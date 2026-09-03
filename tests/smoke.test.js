@@ -1,14 +1,24 @@
 const fs = require('fs');
 const { JSDOM } = require('jsdom');
 
-const frag = fs.readFileSync(require('path').join(__dirname,'..','src','weekzicht.html'), 'utf8');
-const doc = `<!doctype html><html><head><meta charset="utf-8"></head><body>${frag}</body></html>`;
+const path = require('path');
+const FIXTURE = require('./fixture.js');
+// De gebouwde pagina testen, niet de bron: zo dekt de test ook build.mjs.
+const doc = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
 
 const errors = [];
 const dom = new JSDOM(doc, {
   runScripts: 'dangerously',
   pretendToBeVisual: true,
   url: 'https://example.test/',
+  // De app kent geen startgegevens meer; zet ze klaar zoals een browser dat zou hebben.
+  beforeParse(win) {
+    win.localStorage.setItem('weekzicht.v1', JSON.stringify({
+      events: [], tasks: [], leads: FIXTURE,
+      settings: { weekend: true, dayStart: 7, dayEnd: 21 }
+    }));
+    win.localStorage.setItem('weekzicht.v1.leads-seeded', '1');
+  },
   virtualConsole: new (require('jsdom').VirtualConsole)().on('jsdomError', e => errors.push('jsdomError: ' + e.message))
 });
 const w = dom.window, d = w.document;
@@ -49,7 +59,7 @@ setTimeout(() => {
 
     const namen = qa('#canvas .k-name').map(e => e.textContent.trim());
     ok('gesorteerd op datum', JSON.stringify(namen) === JSON.stringify(
-      ['David en Veerle', 'Arco van Beek', 'Juda Urk', 'Lisa van Duijn', '+31 6 34890705']), JSON.stringify(namen));
+      ['Cas en Dina', 'Bram Jansen', 'Eva Bakker', 'Anna de Vries', '+31 6 00000003']), JSON.stringify(namen));
 
     const datums = qa('#canvas .k-date').map(e => e.textContent.trim());
     ok('datums getoond', datums[0].startsWith('29 mei') && datums[4].indexOf('onbekend') >= 0, JSON.stringify(datums));
@@ -80,8 +90,8 @@ setTimeout(() => {
     // ---- klantvenster ----
     click(q('#canvas .k-main'));
     ok('klantvenster open', !$('ldOverlay').hidden);
-    ok('naam ingevuld', $('lName').value === 'David en Veerle', $('lName').value);
-    ok('telefoon ingevuld', $('lPhone').value === '+31 6 34890705', $('lPhone').value);
+    ok('naam ingevuld', $('lName').value === 'Cas en Dina', $('lName').value);
+    ok('telefoon ingevuld', $('lPhone').value === '+31 6 00000004', $('lPhone').value);
     ok('status voorgeselecteerd', $('lStatus').querySelector('[aria-pressed="true"]').getAttribute('data-pickst') === 'gebeld');
     ok('verwijderknop zichtbaar', !$('lDelete').hidden);
 
@@ -100,7 +110,7 @@ setTimeout(() => {
     click(q('.viewswitch [data-view="lijst"]'));
     ok('lijstweergave rendert', qa('#canvas .lrow').length > 0, qa('#canvas .lrow').length);
     ok('lijst bevat klantitems', qa('#canvas .lrow[data-lead]').length > 0);
-    $('searchBox').value = 'juda';
+    $('searchBox').value = 'eva';
     $('searchBox').dispatchEvent(new w.Event('input', { bubbles: true }));
     ok('zoeken op klantnaam', qa('#canvas .lrow').length === 2, qa('#canvas .lrow').length);
     $('searchBox').value = '';
@@ -146,28 +156,28 @@ setTimeout(() => {
     function statusOf(n) { return rowByName(n).querySelector('.stat-pill').textContent.trim(); }
 
     ok('vinkje op elke rij', qa('#canvas [data-called]').length === 5, qa('#canvas [data-called]').length);
-    ok('gebelde klant staat aan', rowByName('David en Veerle').querySelector('[data-called]').checked);
-    ok('niet-gebelde klant staat uit', !rowByName('Lisa van Duijn').querySelector('[data-called]').checked);
-    ok('aangevinkte rij is gemarkeerd', rowByName('David en Veerle').querySelector('.k-check').className.indexOf('on') >= 0);
+    ok('gebelde klant staat aan', rowByName('Cas en Dina').querySelector('[data-called]').checked);
+    ok('niet-gebelde klant staat uit', !rowByName('Anna de Vries').querySelector('[data-called]').checked);
+    ok('aangevinkte rij is gemarkeerd', rowByName('Cas en Dina').querySelector('.k-check').className.indexOf('on') >= 0);
 
     // aanvinken zet de status op Gebeld en noteert de datum
-    check(rowByName('Lisa van Duijn'));
-    ok('aanvinken -> Gebeld', statusOf('Lisa van Duijn') === 'Gebeld', statusOf('Lisa van Duijn'));
-    ok('beldatum genoteerd', /gebeld op/.test(rowByName('Lisa van Duijn').textContent), rowByName('Lisa van Duijn').textContent.slice(0,80));
-    ok('vinkje blijft aan na hertekenen', rowByName('Lisa van Duijn').querySelector('[data-called]').checked);
+    check(rowByName('Anna de Vries'));
+    ok('aanvinken -> Gebeld', statusOf('Anna de Vries') === 'Gebeld', statusOf('Anna de Vries'));
+    ok('beldatum genoteerd', /gebeld op/.test(rowByName('Anna de Vries').textContent), rowByName('Anna de Vries').textContent.slice(0,80));
+    ok('vinkje blijft aan na hertekenen', rowByName('Anna de Vries').querySelector('[data-called]').checked);
 
     // uitvinken zet hem terug (geen belafspraak -> Nog bellen)
-    check(rowByName('Lisa van Duijn'));
-    ok('uitvinken -> Nog bellen', statusOf('Lisa van Duijn') === 'Nog bellen', statusOf('Lisa van Duijn'));
-    ok('beldatum weer weg', !/gebeld op/.test(rowByName('Lisa van Duijn').textContent));
+    check(rowByName('Anna de Vries'));
+    ok('uitvinken -> Nog bellen', statusOf('Anna de Vries') === 'Nog bellen', statusOf('Anna de Vries'));
+    ok('beldatum weer weg', !/gebeld op/.test(rowByName('Anna de Vries').textContent));
 
     // uitvinken met belafspraak valt terug op Call gepland, mét waarschuwing
     $('toast').hidden = true;
-    check(rowByName('Juda Urk'));
-    ok('akkoord uitvinken -> Call gepland', statusOf('Juda Urk') === 'Call gepland', statusOf('Juda Urk'));
+    check(rowByName('Eva Bakker'));
+    ok('akkoord uitvinken -> Call gepland', statusOf('Eva Bakker') === 'Call gepland', statusOf('Eva Bakker'));
     ok('waarschuwing getoond', !$('toast').hidden && /Akkoord/.test($('toast').textContent), $('toast').textContent);
-    check(rowByName('Juda Urk'));
-    ok('weer aanvinken -> Gebeld', statusOf('Juda Urk') === 'Gebeld', statusOf('Juda Urk'));
+    check(rowByName('Eva Bakker'));
+    ok('weer aanvinken -> Gebeld', statusOf('Eva Bakker') === 'Gebeld', statusOf('Eva Bakker'));
 
     // filter "Al gebeld" volgt het vinkje
     click(q('#canvas [data-preset="gebeld"]'));
@@ -175,12 +185,12 @@ setTimeout(() => {
     click(q('#canvas [data-preset="alles"]'));
 
     // venster en vinkje blijven gelijk
-    click(rowByName('Juda Urk').querySelector('.k-main'));
+    click(rowByName('Eva Bakker').querySelector('.k-main'));
     ok('venster toont Gebeld', $('lStatus').querySelector('[aria-pressed="true"]').getAttribute('data-pickst') === 'gebeld');
     click($('lStatus').querySelector('[data-pickst="akkoord"]'));
     click($('lSave'));
-    ok('via venster akkoord -> vinkje aan', rowByName('Juda Urk').querySelector('[data-called]').checked);
-    ok('via venster akkoord -> beldatum', /gebeld op/.test(rowByName('Juda Urk').textContent));
+    ok('via venster akkoord -> vinkje aan', rowByName('Eva Bakker').querySelector('[data-called]').checked);
+    ok('via venster akkoord -> beldatum', /gebeld op/.test(rowByName('Eva Bakker').textContent));
 
     ok('nog steeds geen scriptfouten', errors.length === 0, errors.join(' | '));
   } catch (e) {

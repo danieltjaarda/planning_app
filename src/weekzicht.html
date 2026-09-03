@@ -1432,7 +1432,7 @@ button { cursor: pointer; }
       <div class="row2">
         <div class="field">
           <label class="label" for="lName">Naam</label>
-          <input type="text" id="lName" placeholder="Lisa van Duijn" autocomplete="off">
+          <input type="text" id="lName" placeholder="Naam van de klant" autocomplete="off">
         </div>
         <div class="field">
           <label class="label" for="lPhone">Telefoon</label>
@@ -2899,21 +2899,23 @@ button { cursor: pointer; }
 
   /* --- eenmalig de bestaande lijst inladen ------------------- */
 
+  // Let op: dit zijn echte klantgegevens. Houd deze repository privé en zet
+  // geen openbare deploy op dit bestand.
   var SEED_LEADS = [
     { id: "ld-lisa-van-duijn", name: "Lisa van Duijn", phone: "+31 6 11072509",
-      date: "2026-10-30", status: "wacht", callDate: null, callTime: null,
+      date: "2026-10-30", status: "wacht", calledAt: null, callDate: null, callTime: null,
       note: "Wachten op een datum voor de call." },
     { id: "ld-arco-van-beek", name: "Arco van Beek", phone: "+31 6 30756081",
-      date: "2026-10-03", status: "wacht", callDate: null, callTime: null,
+      date: "2026-10-03", status: "wacht", calledAt: null, callDate: null, callTime: null,
       note: "Wachten op een datum voor de call." },
     { id: "ld-34890705-nieuw", name: "", phone: "+31 6 34890705",
-      date: null, status: "gepland", callDate: "2026-09-02", callTime: "18:15",
+      date: null, status: "gepland", calledAt: null, callDate: "2026-09-02", callTime: "18:15",
       note: "Datum van de klus nog onbekend. Zelfde nummer als David en Veerle — controleren of dit dezelfde aanvraag is." },
     { id: "ld-david-en-veerle", name: "David en Veerle", phone: "+31 6 34890705",
-      date: "2026-05-29", status: "gebeld", callDate: null, callTime: null,
+      date: "2026-05-29", status: "gebeld", calledAt: null, callDate: null, callTime: null,
       note: "Call al gehad. Hebben nog een gesprek met een andere videograaf. Let op: opgegeven datum ligt in het verleden — klopt 2027?" },
     { id: "ld-juda-urk", name: "Juda Urk", phone: "+31 6 13007910",
-      date: "2026-10-05", status: "akkoord", callDate: "2026-09-04", callTime: null,
+      date: "2026-10-05", status: "akkoord", calledAt: null, callDate: "2026-09-04", callTime: null,
       note: "Is al akkoord. Vrijdag bellen om het draaiboek door te nemen — tijd nog invullen." }
   ];
 

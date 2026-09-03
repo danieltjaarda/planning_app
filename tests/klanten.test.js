@@ -1,71 +1,87 @@
 const L = require('./_lead-lib.js');
-let fail=0,pass=0;
-function eq(n,g,w){const a=JSON.stringify(g),b=JSON.stringify(w);if(a===b)pass++;else{fail++;console.log("FAIL",n,"\n  got ",a,"\n  want",b);}}
+const FIXTURE = require('./fixture.js');
+let fail = 0, pass = 0;
+function eq(n, g, w) {
+  const a = JSON.stringify(g), b = JSON.stringify(w);
+  if (a === b) pass++; else { fail++; console.log('FAIL', n, '\n  got ', a, '\n  want', b); }
+}
+function load() { L.state.leads = FIXTURE.map(o => Object.assign({}, o)); }
 
-// de ingelezen lijst
-L.state.leads = L.SEED_LEADS.map(o => Object.assign({}, o));
-eq("aantal klanten", L.state.leads.length, 5);
+load();
+eq('aantal klanten', L.state.leads.length, 5);
 
 // sortering op datum, onbekend achteraan
-eq("volgorde", L.sortLeads(L.state.leads).map(l => (l.date || "onbekend") + " " + L.leadName(l)),
-  ["2026-05-29 David en Veerle",
-   "2026-10-03 Arco van Beek",
-   "2026-10-05 Juda Urk",
-   "2026-10-30 Lisa van Duijn",
-   "onbekend +31 6 34890705"]);
+eq('volgorde', L.sortLeads(L.state.leads).map(l => (l.date || 'onbekend') + ' ' + L.leadName(l)),
+  ['2026-05-29 Cas en Dina',
+   '2026-10-03 Bram Jansen',
+   '2026-10-05 Eva Bakker',
+   '2026-10-30 Anna de Vries',
+   'onbekend +31 6 00000003']);
 
 // naam valt terug op het nummer
-eq("naamloos -> nummer", L.leadName({name:"", phone:"+31 6 34890705"}), "+31 6 34890705");
-eq("lege lead", L.leadName({}), "Naamloos");
+eq('naamloos -> nummer', L.leadName({ name: '', phone: '+31 6 00000003' }), '+31 6 00000003');
+eq('lege lead', L.leadName({}), 'Naamloos');
 
-// tellingen per status
-eq("tellingen", L.statusCounts(), {wacht:2, gepland:1, gebeld:1, akkoord:1, af:0});
+eq('tellingen', L.statusCounts(), { wacht: 2, gepland: 1, gebeld: 1, akkoord: 1, af: 0 });
 
 // belafspraak -> tijdblok van 30 minuten
-eq("belblok eindtijd", L.leadCallEnd({callTime:"18:15"}), "18:45");
-eq("belblok over middernacht", L.leadCallEnd({callTime:"23:50"}), "23:59");
+eq('belblok eindtijd', L.leadCallEnd({ callTime: '18:15' }), '18:45');
+eq('belblok over middernacht', L.leadCallEnd({ callTime: '23:50' }), '23:59');
 
-// klusdatum verschijnt als hele-dag item
-const okt5 = L.dayItems("2026-10-05");
-eq("klusdag item", okt5.map(i => i.kind+"/"+i.sub+"/"+i.title+"/"+i.allDay), ["lead/klus/Juda Urk/true"]);
-eq("klusdag kleur = status", L.itemColor(okt5[0]), "var(--st-akkoord)");
-eq("klusdag attribuut", L.itemAttr(okt5[0]), 'data-lead="ld-juda-urk"');
-eq("klusdag icoon in titel", L.itemTitleHtml(okt5[0]).indexOf("<svg") >= 0, true);
+// klusdatum verschijnt als hele-dag item, met statuskleur en -icoon
+const okt5 = L.dayItems('2026-10-05');
+eq('klusdag item', okt5.map(i => `${i.kind}/${i.sub}/${i.title}/${i.allDay}`), ['lead/klus/Eva Bakker/true']);
+eq('klusdag kleur = status', L.itemColor(okt5[0]), 'var(--st-akkoord)');
+eq('klusdag attribuut', L.itemAttr(okt5[0]), 'data-lead="t-eva"');
+eq('klusdag icoon in titel', L.itemTitleHtml(okt5[0]).includes('<svg'), true);
 
-// belafspraak met tijd -> tijdblok
-const sep2 = L.dayItems("2026-09-02");
-eq("belafspraak met tijd", sep2.map(i => i.title+" "+i.start+"-"+i.end+" allDay="+i.allDay),
-   ["Bellen · +31 6 34890705 18:15-18:45 allDay=false"]);
-
-// belafspraak zonder tijd -> hele dag
-const sep4 = L.dayItems("2026-09-04");
-eq("belafspraak zonder tijd", sep4.map(i => i.title+" allDay="+i.allDay),
-   ["Bellen · Juda Urk allDay=true"]);
+eq('belafspraak met tijd', L.dayItems('2026-09-02').map(i => `${i.title} ${i.start}-${i.end} allDay=${i.allDay}`),
+  ['Bellen · +31 6 00000003 18:15-18:45 allDay=false']);
+eq('belafspraak zonder tijd', L.dayItems('2026-09-04').map(i => `${i.title} allDay=${i.allDay}`),
+  ['Bellen · Eva Bakker allDay=true']);
 
 // afspraken en klanten door elkaar, op tijd gesorteerd
 L.state.events = [
-  {id:"e1", title:"Overleg", date:"2026-09-02", start:"09:00", end:"10:00", allDay:false, cat:"afspraak", loc:""},
-  {id:"e2", title:"Deadline", date:"2026-09-02", start:"00:00", end:"23:59", allDay:true, cat:"focus", loc:""}
+  { id: 'e1', title: 'Overleg',  date: '2026-09-02', start: '09:00', end: '10:00', allDay: false, cat: 'afspraak', loc: '' },
+  { id: 'e2', title: 'Deadline', date: '2026-09-02', start: '00:00', end: '23:59', allDay: true,  cat: 'focus',    loc: '' }
 ];
-eq("gemengde dag", L.dayItems("2026-09-02").map(i => i.title),
-   ["Deadline", "Overleg", "Bellen · +31 6 34890705"]);
-eq("afspraak zonder icoon", L.itemTitleHtml(L.dayItems("2026-09-02")[1]), "Overleg");
-eq("afspraak kleur = categorie", L.itemColor(L.dayItems("2026-09-02")[1]), "var(--cat-afspraak)");
+eq('gemengde dag', L.dayItems('2026-09-02').map(i => i.title), ['Deadline', 'Overleg', 'Bellen · +31 6 00000003']);
+eq('afspraak zonder icoon', L.itemTitleHtml(L.dayItems('2026-09-02')[1]), 'Overleg');
+eq('afspraak kleur = categorie', L.itemColor(L.dayItems('2026-09-02')[1]), 'var(--cat-afspraak)');
 
 // statusfilter werkt door in de agenda
-L.state.stHidden = {akkoord:true};
-eq("gefilterd: klusdag weg", L.dayItems("2026-10-05").length, 0);
-eq("gefilterd: belafspraak weg", L.dayItems("2026-09-04").length, 0);
-eq("gefilterd: afspraken blijven", L.dayItems("2026-09-02").map(i=>i.title), ["Deadline","Overleg","Bellen · +31 6 34890705"]);
+L.state.stHidden = { akkoord: true };
+eq('gefilterd: klusdag weg', L.dayItems('2026-10-05').length, 0);
+eq('gefilterd: belafspraak weg', L.dayItems('2026-09-04').length, 0);
+eq('gefilterd: afspraken blijven', L.dayItems('2026-09-02').map(i => i.title),
+  ['Deadline', 'Overleg', 'Bellen · +31 6 00000003']);
 L.state.stHidden = {};
 
+// het Gebeld-vinkje verzet de status
+eq('gebeld?', ['wacht', 'gepland', 'gebeld', 'akkoord', 'af'].map(L.isCalled), [false, false, true, true, true]);
+
+load(); L.CAPTURED.length = 0;
+L.toggleCalled('t-anna');                      // wacht, geen belafspraak
+eq('aanvinken -> gebeld', L.CAPTURED[0].status, 'gebeld');
+eq('aanvinken noteert datum', /^\d{4}-\d{2}-\d{2}$/.test(L.CAPTURED[0].calledAt), true);
+
+load(); L.CAPTURED.length = 0;
+L.toggleCalled('t-cas');                       // gebeld, geen belafspraak
+eq('uitvinken zonder belafspraak -> wacht', L.CAPTURED[0].status, 'wacht');
+eq('uitvinken wist de datum', L.CAPTURED[0].calledAt, null);
+
+load(); L.CAPTURED.length = 0;
+L.toggleCalled('t-eva');                       // akkoord, mét belafspraak
+eq('uitvinken met belafspraak -> gepland', L.CAPTURED[0].status, 'gepland');
+eq('waarschuwing bij akkoord terugdraaien', /Akkoord/.test(L.LAST_TOAST), true);
+
 // escaping
-eq("escaping in titel", L.itemTitleHtml({kind:"event", title:'<img src=x>'}), "&lt;img src=x&gt;");
+eq('escaping in titel', L.itemTitleHtml({ kind: 'event', title: '<img src=x>' }), '&lt;img src=x&gt;');
 
 // elke status heeft een icoon
-eq("iconen aanwezig", L.STATUSES.every(s => L.icon(s.icon,12).indexOf("<path") >= 0), true);
-eq("statuskleuren", L.STATUSES.map(s => L.stVar(s.id)),
-   ["var(--st-wacht)","var(--st-gepland)","var(--st-gebeld)","var(--st-akkoord)","var(--st-af)"]);
+eq('iconen aanwezig', L.STATUSES.every(s => L.icon(s.icon, 12).includes('<path')), true);
+eq('statuskleuren', L.STATUSES.map(s => L.stVar(s.id)),
+  ['var(--st-wacht)', 'var(--st-gepland)', 'var(--st-gebeld)', 'var(--st-akkoord)', 'var(--st-af)']);
 
-console.log("\n" + pass + " geslaagd, " + fail + " gefaald");
-process.exit(fail?1:0);
+console.log('\n' + pass + ' geslaagd, ' + fail + ' gefaald');
+process.exit(fail ? 1 : 0);

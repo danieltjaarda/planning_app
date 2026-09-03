@@ -8,12 +8,10 @@ wintertijd.
 ## Snel starten
 
 ```bash
-python3 build.py
-python3 -m http.server 8787 --bind 127.0.0.1
-# → http://localhost:8787
+npm start          # bouwt public/ en serveert op http://localhost:8787
 ```
 
-Of via npm: `npm start`.
+Of los: `node build.mjs` en dan een willekeurige statische server op `public/`.
 
 De server bindt bewust alleen op `127.0.0.1`; er staan telefoonnummers van
 klanten in.
@@ -59,13 +57,24 @@ browser. **De twee delen hun gegevens niet** — ander adres, andere opslag.
 
 ```
 src/weekzicht.html   bron: het artifact-fragment (zonder <head>)
-build.py             zet daar de <head> omheen → index.html
-index.html           gegenereerd; gecommit zodat je 'm direct kunt openen
-tests/               149 controles, zie hieronder
+build.mjs            zet daar de <head> omheen → public/index.html
+vercel.json          buildCommand + outputDirectory voor Vercel
+public/              gegenereerd, niet in git
+tests/               156 controles, zie hieronder
 ```
 
-`src/weekzicht.html` is de bron. `index.html` niet met de hand bewerken —
-`build.py` overschrijft hem.
+`src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
+bewerken — de build overschrijft hem. De build draait op Node, niet op Python,
+zodat een kale Vercel-build hem zonder meer kan uitvoeren.
+
+## Deployen
+
+Vercel pakt `vercel.json` vanzelf op: build `node build.mjs`, output `public`.
+Zonder die twee instellingen zoekt Vercel na de build naar een map `public` die
+er niet is en faalt de deploy met *"No Output Directory named 'public' found"*.
+
+De deploy krijgt `X-Robots-Tag: noindex` mee. Dat houdt zoekmachines weg, maar
+maakt de URL niet geheim: iedereen die hem heeft, kan de pagina openen.
 
 ## Tests
 
@@ -79,8 +88,16 @@ npm test
   RRULE-uitrekening, knippen over middernacht
 - **import** — kolomindeling bij overlap, volledige ICS-import van begin tot eind
 - **klanten** — sortering, statustellingen, klantitems in de agenda, filters
-- **smoke** — de hele pagina in jsdom: elke weergave, elk venster, de filters,
-  het Gebeld-vinkje en de opslag
+- **smoke** — de gebouwde `public/index.html` in jsdom: elke weergave, elk
+  venster, de filters, het Gebeld-vinkje en de opslag
+
+De tests draaien op verzonnen klanten uit `tests/fixture.js`.
+
+## Geen gegevens in deze repository
+
+De app start leeg. Namen en telefoonnummers van klanten horen niet in een
+repository en al helemaal niet op een openbare deploy; ze leven in de opslag van
+de pagina zelf — de `db`-capability als artifact, anders `localStorage`.
 
 ## Bekende grenzen
 
