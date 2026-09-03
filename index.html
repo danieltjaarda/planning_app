@@ -1,0 +1,3829 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 14px system-ui, -apple-system, sans-serif; background: #faf9f7; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<title>Weekzicht</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Martian+Mono:wght@300..700&display=swap">
+<style>
+/* ============================================================
+   Weekzicht — Nederlandse week- en dagplanning
+   Richting: Nederlands functionalisme (Total Design / NS-dienstregeling):
+   strak stramien, zichtbare haarlijnen, uitgerekte grotesque,
+   24-uursnotatie en het weeknummer als vaste ankers.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  --paper:        #E9EBF0;
+  --surface:      #FBFBFD;
+  --surface-2:    #F2F3F7;
+  --surface-3:    #E4E7EE;
+  --ink:          #13151C;
+  --ink-2:        #565E70;
+  --ink-3:        #858DA0;
+  --line:         #D6DAE3;
+  --line-2:       #B9BFCC;
+  --accent:       #2B45D4;
+  --accent-ink:   #FFFFFF;
+  --accent-soft:  #E1E5FB;
+  --now:          #D93A1E;
+  --now-ink:      #FFFFFF;
+  --now-soft:     #FBE4DF;
+
+  --cat-afspraak: #2B45D4;
+  --cat-focus:    #26AC83;
+  --cat-reizen:   #C08100;
+  --cat-prive:    #96275E;
+  --cat-overig:   #5A6270;
+
+  --st-wacht:     #C08100;
+  --st-gepland:   #2B45D4;
+  --st-gebeld:    #96275E;
+  --st-akkoord:   #26AC83;
+  --st-af:        #5A6270;
+
+  --cat-mix:      13%;
+  --cat-mix-hi:   22%;
+
+  --shadow:       0 1px 2px rgba(19,21,28,.06), 0 8px 24px -12px rgba(19,21,28,.18);
+  --rowh:         56px;
+  --gutter:       58px;
+  --headh:        50px;
+
+  --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper:        #0E1016;
+    --surface:      #161922;
+    --surface-2:    #1D2029;
+    --surface-3:    #262B36;
+    --ink:          #EAECF3;
+    --ink-2:        #98A0B3;
+    --ink-3:        #6C748A;
+    --line:         #282D39;
+    --line-2:       #3A4150;
+    --accent:       #7C8DF2;
+    --accent-ink:   #0E1016;
+    --accent-soft:  #1E2545;
+    --now:          #FF7454;
+    --now-ink:      #2A0F06;
+    --now-soft:     #331B15;
+
+    --cat-afspraak: #6478E9;
+    --cat-focus:    #22AE84;
+    --cat-reizen:   #B98729;
+    --cat-prive:    #B03A72;
+    --cat-overig:   #8892A5;
+
+    --st-wacht:     #B98729;
+    --st-gepland:   #6478E9;
+    --st-gebeld:    #B03A72;
+    --st-akkoord:   #22AE84;
+    --st-af:        #8892A5;
+
+    --cat-mix:      22%;
+    --cat-mix-hi:   34%;
+
+    --shadow:       0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:        #0E1016;
+  --surface:      #161922;
+  --surface-2:    #1D2029;
+  --surface-3:    #262B36;
+  --ink:          #EAECF3;
+  --ink-2:        #98A0B3;
+  --ink-3:        #6C748A;
+  --line:         #282D39;
+  --line-2:       #3A4150;
+  --accent:       #7C8DF2;
+  --accent-ink:   #0E1016;
+  --accent-soft:  #1E2545;
+  --now:          #FF7454;
+  --now-ink:      #2A0F06;
+  --now-soft:     #331B15;
+
+  --cat-afspraak: #6478E9;
+  --cat-focus:    #22AE84;
+  --cat-reizen:   #B98729;
+  --cat-prive:    #B03A72;
+  --cat-overig:   #8892A5;
+
+  --st-wacht:     #B98729;
+  --st-gepland:   #6478E9;
+  --st-gebeld:    #B03A72;
+  --st-akkoord:   #22AE84;
+  --st-af:        #8892A5;
+
+  --cat-mix:      22%;
+  --cat-mix-hi:   34%;
+
+  --shadow:       0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* --- shared type roles ----------------------------------- */
+
+.label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* --- app shell -------------------------------------------- */
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* --- top bar ---------------------------------------------- */
+
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.mark {
+  width: 34px; height: 34px;
+  flex: none;
+  display: grid; place-items: center;
+  background: var(--ink);
+  color: var(--surface);
+  font-family: var(--sans);
+  font-stretch: 120%;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .02em;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 15px;
+  font-stretch: 118%;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.brand .tz {
+  margin: 1px 0 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.clock {
+  margin-left: 10px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+  min-width: 0;
+}
+.clock-time {
+  display: block;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+.clock-date {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.weeknav { display: flex; align-items: center; gap: 8px; justify-self: center; }
+
+.navbtn {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 2px;
+}
+.navbtn:hover { background: var(--surface-2); color: var(--ink); border-color: var(--line-2); }
+.navbtn:disabled { opacity: .35; cursor: default; }
+.navbtn:disabled:hover { background: var(--surface); color: var(--ink-2); border-color: var(--line); }
+
+.btn-today {
+  height: 30px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.btn-today:hover { background: var(--surface-2); color: var(--ink); border-color: var(--line-2); }
+
+.period { margin-left: 8px; text-align: left; }
+.period-week {
+  display: block;
+  font-stretch: 118%;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.period-range {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.topbar-actions { display: flex; align-items: center; gap: 8px; justify-self: end; }
+
+.viewswitch {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 2px;
+  gap: 2px;
+}
+.viewswitch button {
+  height: 24px;
+  padding: 0 11px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 1px;
+}
+.viewswitch button:hover { color: var(--ink); }
+.viewswitch button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0,0,0,.10);
+}
+
+.btn-primary {
+  height: 30px;
+  padding: 0 13px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+
+.btn-ghost {
+  height: 30px;
+  min-width: 30px;
+  padding: 0 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.btn-ghost:hover { background: var(--surface-2); color: var(--ink); border-color: var(--line-2); }
+
+/* --- menu popover ----------------------------------------- */
+
+.menuwrap { position: relative; }
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  min-width: 226px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+  padding: 5px;
+}
+.menu[hidden] { display: none !important; }
+.menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 9px;
+  background: none;
+  border: 0;
+  border-radius: 2px;
+  font-size: 13px;
+  text-align: left;
+  color: var(--ink);
+}
+.menu button:hover { background: var(--surface-2); }
+.menu button .k { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 2px; }
+.menu .danger { color: var(--now); }
+
+/* --- body ------------------------------------------------- */
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 332px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.canvas {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.rail {
+  border-left: 1px solid var(--line);
+  background: var(--paper);
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* --- week / day grid -------------------------------------- */
+
+.grid-scroll {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  position: relative;
+}
+
+.grid {
+  display: grid;
+  grid-auto-rows: min-content;
+  align-items: start;
+}
+
+.corner {
+  position: sticky;
+  top: 0; left: 0;
+  z-index: 7;
+  height: var(--headh);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-2);
+  display: grid;
+  place-items: center;
+  gap: 0;
+}
+.corner .label { font-size: 8.5px; }
+.corner .wknum {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dayhead {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: var(--headh);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-2);
+  border-right: 1px solid var(--line);
+  padding: 7px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.dayhead.weekend { background: var(--surface-2); }
+.dayhead .dh-dow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.dayhead .dh-num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+.dayhead .dh-mon { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.dayhead .dh-count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  align-self: center;
+}
+.dayhead.today { background: var(--accent-soft); border-bottom-color: var(--accent); }
+.dayhead.today .dh-num, .dayhead.today .dh-dow { color: var(--accent); font-weight: 700; }
+
+.allday-gut {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 6px 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.allday-cell {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 34px;
+}
+.allday-cell.weekend { background: var(--surface-2); }
+
+.chip-allday {
+  --cat: var(--cat-overig);
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-left: 3px solid var(--cat);
+  background: color-mix(in oklab, var(--cat) var(--cat-mix), var(--surface));
+  color: var(--ink);
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-allday:hover { background: color-mix(in oklab, var(--cat) var(--cat-mix-hi), var(--surface)); }
+
+.hourgut {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  height: var(--bodyh);
+}
+.hourgut .hr {
+  position: absolute;
+  right: 8px;
+  padding-top: 3px;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: -.02em;
+}
+.hourgut .nowpill {
+  position: absolute;
+  right: 4px;
+  transform: translateY(-50%);
+  background: var(--now);
+  color: var(--now-ink);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: -.02em;
+  z-index: 2;
+}
+
+.daycol {
+  position: relative;
+  height: var(--bodyh);
+  border-right: 1px solid var(--line);
+  background-image:
+    repeating-linear-gradient(to bottom,
+      color-mix(in oklab, var(--line) 55%, transparent) 0 1px,
+      transparent 1px var(--rowh));
+  background-position: 0 0;
+}
+.daycol.weekend { background-color: var(--surface-2); }
+.daycol.today { background-color: color-mix(in oklab, var(--accent) 4%, var(--surface)); }
+.daycol.today.weekend { background-color: color-mix(in oklab, var(--accent) 4%, var(--surface-2)); }
+
+.nowline {
+  position: absolute;
+  left: 0; right: 0;
+  height: 0;
+  border-top: 1px solid color-mix(in oklab, var(--now) 45%, transparent);
+  z-index: 4;
+  pointer-events: none;
+}
+.nowline.strong { border-top: 2px solid var(--now); }
+.nowline.strong::before {
+  content: "";
+  position: absolute;
+  left: -4px; top: -5px;
+  width: 8px; height: 8px;
+  background: var(--now);
+  border-radius: 50%;
+}
+
+.ev {
+  --cat: var(--cat-overig);
+  position: absolute;
+  z-index: 2;
+  border: 0;
+  border-left: 3px solid var(--cat);
+  background: color-mix(in oklab, var(--cat) var(--cat-mix), var(--surface));
+  color: var(--ink);
+  border-radius: 2px;
+  padding: 3px 5px 3px 6px;
+  text-align: left;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--cat) 18%, transparent);
+  transition: background .12s ease;
+}
+.ev:hover { background: color-mix(in oklab, var(--cat) var(--cat-mix-hi), var(--surface)); z-index: 3; }
+.ev > span { min-width: 0; }
+.ev .ev-t {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ev .ev-m {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 9.5px;
+  color: var(--ink-2);
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ev .ev-l {
+  font-size: 10.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ev.past { opacity: .52; }
+.ev.tight { flex-direction: row; align-items: baseline; gap: 5px; padding-top: 1px; }
+.ev.tight .ev-m { order: -1; }
+
+.slotcatch { position: absolute; inset: 0; z-index: 0; }
+
+/* --- list view -------------------------------------------- */
+
+.listwrap { flex: 1; overflow-y: auto; min-height: 0; }
+
+.listbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.search {
+  flex: 1;
+  max-width: 340px;
+  height: 30px;
+  padding: 0 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 13px;
+}
+.search::placeholder { color: var(--ink-3); }
+
+.daygroup { border-bottom: 1px solid var(--line); }
+.daygroup > h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  padding: 9px 16px 7px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-stretch: 112%;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.daygroup > h3 .rel { font-family: var(--mono); font-size: 10px; font-weight: 400; letter-spacing: .04em; color: var(--ink-3); text-transform: none; }
+.daygroup.is-today > h3 { background: var(--accent-soft); color: var(--accent); }
+.daygroup.is-today > h3 .rel { color: var(--accent); }
+
+.lrow {
+  --cat: var(--cat-overig);
+  display: grid;
+  grid-template-columns: 104px 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+  width: 100%;
+  padding: 9px 16px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
+  text-align: left;
+}
+.lrow:last-child { border-bottom: 0; }
+.lrow:hover { background: var(--surface-2); }
+.lrow .lt {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-2);
+  letter-spacing: -.02em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.lrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cat); flex: none; }
+.lrow .ln { font-size: 13.5px; font-weight: 500; min-width: 0; }
+.lrow .ln small { display: block; font-size: 11.5px; font-weight: 400; color: var(--ink-2); }
+.lrow .lc { font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.lrow.past { opacity: .55; }
+
+/* --- rail cards ------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 12px;
+}
+.card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.now-card { border-left: 3px solid var(--now); }
+.now-card.idle { border-left-color: var(--line-2); }
+.now-title { font-size: 15px; font-weight: 600; line-height: 1.25; margin: 2px 0 3px; }
+.now-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-2); letter-spacing: -.01em; }
+.now-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.now-empty { font-size: 13px; color: var(--ink-2); }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.stat { background: var(--surface); padding: 8px 9px; }
+.stat .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 17px; font-weight: 500; line-height: 1.1; }
+.stat .k { font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-top: 2px; }
+
+/* weekbelasting — één reeks, één tint, geen legenda nodig */
+.chart { margin-top: 11px; }
+.chart-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.chart-max { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); }
+.bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  align-items: end;
+  height: 52px;
+  margin-top: 15px;
+  border-bottom: 1px solid var(--line-2);
+}
+.barcell { position: relative; height: 100%; display: flex; align-items: flex-end; }
+.bar {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+  transition: filter .12s ease;
+}
+.bar.zero { background: var(--line); border-radius: 0; height: 2px !important; }
+.barcell:hover .bar { filter: brightness(1.15); }
+.barcell .bl {
+  position: absolute;
+  top: -13px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  color: var(--ink-2);
+}
+.barlabels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 4px; }
+.barlabels span {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+.barlabels span.today { color: var(--accent); font-weight: 700; }
+
+/* tasks */
+.taskadd { display: grid; grid-template-columns: 1fr auto auto; gap: 5px; margin-bottom: 9px; }
+.taskadd input[type="text"] {
+  height: 29px;
+  padding: 0 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 12.5px;
+  min-width: 0;
+}
+.taskadd input[type="date"] {
+  height: 29px;
+  padding: 0 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-2);
+  width: 108px;
+}
+.taskadd button {
+  height: 29px; width: 29px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 0; border-radius: 2px;
+  font-size: 15px; line-height: 1;
+}
+
+.tasklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tasklist li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: start;
+  padding: 7px 0;
+  border-top: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
+}
+.tasklist li:first-child { border-top: 0; }
+.tasklist input[type="checkbox"] { margin: 3px 0 0; width: 14px; height: 14px; accent-color: var(--accent); }
+.tk-t { font-size: 13px; line-height: 1.35; word-break: break-word; }
+.tasklist li.done .tk-t { text-decoration: line-through; color: var(--ink-3); }
+.tk-d {
+  display: inline-block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+}
+.tk-d.late { color: var(--now); font-weight: 600; }
+.tk-d.today { color: var(--accent); font-weight: 600; }
+.tk-x { background: none; border: 0; color: var(--ink-3); font-size: 14px; line-height: 1; padding: 2px 3px; opacity: 0; }
+.tasklist li:hover .tk-x { opacity: 1; }
+.tk-x:hover { color: var(--now); }
+
+/* legenda + filter */
+.legend { display: flex; flex-direction: column; }
+.legend button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  align-items: center;
+  padding: 5px 2px;
+  background: none;
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
+  text-align: left;
+  font-size: 12.5px;
+}
+.legend button:first-child { border-top: 0; }
+.legend .sw { width: 11px; height: 11px; border-radius: 2px; background: var(--cat); }
+.legend .ct { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 10px; color: var(--ink-3); }
+.legend button.off { opacity: .4; }
+.legend button.off .sw { background: var(--line-2); }
+
+/* --- onboarding / empty ----------------------------------- */
+
+.empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 28px 22px;
+  overflow-y: auto;
+}
+.empty-inner { max-width: 560px; }
+.empty h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-stretch: 112%;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.empty p { margin: 0 0 16px; color: var(--ink-2); font-size: 14px; max-width: 60ch; }
+.empty ol { margin: 0 0 18px; padding-left: 20px; color: var(--ink-2); font-size: 13px; }
+.empty ol li { margin-bottom: 5px; }
+.empty ol strong { color: var(--ink); font-weight: 600; }
+.empty-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.empty-src {
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  background: var(--surface-2);
+}
+.empty-src h3 { margin: 0 0 7px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-family: var(--mono); font-weight: 500; color: var(--ink-3); }
+.empty-src dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12.5px; }
+.empty-src dt { font-weight: 600; }
+.empty-src dd { margin: 0; color: var(--ink-2); }
+
+/* --- modal ------------------------------------------------ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: color-mix(in oklab, var(--ink) 42%, transparent);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+.overlay[hidden] { display: none !important; }
+
+.modal {
+  width: min(520px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+}
+.modal > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.modal > header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-stretch: 115%;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.modal .mbody { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 13px; }
+.modal > footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+.modal > footer .spacer { flex: 1; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field > .label { display: block; }
+.field input[type="text"],
+.field input[type="date"],
+.field input[type="time"],
+.field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 14px;
+}
+.field input[type="date"], .field input[type="time"] { font-family: var(--mono); font-size: 13px; }
+.field textarea { resize: vertical; min-height: 62px; font-size: 13px; line-height: 1.5; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 11px; align-items: end; }
+
+.catpick { display: flex; flex-wrap: wrap; gap: 5px; }
+.catpick button {
+  --cat: var(--cat-overig);
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.catpick button .sw { width: 9px; height: 9px; border-radius: 2px; background: var(--cat); }
+.catpick button[aria-pressed="true"] {
+  border-color: var(--cat);
+  background: color-mix(in oklab, var(--cat) var(--cat-mix), var(--surface));
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.check input { width: 15px; height: 15px; accent-color: var(--accent); }
+
+.btn-line {
+  height: 32px;
+  padding: 0 13px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 2px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.btn-line:hover { background: var(--surface-2); }
+.btn-line.danger { color: var(--now); border-color: color-mix(in oklab, var(--now) 40%, var(--line)); }
+.btn-line.danger:hover { background: var(--now-soft); }
+
+.dropzone {
+  border: 1px dashed var(--line-2);
+  border-radius: 3px;
+  padding: 20px;
+  text-align: center;
+  background: var(--surface-2);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.dropzone.hot { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.dropzone strong { display: block; color: var(--ink); font-size: 14px; margin-bottom: 3px; }
+
+.note {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  padding: 9px 11px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--line-2);
+  border-radius: 0 2px 2px 0;
+}
+
+/* --- tooltip + toast -------------------------------------- */
+
+.tip {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--surface);
+  padding: 5px 8px;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+.tip[hidden] { display: none !important; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 300;
+  background: var(--ink);
+  color: var(--surface);
+  padding: 9px 15px;
+  border-radius: 3px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  max-width: min(520px, calc(100vw - 32px));
+}
+.toast[hidden] { display: none !important; }
+
+.syncdot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.syncdot::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--line-2);
+}
+.syncdot.on::before { background: var(--cat-focus); }
+
+
+/* --- status, filters, klantenlijst ------------------------- */
+
+.stat-ico { flex: none; color: var(--st); display: block; }
+
+.stat-pill {
+  --st: var(--st-af);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid color-mix(in oklab, var(--st) 45%, transparent);
+  background: color-mix(in oklab, var(--st) 12%, var(--surface));
+  color: var(--ink);
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.filterbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
+.filterbar .tally { margin-left: auto; }
+
+.fchip {
+  --st: var(--st-af);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.fchip:hover { border-color: var(--line-2); color: var(--ink); }
+.fchip .n { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.fchip[aria-pressed="true"] {
+  border-color: var(--st);
+  background: color-mix(in oklab, var(--st) 13%, var(--surface));
+  color: var(--ink);
+  font-weight: 600;
+}
+.fchip[aria-pressed="true"] .n { color: var(--ink-2); }
+.fchip[aria-pressed="false"] .stat-ico { opacity: .5; }
+.fchip.preset { color: var(--ink-2); font-weight: 500; }
+
+.klantwrap { flex: 1; overflow-y: auto; min-height: 0; }
+
+.klant {
+  --st: var(--st-af);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid var(--st);
+}
+.klant.gone { opacity: .58; }
+.klant:hover { background: var(--surface-2); }
+
+.k-main {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 3px 16px;
+  align-items: start;
+  padding: 13px 10px 13px 13px;
+  background: none;
+  border: 0;
+  text-align: left;
+  min-width: 0;
+}
+.k-date { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.k-date b {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.03em;
+  line-height: 1.2;
+}
+.k-date span {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.k-date b.unknown { color: var(--ink-3); font-size: 13px; font-weight: 500; }
+.k-body { min-width: 0; display: block; }
+.k-name, .k-note { display: block; }
+.k-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.k-name.anon { color: var(--ink-2); font-weight: 500; }
+.k-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 5px; }
+.k-note { font-size: 12.5px; color: var(--ink-2); line-height: 1.45; margin-top: 5px; }
+.k-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: -.01em;
+  color: var(--st);
+  font-weight: 600;
+}
+
+.k-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px 16px 13px 10px;
+}
+.k-phone {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  letter-spacing: -.03em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.k-copy {
+  height: 24px;
+  padding: 0 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.k-copy:hover { background: var(--surface-2); color: var(--ink); border-color: var(--line-2); }
+
+.k-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 27px;
+  padding: 0 11px 0 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.k-check:hover { border-color: var(--line-2); color: var(--ink); }
+.k-check input { width: 13px; height: 13px; margin: 0; accent-color: var(--st); cursor: pointer; }
+.k-check.on {
+  border-color: color-mix(in oklab, var(--st) 55%, transparent);
+  background: color-mix(in oklab, var(--st) 13%, var(--surface));
+  color: var(--ink);
+  font-weight: 600;
+}
+.k-when {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .03em;
+  color: var(--ink-3);
+}
+
+/* leaditems in het raster en de lijst */
+.chip-allday.lead, .ev.lead {
+  border-left-style: solid;
+  border-left-width: 3px;
+}
+.chip-lead-in { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.chip-lead-in span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* statusoverzicht in de zijkolom */
+.stlist { display: flex; flex-direction: column; }
+.stlist button {
+  --st: var(--st-af);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  align-items: center;
+  padding: 6px 2px;
+  background: none;
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
+  text-align: left;
+  font-size: 12.5px;
+}
+.stlist button:first-child { border-top: 0; }
+.stlist button .ct { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 10px; color: var(--ink-3); }
+.stlist button.off { opacity: .42; }
+.stlist button.off .stat-ico { color: var(--ink-3); }
+
+/* --- responsive ------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .clock { display: none; }
+}
+
+@media (max-width: 960px) {
+  .app { height: auto; min-height: 100dvh; }
+  .body { grid-template-columns: 1fr; overflow: visible; }
+  .canvas { min-height: 68vh; }
+  .rail { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .topbar { grid-template-columns: 1fr auto; row-gap: 10px; }
+  .weeknav { grid-column: 1; justify-self: start; }
+  .topbar-actions { grid-column: 2; }
+}
+
+@media (max-width: 620px) {
+  :root { --rowh: 48px; --gutter: 46px; }
+  .topbar { grid-template-columns: 1fr; }
+  .topbar-actions, .weeknav { grid-column: 1; justify-self: start; flex-wrap: wrap; }
+  .brand h1 { font-size: 14px; }
+  .row2, .row3 { grid-template-columns: 1fr; }
+  .lrow { grid-template-columns: 88px 1fr; }
+  .lrow .lc { display: none; }
+  .klant { grid-template-columns: 1fr; }
+  .k-main { grid-template-columns: 1fr; gap: 6px; }
+  .k-side { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; padding: 0 16px 13px 13px; }
+}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">WZ</div>
+      <div>
+        <h1>Weekzicht</h1>
+        <p class="tz">Europe/Amsterdam</p>
+      </div>
+      <div class="clock">
+        <span class="clock-time num" id="clockTime">--:--:--</span>
+        <span class="clock-date" id="clockDate">&nbsp;</span>
+      </div>
+    </div>
+
+    <nav class="weeknav" aria-label="Periode">
+      <button class="navbtn" id="prevBtn" aria-label="Vorige periode" title="Vorige (←)">‹</button>
+      <button class="btn-today" id="todayBtn" title="Vandaag (T)">Vandaag</button>
+      <button class="navbtn" id="nextBtn" aria-label="Volgende periode" title="Volgende (→)">›</button>
+      <div class="period">
+        <span class="period-week" id="periodWeek">—</span>
+        <span class="period-range" id="periodRange">—</span>
+      </div>
+    </nav>
+
+    <div class="topbar-actions">
+      <div class="viewswitch" role="group" aria-label="Weergave">
+        <button data-view="week" aria-pressed="true">Week</button>
+        <button data-view="dag" aria-pressed="false">Dag</button>
+        <button data-view="lijst" aria-pressed="false">Lijst</button>
+        <button data-view="klanten" aria-pressed="false">Klanten</button>
+      </div>
+      <button class="btn-primary" id="newBtn" title="Nieuwe afspraak (N)">+ Nieuw</button>
+      <div class="menuwrap">
+        <button class="btn-ghost" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Meer opties">⋯</button>
+        <div class="menu" id="menu" hidden>
+          <button id="miImport">Importeer .ics-bestand…</button>
+          <button id="miWeekend"><span>Weekend tonen</span><span class="k" id="weekendState">aan</span></button>
+          <hr>
+          <button id="miCsv">Exporteer periode (.csv)</button>
+          <button id="miKlantCsv">Exporteer klanten (.csv)</button>
+          <button id="miJson">Back-up alles (.json)</button>
+          <hr>
+          <button id="miWipe" class="danger">Alle gegevens wissen…</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="body">
+    <section class="canvas" id="canvas" aria-label="Agenda"></section>
+    <aside class="rail" aria-label="Overzicht">
+      <div class="card now-card" id="nowCard"></div>
+      <div class="card" id="loadCard"></div>
+      <div class="card" id="taskCard"></div>
+      <div class="card" id="klantCard"></div>
+      <div class="card" id="legendCard"></div>
+      <p style="margin:0;text-align:center"><span class="syncdot" id="syncDot">alleen op dit apparaat</span></p>
+    </aside>
+  </main>
+</div>
+
+<div class="overlay" id="evOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTitle">
+    <header>
+      <h2 id="evTitle">Nieuwe afspraak</h2>
+      <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <div class="field">
+        <label class="label" for="fTitle">Titel</label>
+        <input type="text" id="fTitle" placeholder="Waar gaat het over?" autocomplete="off">
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label class="label" for="fDate">Datum</label>
+          <input type="date" id="fDate">
+        </div>
+        <div class="field" data-timefield>
+          <label class="label" for="fStart">Van</label>
+          <input type="time" id="fStart" step="300">
+        </div>
+        <div class="field" data-timefield>
+          <label class="label" for="fEnd">Tot</label>
+          <input type="time" id="fEnd" step="300">
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="fAllDay"> Hele dag</label>
+      <div class="field">
+        <span class="label">Categorie</span>
+        <div class="catpick" id="fCat"></div>
+      </div>
+      <div class="field">
+        <label class="label" for="fLoc">Locatie</label>
+        <input type="text" id="fLoc" placeholder="Kantoor, Teams, Amsterdam…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="label" for="fNote">Notitie</label>
+        <textarea id="fNote" placeholder="Voorbereiding, agenda, deelnemers…"></textarea>
+      </div>
+    </div>
+    <footer>
+      <button class="btn-line danger" id="fDelete" hidden>Verwijderen</button>
+      <span class="spacer"></span>
+      <button class="btn-line" data-close>Annuleren</button>
+      <button class="btn-primary" id="fSave">Opslaan</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="ldOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ldTitle">
+    <header>
+      <h2 id="ldTitle">Nieuwe klant</h2>
+      <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <div class="row2">
+        <div class="field">
+          <label class="label" for="lName">Naam</label>
+          <input type="text" id="lName" placeholder="Lisa van Duijn" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="label" for="lPhone">Telefoon</label>
+          <input type="text" id="lPhone" placeholder="+31 6 12345678" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Status</span>
+        <div class="catpick" id="lStatus"></div>
+      </div>
+      <div class="field">
+        <label class="label" for="lDate">Datum van de klus</label>
+        <input type="date" id="lDate">
+        <span style="font-size:11.5px;color:var(--ink-3)">Laat leeg als de datum nog niet bekend is.</span>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label class="label" for="lCallDate">Belafspraak — datum</label>
+          <input type="date" id="lCallDate">
+        </div>
+        <div class="field">
+          <label class="label" for="lCallTime">Belafspraak — tijd</label>
+          <input type="time" id="lCallTime" step="300">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="lNote">Notitie</label>
+        <textarea id="lNote" placeholder="Waar staat het gesprek, wat is afgesproken…"></textarea>
+      </div>
+    </div>
+    <footer>
+      <button class="btn-line danger" id="lDelete" hidden>Verwijderen</button>
+      <span class="spacer"></span>
+      <button class="btn-line" data-close>Annuleren</button>
+      <button class="btn-primary" id="lSave">Opslaan</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="impOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="impTitle">
+    <header>
+      <h2 id="impTitle">Agenda importeren</h2>
+      <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <div class="dropzone" id="dropzone">
+        <strong>Sleep je .ics-bestand hierheen</strong>
+        of <button class="btn-line" id="pickFile" style="height:26px;padding:0 10px">kies een bestand</button>
+        <input type="file" id="fileInput" accept=".ics,text/calendar" hidden>
+      </div>
+      <div class="field">
+        <label class="label" for="icsText">Of plak de inhoud van je .ics</label>
+        <textarea id="icsText" style="min-height:110px;font-family:var(--mono);font-size:11px" placeholder="BEGIN:VCALENDAR…"></textarea>
+      </div>
+      <p class="note">
+        Terugkerende afspraken worden uitgerekend van <strong>8 weken terug</strong> tot
+        <strong>26 weken vooruit</strong>. Tijden in UTC of met een andere tijdzone worden
+        omgerekend naar Nederlandse tijd. Dezelfde export nog eens importeren overschrijft
+        de vorige versie in plaats van te verdubbelen.
+      </p>
+      <div class="empty-src">
+        <h3>Waar vind je dat bestand</h3>
+        <dl>
+          <dt>Google Agenda</dt><dd>Instellingen → jouw agenda → Agenda exporteren (.zip → pak uit)</dd>
+          <dt>Outlook</dt><dd>Bestand → Agenda opslaan als → iCalendar-indeling</dd>
+          <dt>Apple Agenda</dt><dd>Archief → Exporteer → Exporteer…</dd>
+        </dl>
+      </div>
+    </div>
+    <footer>
+      <span class="spacer"></span>
+      <button class="btn-line" data-close>Annuleren</button>
+      <button class="btn-primary" id="impGo">Importeren</button>
+    </footer>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ==========================================================
+     1. Constanten — alles in het Nederlands, 24-uursnotatie
+     ========================================================== */
+
+  var AMS = "Europe/Amsterdam";
+  var DAYS = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
+  var DAYS_S = ["ma","di","wo","do","vr","za","zo"];
+  var MONTHS = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+  var MONTHS_S = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+
+  var CATS = [
+    { id: "afspraak", label: "Afspraak" },
+    { id: "focus",    label: "Focus"    },
+    { id: "reizen",   label: "Reizen"   },
+    { id: "prive",    label: "Privé"    },
+    { id: "overig",   label: "Overig"   }
+  ];
+  var CAT_IDS = CATS.map(function (c) { return c.id; });
+  function catVar(id) { return "var(--cat-" + (CAT_IDS.indexOf(id) >= 0 ? id : "overig") + ")"; }
+  function catLabel(id) {
+    for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i].label;
+    return "Overig";
+  }
+
+  // De belpijplijn. Elke status draagt een eigen icoon én label, zodat de
+  // kleur nooit de enige drager van de betekenis is.
+  var STATUSES = [
+    { id: "wacht",   label: "Nog bellen",   icon: "hourglass" },
+    { id: "gepland", label: "Call gepland", icon: "phone"     },
+    { id: "gebeld",  label: "Gebeld",       icon: "check"     },
+    { id: "akkoord", label: "Akkoord",      icon: "star"      },
+    { id: "af",      label: "Afgevallen",   icon: "cross"     }
+  ];
+  var ST_IDS = STATUSES.map(function (x) { return x.id; });
+  var GEBELD_SET = ["gebeld", "akkoord", "af"];
+  var TE_BELLEN_SET = ["wacht", "gepland"];
+
+  function stVar(id) { return "var(--st-" + (ST_IDS.indexOf(id) >= 0 ? id : "af") + ")"; }
+  function stDef(id) {
+    for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].id === id) return STATUSES[i];
+    return STATUSES[4];
+  }
+
+  var ICON_PATHS = {
+    hourglass: '<path d="M4.5 2h7M4.5 14h7M5.6 2v3.1L8 7.6l2.4-2.5V2M5.6 14v-3.1L8 8.4l2.4 2.5V14"/>',
+    phone: '<path d="M5.7 2.7 3.6 3.5c-.5.2-.8.7-.7 1.2.4 2.4 1.5 4.5 3.2 6.2s3.8 2.8 6.2 3.2c.5.1 1-.2 1.2-.7l.8-2.1-3-1.4-1.2 1.3a9.3 9.3 0 0 1-3.4-3.4l1.3-1.2z"/>',
+    check: '<path d="M2.9 8.5 6.3 11.9 13.1 4.5"/>',
+    star: '<path d="M8 1.7 9.9 5.6l4.3.6-3.1 3 .7 4.3L8 11.5l-3.8 2-.7-4.3-3.1-3 4.3-.6z" fill="currentColor" stroke="none"/>',
+    cross: '<path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8"/>'
+  };
+
+  function icon(name, size) {
+    var d = ICON_PATHS[name] || "";
+    var n = size || 13;
+    return '<svg class="stat-ico" width="' + n + '" height="' + n + '" viewBox="0 0 16 16" ' +
+      'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  }
+
+  var LS_KEY = "weekzicht.v1";
+  var LS_SYNCED = "weekzicht.v1.synced";
+  var LS_SEEDED = "weekzicht.v1.leads-seeded";
+
+  /* ==========================================================
+     2. Tijd — altijd Nederlandse tijd, ongeacht de browser
+     ========================================================== */
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  var fmtCache = {};
+  function formatterFor(tz) {
+    if (!fmtCache[tz]) {
+      fmtCache[tz] = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+      });
+    }
+    return fmtCache[tz];
+  }
+
+  function partsIn(d, tz) {
+    var parts = formatterFor(tz).formatToParts(d);
+    var o = {};
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].type !== "literal") o[parts[i].type] = parseInt(parts[i].value, 10);
+    }
+    return o;
+  }
+
+  /** Huidige wandklok in Nederland. */
+  function amsNow() {
+    var p = partsIn(new Date(), AMS);
+    return {
+      date: p.year + "-" + pad(p.month) + "-" + pad(p.day),
+      h: p.hour, m: p.minute, s: p.second,
+      min: p.hour * 60 + p.minute
+    };
+  }
+
+  /** Een absoluut moment → Nederlandse wandklok. */
+  function instantToAms(d) {
+    var p = partsIn(d, AMS);
+    return {
+      date: p.year + "-" + pad(p.month) + "-" + pad(p.day),
+      time: pad(p.hour) + ":" + pad(p.minute)
+    };
+  }
+
+  function tzOffsetMs(d, tz) {
+    var p = partsIn(d, tz);
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - d.getTime();
+  }
+
+  /** Wandklok in willekeurige tijdzone → absoluut moment (twee passes voor DST). */
+  function wallToInstant(y, mo, da, h, mi, s, tz) {
+    try {
+      var target = Date.UTC(y, mo - 1, da, h, mi, s);
+      var ms = target;
+      for (var i = 0; i < 3; i++) ms = target - tzOffsetMs(new Date(ms), tz);
+      return new Date(ms);
+    } catch (e) { return null; }
+  }
+
+  /* --- kalenderrekenen op kale datums (geen tijdzonedrift) --- */
+
+  function civ(s) {
+    var a = s.split("-");
+    return Date.UTC(+a[0], +a[1] - 1, +a[2]);
+  }
+  function dstr(ms) {
+    var d = new Date(ms);
+    return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate());
+  }
+  function addD(s, n) { return dstr(civ(s) + n * 86400000); }
+  function dowOf(s) { return (new Date(civ(s)).getUTCDay() + 6) % 7; } // 0 = maandag
+  function mondayOf(s) { return addD(s, -dowOf(s)); }
+  function diffD(a, b) { return Math.round((civ(a) - civ(b)) / 86400000); }
+
+  function isoWeek(s) {
+    var mon = civ(mondayOf(s));
+    var thu = mon + 3 * 86400000;
+    var y = new Date(thu).getUTCFullYear();
+    var jan4 = Date.UTC(y, 0, 4);
+    var jan4mon = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * 86400000;
+    return { week: Math.round((mon - jan4mon) / (7 * 86400000)) + 1, year: y };
+  }
+
+  function dayNum(s) { return parseInt(s.slice(8, 10), 10); }
+  function monIdx(s) { return parseInt(s.slice(5, 7), 10) - 1; }
+  function fmtLong(s) { return DAYS[dowOf(s)] + " " + dayNum(s) + " " + MONTHS[monIdx(s)]; }
+  function fmtShort(s) { return dayNum(s) + " " + MONTHS_S[monIdx(s)]; }
+
+  function toMin(t) { return parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3, 5), 10); }
+  function toTime(m) {
+    m = Math.max(0, Math.min(1439, Math.round(m)));
+    return pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+  }
+  function durText(min) {
+    var h = Math.floor(min / 60), m = min % 60;
+    if (h && m) return h + " u " + m + " min";
+    if (h) return h + " u";
+    return m + " min";
+  }
+  function hoursText(min) {
+    var h = min / 60;
+    return (Math.round(h * 10) / 10).toString().replace(".", ",") + " u";
+  }
+
+  /* ==========================================================
+     3. Toestand
+     ========================================================== */
+
+  var state = {
+    view: window.innerWidth < 720 ? "dag" : "week",
+    anchor: amsNow().date,
+    events: [],
+    tasks: [],
+    leads: [],
+    stHidden: {},        // status-id → true als weggefilterd
+    settings: { weekend: true, dayStart: 7, dayEnd: 21 },
+    hidden: {},          // categorie-id → true als verborgen
+    query: ""
+  };
+
+  var db = null;
+  var dbReady = false;
+  var pendingIds = { events: {}, tasks: {}, leads: {} };
+  var pendingDeletes = { events: {}, tasks: {}, leads: {} };
+  var downloads = null;
+
+  function uid(prefix) {
+    return (prefix || "e") + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  /* --- lokale opslag als tekencache en offline-buffer -------- */
+
+  function saveLocal() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        events: state.events, tasks: state.tasks, leads: state.leads, settings: state.settings
+      }));
+    } catch (e) { /* privémodus e.d. — de app werkt door */ }
+  }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (d && Array.isArray(d.events)) state.events = d.events;
+      if (d && Array.isArray(d.tasks)) state.tasks = d.tasks;
+      if (d && Array.isArray(d.leads)) state.leads = d.leads;
+      if (d && d.settings) {
+        state.settings.weekend = d.settings.weekend !== false;
+        if (typeof d.settings.dayStart === "number") state.settings.dayStart = d.settings.dayStart;
+        if (typeof d.settings.dayEnd === "number") state.settings.dayEnd = d.settings.dayEnd;
+      }
+    } catch (e) { /* onleesbare cache — start leeg */ }
+  }
+
+  function everSynced() {
+    try { return localStorage.getItem(LS_SYNCED) === "1"; } catch (e) { return false; }
+  }
+  function markSynced() {
+    try { localStorage.setItem(LS_SYNCED, "1"); } catch (e) {}
+  }
+
+  /* --- schrijfpaden: db als die er is, anders lokaal --------- */
+
+  function put(coll, obj) {
+    var list = state[coll];
+    var i = -1;
+    for (var k = 0; k < list.length; k++) if (list[k].id === obj.id) { i = k; break; }
+    if (i >= 0) list[i] = obj; else list.push(obj);
+    saveLocal();
+    if (dbReady && db) {
+      var body = {};
+      for (var key in obj) if (key !== "id") body[key] = obj[key];
+      db.doc(coll + "/" + obj.id).set(body).catch(function (err) { dbTrouble(err); });
+    } else {
+      pendingIds[coll][obj.id] = true;
+      delete pendingDeletes[coll][obj.id];
+    }
+  }
+
+  function drop(coll, id) {
+    state[coll] = state[coll].filter(function (x) { return x.id !== id; });
+    saveLocal();
+    if (dbReady && db) {
+      db.doc(coll + "/" + id)["delete"]().catch(function (err) { dbTrouble(err); });
+    } else {
+      delete pendingIds[coll][id];
+      pendingDeletes[coll][id] = true;
+    }
+  }
+
+  function putMany(coll, objs) {
+    for (var i = 0; i < objs.length; i++) put(coll, objs[i]);
+  }
+
+  function saveSettings() {
+    saveLocal();
+    if (dbReady && db) {
+      db.doc("meta/settings").set({
+        weekend: state.settings.weekend,
+        dayStart: state.settings.dayStart,
+        dayEnd: state.settings.dayEnd
+      }).catch(function () {});
+    }
+  }
+
+  function dbTrouble(err) {
+    var code = err && err.code;
+    if (code === "quota_exceeded") {
+      toast("De opslag van deze pagina zit vol. Verwijder oude afspraken om weer te kunnen opslaan.");
+    } else if (code === "revoked" || code === "not_granted" || code === "capability_disabled") {
+      dbReady = false; db = null;
+      setSync(false);
+    } else if (code === "resource_exhausted") {
+      toast("Even rustig aan — te veel wijzigingen tegelijk. Probeer het zo nog eens.");
+    }
+  }
+
+  /* ==========================================================
+     4. Afgeleide gegevens
+     ========================================================== */
+
+  function visibleEvents() {
+    return state.events.filter(function (e) { return !state.hidden[e.cat]; });
+  }
+
+  function eventsOn(date) {
+    var out = [];
+    var evs = visibleEvents();
+    for (var i = 0; i < evs.length; i++) if (evs[i].date === date) out.push(evs[i]);
+    out.sort(function (a, b) {
+      if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+      if (a.allDay) return a.title.localeCompare(b.title, "nl");
+      var d = toMin(a.start) - toMin(b.start);
+      return d !== 0 ? d : toMin(a.end) - toMin(b.end);
+    });
+    return out;
+  }
+
+  function leadName(l) {
+    return (l.name && l.name.trim()) || l.phone || "Naamloos";
+  }
+
+  function visibleLeads() {
+    return state.leads.filter(function (l) { return !state.stHidden[l.status]; });
+  }
+
+  function leadCallEnd(l) {
+    return toTime(Math.min(1439, toMin(l.callTime) + 30));
+  }
+
+  /** Afspraken en klanten in één genormaliseerde stroom per dag. */
+  function dayItems(date) {
+    var out = [];
+    var evs = eventsOn(date);
+    for (var i = 0; i < evs.length; i++) {
+      var e = evs[i];
+      out.push({
+        key: "e" + e.id, kind: "event", refId: e.id,
+        title: e.title, sub: "", allDay: !!e.allDay,
+        start: e.start, end: e.end, cat: e.cat, status: null,
+        loc: e.loc || ""
+      });
+    }
+    var lds = visibleLeads();
+    for (var j = 0; j < lds.length; j++) {
+      var l = lds[j];
+      if (l.date === date) {
+        out.push({
+          key: "lk" + l.id, kind: "lead", refId: l.id,
+          title: leadName(l), sub: "klus", allDay: true,
+          start: "00:00", end: "23:59", cat: null, status: l.status,
+          loc: l.phone || ""
+        });
+      }
+      if (l.callDate === date) {
+        out.push({
+          key: "lc" + l.id, kind: "lead", refId: l.id,
+          title: "Bellen · " + leadName(l), sub: "call",
+          allDay: !l.callTime,
+          start: l.callTime || "00:00",
+          end: l.callTime ? leadCallEnd(l) : "23:59",
+          cat: null, status: l.status, loc: l.phone || ""
+        });
+      }
+    }
+    out.sort(function (a, b) {
+      if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+      if (a.allDay) return a.title.localeCompare(b.title, "nl");
+      var d = toMin(a.start) - toMin(b.start);
+      return d !== 0 ? d : toMin(a.end) - toMin(b.end);
+    });
+    return out;
+  }
+
+  function itemColor(it) {
+    return it.kind === "lead" ? stVar(it.status) : catVar(it.cat);
+  }
+  function itemAttr(it) {
+    return it.kind === "lead" ? 'data-lead="' + esc(it.refId) + '"' : 'data-ev="' + esc(it.refId) + '"';
+  }
+  function itemTitleHtml(it) {
+    if (it.kind !== "lead") return esc(it.title);
+    return '<span class="chip-lead-in">' + icon(stDef(it.status).icon, 11) +
+      '<span>' + esc(it.title) + '</span></span>';
+  }
+
+  function periodDates() {
+    if (state.view === "dag") return [state.anchor];
+    var mon = mondayOf(state.anchor);
+    var n = state.settings.weekend ? 7 : 5;
+    var out = [];
+    for (var i = 0; i < n; i++) out.push(addD(mon, i));
+    return out;
+  }
+
+  /** Overlappende afspraken naast elkaar zetten. */
+  function packColumns(items) {
+    var i, j;
+    for (i = 0; i < items.length; i++) { items[i]._col = 0; items[i]._n = 1; }
+    var cluster = [], clusterEnd = -1, clusters = [];
+    for (i = 0; i < items.length; i++) {
+      if (cluster.length && items[i]._s >= clusterEnd) { clusters.push(cluster); cluster = []; clusterEnd = -1; }
+      cluster.push(items[i]);
+      clusterEnd = Math.max(clusterEnd, items[i]._e);
+    }
+    if (cluster.length) clusters.push(cluster);
+
+    for (i = 0; i < clusters.length; i++) {
+      var cl = clusters[i], colEnds = [];
+      for (j = 0; j < cl.length; j++) {
+        var c = -1;
+        for (var k = 0; k < colEnds.length; k++) if (colEnds[k] <= cl[j]._s) { c = k; break; }
+        if (c === -1) { c = colEnds.length; colEnds.push(cl[j]._e); } else colEnds[c] = cl[j]._e;
+        cl[j]._col = c;
+      }
+      for (j = 0; j < cl.length; j++) cl[j]._n = colEnds.length;
+    }
+  }
+
+  function hourRange(dates) {
+    var lo = state.settings.dayStart, hi = state.settings.dayEnd;
+    var now = amsNow();
+    for (var i = 0; i < dates.length; i++) {
+      var evs = dayItems(dates[i]);
+      for (var j = 0; j < evs.length; j++) {
+        var e = evs[j];
+        if (e.allDay) continue;
+        lo = Math.min(lo, Math.floor(toMin(e.start) / 60));
+        hi = Math.max(hi, Math.ceil(toMin(e.end) / 60));
+      }
+      if (dates[i] === now.date) {
+        lo = Math.min(lo, now.h);
+        hi = Math.max(hi, now.h + 1);
+      }
+    }
+    lo = Math.max(0, Math.min(lo, 23));
+    hi = Math.min(24, Math.max(hi, lo + 4));
+    return [lo, hi];
+  }
+
+  function nextEvent() {
+    var now = amsNow();
+    var evs = visibleEvents().filter(function (e) { return !e.allDay; }).map(function (e) {
+      return { title: e.title, date: e.date, start: e.start, end: e.end, loc: e.loc || "", kind: "event" };
+    });
+    var lds = visibleLeads();
+    for (var z = 0; z < lds.length; z++) {
+      if (lds[z].callDate && lds[z].callTime) {
+        evs.push({
+          title: "Bellen · " + leadName(lds[z]), date: lds[z].callDate,
+          start: lds[z].callTime, end: leadCallEnd(lds[z]),
+          loc: lds[z].phone || "", kind: "lead", status: lds[z].status, refId: lds[z].id
+        });
+      }
+    }
+    evs.sort(function (a, b) {
+      var d = civ(a.date) - civ(b.date);
+      return d !== 0 ? d : toMin(a.start) - toMin(b.start);
+    });
+    var running = null, next = null;
+    for (var i = 0; i < evs.length; i++) {
+      var e = evs[i];
+      if (e.date < now.date) continue;
+      if (e.date === now.date) {
+        var s = toMin(e.start), en = toMin(e.end);
+        if (s <= now.min && now.min < en) { if (!running) running = e; continue; }
+        if (s > now.min) { if (!next) next = e; continue; }
+        continue;
+      }
+      if (!next) next = e;
+    }
+    return { running: running, next: next, now: now };
+  }
+
+  /* ==========================================================
+     5. Weergave
+     ========================================================== */
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var canvas = $("canvas");
+  var lastScrollTop = 0, lastScrollKey = null;
+
+  function render() {
+    renderPeriodLabel();
+    if (state.view === "lijst") renderList();
+    else if (state.view === "klanten") renderKlanten();
+    else renderGrid();
+    renderNowCard();
+    renderLoadCard();
+    renderTaskCard();
+    renderKlantCard();
+    renderLegend();
+  }
+
+  function renderPeriodLabel() {
+    var isK = state.view === "klanten";
+    $("prevBtn").disabled = isK;
+    $("nextBtn").disabled = isK;
+    if (isK) {
+      var c = statusCounts();
+      $("periodWeek").textContent = "Klanten";
+      $("periodRange").textContent = state.leads.length + " totaal · " +
+        (c.wacht + c.gepland) + " nog te bellen";
+      return;
+    }
+    if (state.view === "dag") {
+      var w = isoWeek(state.anchor);
+      $("periodWeek").textContent = fmtLong(state.anchor);
+      $("periodRange").textContent = "week " + w.week + " · " + dayNum(state.anchor) + " " + MONTHS[monIdx(state.anchor)] + " " + state.anchor.slice(0, 4);
+      return;
+    }
+    if (state.view === "lijst") {
+      $("periodWeek").textContent = "Agenda";
+      $("periodRange").textContent = "vanaf " + fmtShort(state.anchor) + " · 6 weken";
+      return;
+    }
+    var dates = periodDates();
+    var a = dates[0], b = dates[dates.length - 1];
+    var wk = isoWeek(a);
+    $("periodWeek").textContent = "Week " + wk.week;
+    $("periodRange").textContent = fmtShort(a) + " – " + fmtShort(b) + " " + b.slice(0, 4);
+  }
+
+  /* --- raster (week + dag) ---------------------------------- */
+
+  function renderGrid() {
+    var dates = periodDates();
+    var single = state.view === "dag";
+    var now = amsNow();
+
+    if (state.events.length === 0 && state.tasks.length === 0 && state.leads.length === 0) {
+      renderEmpty(); return;
+    }
+
+    var rng = hourRange(dates);
+    var lo = rng[0], hi = rng[1];
+    var rows = hi - lo;
+
+    var hasAllDay = false;
+    var perDay = {};
+    for (var d = 0; d < dates.length; d++) {
+      perDay[dates[d]] = dayItems(dates[d]);
+      for (var q = 0; q < perDay[dates[d]].length; q++) if (perDay[dates[d]][q].allDay) hasAllDay = true;
+    }
+
+    // scrollpositie bewaren zolang we naar dezelfde periode kijken
+    var key = state.view + "|" + dates[0] + "|" + dates.length;
+    var live = $("gridScroll");
+    if (live && key === lastScrollKey) lastScrollTop = live.scrollTop;
+
+    var cols = single
+      ? "var(--gutter) minmax(240px, 1fr)"
+      : "var(--gutter) repeat(" + dates.length + ", minmax(112px, 1fr))";
+
+    var html = '<div class="grid-scroll" id="gridScroll"><div class="grid" style="grid-template-columns:' +
+      cols + ';--bodyh:calc(' + rows + ' * var(--rowh))">';
+
+    // koprij
+    var wk = isoWeek(dates[0]);
+    html += '<div class="corner"><span class="label">wk</span><span class="wknum">' + wk.week + '</span></div>';
+    for (var i = 0; i < dates.length; i++) {
+      var dt = dates[i];
+      var wknd = dowOf(dt) >= 5;
+      var isToday = dt === now.date;
+      var cnt = perDay[dt].length;
+      html += '<div class="dayhead' + (wknd ? " weekend" : "") + (isToday ? " today" : "") + '">' +
+        '<span class="dh-dow">' + DAYS_S[dowOf(dt)] + '</span>' +
+        '<span class="dh-num">' + dayNum(dt) + '</span>' +
+        '<span class="dh-mon">' + MONTHS_S[monIdx(dt)] + '</span>' +
+        (cnt ? '<span class="dh-count">' + cnt + '</span>' : '') +
+        '</div>';
+    }
+
+    // hele-dagband
+    if (hasAllDay) {
+      html += '<div class="allday-gut"><span class="label">hele dag</span></div>';
+      for (i = 0; i < dates.length; i++) {
+        var dd = dates[i];
+        html += '<div class="allday-cell' + (dowOf(dd) >= 5 ? " weekend" : "") + '">';
+        var ad = perDay[dd].filter(function (e) { return e.allDay; });
+        for (var a = 0; a < ad.length; a++) {
+          var it = ad[a];
+          html += '<button class="chip-allday' + (it.kind === "lead" ? " lead" : "") + '" ' +
+            itemAttr(it) + ' title="' + esc(it.title) + '" style="--cat:' + itemColor(it) + '">' +
+            itemTitleHtml(it) + '</button>';
+        }
+        html += '</div>';
+      }
+    }
+
+    // uurgoot
+    html += '<div class="hourgut">';
+    for (var h = lo; h <= hi; h++) {
+      if (h === 24) continue;
+      html += '<div class="hr" style="top:calc(' + (h - lo) + ' * var(--rowh))">' + pad(h) + '</div>';
+    }
+    var todayIn = dates.indexOf(now.date) >= 0;
+    if (todayIn && now.min >= lo * 60 && now.min <= hi * 60) {
+      html += '<div class="nowpill" style="top:calc(' + ((now.min - lo * 60) / 60) + ' * var(--rowh))">' +
+        pad(now.h) + ":" + pad(now.m) + '</div>';
+    }
+    html += '</div>';
+
+    // dagkolommen
+    for (i = 0; i < dates.length; i++) {
+      var date = dates[i];
+      var wknd2 = dowOf(date) >= 5;
+      var isToday2 = date === now.date;
+      html += '<div class="daycol' + (wknd2 ? " weekend" : "") + (isToday2 ? " today" : "") +
+        '" data-date="' + date + '" data-lo="' + lo + '">';
+      html += '<div class="slotcatch"></div>';
+
+      // kopieën: de opmaakvelden horen niet in de opgeslagen gegevens thuis
+      var timed = perDay[date].filter(function (e) { return !e.allDay; }).map(function (e) {
+        var s = toMin(e.start), en = toMin(e.end);
+        if (en <= s) en = Math.min(1440, s + 30);
+        return { kind: e.kind, refId: e.refId, title: e.title, start: e.start, end: e.end,
+                 loc: e.loc, cat: e.cat, status: e.status, _s: s, _e: en, _col: 0, _n: 1 };
+      });
+      packColumns(timed);
+
+      for (var t = 0; t < timed.length; t++) {
+        var ev = timed[t];
+        var top = (ev._s - lo * 60) / 60;
+        var hgt = (ev._e - ev._s) / 60;
+        var w = 100 / ev._n;
+        var left = ev._col * w;
+        var mins = ev._e - ev._s;
+        var tight = mins < 45;
+        var past = (date < now.date) || (date === now.date && ev._e <= now.min);
+        html += '<button class="ev' + (tight ? " tight" : "") + (past ? " past" : "") +
+          (ev.kind === "lead" ? " lead" : "") + '" ' + itemAttr(ev) +
+          ' title="' + esc(ev.title) + '"' +
+          ' style="--cat:' + itemColor(ev) + ';top:calc(' + top + ' * var(--rowh));' +
+          'height:max(18px, calc(' + hgt + ' * var(--rowh) - 2px));left:calc(' + left + '% + 1px);' +
+          'width:calc(' + w + '% - 3px)">' +
+          '<span class="ev-t">' + itemTitleHtml(ev) + '</span>' +
+          '<span class="ev-m">' + ev.start + '–' + ev.end + (tight ? "" : " · " + durText(mins)) + '</span>' +
+          (!tight && ev.loc && hgt > 1 ? '<span class="ev-l">' + esc(ev.loc) + '</span>' : '') +
+          '</button>';
+      }
+
+      if (now.min >= lo * 60 && now.min <= hi * 60) {
+        html += '<div class="nowline' + (isToday2 ? " strong" : "") +
+          '" style="top:calc(' + ((now.min - lo * 60) / 60) + ' * var(--rowh))"></div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+    canvas.innerHTML = html;
+
+    var sc = $("gridScroll");
+    if (sc) {
+      if (key === lastScrollKey) {
+        sc.scrollTop = lastScrollTop;
+      } else {
+        // nieuwe periode: scroll zo dat "nu" (of de werkdagstart) in beeld staat
+        var focusMin = todayIn ? now.min : state.settings.dayStart * 60;
+        var rowh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--rowh")) || 56;
+        sc.scrollTop = Math.max(0, ((focusMin - lo * 60) / 60) * rowh - 140);
+        lastScrollTop = sc.scrollTop;
+      }
+      lastScrollKey = key;
+    }
+  }
+
+  /* --- lijstweergave ---------------------------------------- */
+
+  function renderList() {
+    var now = amsNow();
+    var q = state.query.trim().toLowerCase();
+    var from = q ? null : state.anchor;
+    var to = q ? null : addD(state.anchor, 41);
+
+    var evs = [];
+    if (q) {
+      var all = visibleEvents();
+      for (var z = 0; z < all.length; z++) {
+        var hay = (all[z].title + " " + (all[z].loc || "") + " " + (all[z].note || "")).toLowerCase();
+        if (hay.indexOf(q) >= 0) {
+          evs.push({ key: "e" + all[z].id, kind: "event", refId: all[z].id, title: all[z].title,
+                     date: all[z].date, allDay: !!all[z].allDay, start: all[z].start, end: all[z].end,
+                     cat: all[z].cat, status: null, loc: all[z].loc || "" });
+        }
+      }
+      var ql = visibleLeads();
+      for (var y = 0; y < ql.length; y++) {
+        var lh = (leadName(ql[y]) + " " + (ql[y].phone || "") + " " + (ql[y].note || "")).toLowerCase();
+        if (lh.indexOf(q) < 0) continue;
+        if (ql[y].date) {
+          evs.push({ key: "lk" + ql[y].id, kind: "lead", refId: ql[y].id, title: leadName(ql[y]),
+                     date: ql[y].date, allDay: true, start: "00:00", end: "23:59",
+                     cat: null, status: ql[y].status, loc: ql[y].phone || "" });
+        }
+        if (ql[y].callDate) {
+          evs.push({ key: "lc" + ql[y].id, kind: "lead", refId: ql[y].id,
+                     title: "Bellen · " + leadName(ql[y]), date: ql[y].callDate,
+                     allDay: !ql[y].callTime, start: ql[y].callTime || "00:00",
+                     end: ql[y].callTime ? leadCallEnd(ql[y]) : "23:59",
+                     cat: null, status: ql[y].status, loc: ql[y].phone || "" });
+        }
+      }
+    } else {
+      for (var dd = from; dd <= to; dd = addD(dd, 1)) {
+        var items = dayItems(dd);
+        for (var k = 0; k < items.length; k++) {
+          items[k].date = dd;
+          evs.push(items[k]);
+        }
+      }
+    }
+    evs.sort(function (a, b) {
+      var d = civ(a.date) - civ(b.date);
+      if (d !== 0) return d;
+      if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+      if (a.allDay) return 0;
+      return toMin(a.start) - toMin(b.start);
+    });
+
+    var html = '<div class="listbar">' +
+      '<input class="search" id="searchBox" type="search" placeholder="Zoek in alle afspraken…" value="' + esc(state.query) + '">' +
+      '<span class="label">' + evs.length + ' ' + (evs.length === 1 ? "afspraak" : "afspraken") +
+      (q ? " gevonden" : " · " + esc(fmtShort(from)) + " – " + esc(fmtShort(to))) + '</span>' +
+      '</div><div class="listwrap">';
+
+    if (!evs.length) {
+      html += '<div style="padding:34px 18px;color:var(--ink-2);font-size:14px">' +
+        (q ? "Niets gevonden voor &bdquo;" + esc(state.query) + "&rdquo;."
+           : "Geen afspraken tussen " + esc(fmtShort(from)) + " en " + esc(fmtShort(to)) + ".") + '</div>';
+    }
+
+    var curDate = null;
+    for (var i = 0; i < evs.length; i++) {
+      var e = evs[i];
+      if (e.date !== curDate) {
+        if (curDate !== null) html += '</div>';
+        curDate = e.date;
+        var delta = diffD(curDate, now.date);
+        var rel = delta === 0 ? "vandaag" : delta === 1 ? "morgen" : delta === -1 ? "gisteren"
+          : delta > 1 ? "over " + delta + " dagen" : Math.abs(delta) + " dagen geleden";
+        html += '<div class="daygroup' + (delta === 0 ? " is-today" : "") + '">' +
+          '<h3>' + esc(fmtLong(curDate)) + '<span class="rel">' + rel + '</span></h3>';
+      }
+      var past = (e.date < now.date) || (!e.allDay && e.date === now.date && toMin(e.end) <= now.min);
+      html += '<button class="lrow' + (past ? " past" : "") + '" ' + itemAttr(e) +
+        ' style="--cat:' + itemColor(e) + '">' +
+        '<span class="lt"><span class="dot"></span>' +
+        (e.allDay ? "hele dag" : e.start + "–" + e.end) + '</span>' +
+        '<span class="ln">' + itemTitleHtml(e) +
+        (e.loc ? '<small>' + esc(e.loc) + '</small>' : '') + '</span>' +
+        '<span class="lc">' + esc(e.kind === "lead" ? stDef(e.status).label : catLabel(e.cat)) + '</span>' +
+        '</button>';
+    }
+    if (curDate !== null) html += '</div>';
+    html += '</div>';
+
+    canvas.innerHTML = html;
+    var sb = $("searchBox");
+    if (sb) {
+      sb.addEventListener("input", function () {
+        state.query = sb.value;
+        var pos = sb.selectionStart;
+        renderList();
+        var nb = $("searchBox");
+        if (nb) { nb.focus(); try { nb.setSelectionRange(pos, pos); } catch (err) {} }
+      });
+    }
+  }
+
+  /* --- lege staat ------------------------------------------- */
+
+  function renderEmpty() {
+    canvas.innerHTML =
+      '<div class="empty"><div class="empty-inner">' +
+      '<span class="label">Nog niets gepland</span>' +
+      '<h2>Zet je week erin, dan rekent Weekzicht de rest uit.</h2>' +
+      '<p>Alles staat op Nederlandse tijd (' + AMS + '), inclusief zomer- en wintertijd. ' +
+      'Importeer je bestaande agenda als .ics-bestand, of begin met één afspraak.</p>' +
+      '<div class="empty-src"><h3>Je agenda exporteren</h3><dl>' +
+      '<dt>Google Agenda</dt><dd>Instellingen → jouw agenda → Agenda exporteren</dd>' +
+      '<dt>Outlook</dt><dd>Bestand → Agenda opslaan als → iCalendar</dd>' +
+      '<dt>Apple Agenda</dt><dd>Archief → Exporteer</dd>' +
+      '</dl></div>' +
+      '<div class="empty-actions">' +
+      '<button class="btn-primary" id="emptyNew">+ Nieuwe afspraak</button>' +
+      '<button class="btn-line" id="emptyImport">Importeer .ics</button>' +
+      '<button class="btn-line" id="emptyDemo">Vul een voorbeeldweek</button>' +
+      '<button class="btn-line" id="emptyLead">+ Klant</button>' +
+      '</div>' +
+      '<p style="margin-top:16px;font-size:12px;color:var(--ink-3)">' +
+      'Sneltoetsen: <strong>N</strong> nieuw · <strong>T</strong> vandaag · ' +
+      '<strong>←</strong>/<strong>→</strong> bladeren · <strong>1 2 3 4</strong> week/dag/lijst/klanten</p>' +
+      '</div></div>';
+
+    $("emptyNew").addEventListener("click", function () { openEvent(null); });
+    $("emptyImport").addEventListener("click", openImport);
+    $("emptyDemo").addEventListener("click", fillDemo);
+    $("emptyLead").addEventListener("click", function () { openLead(null); });
+  }
+
+
+  /* --- klantenweergave -------------------------------------- */
+
+  function isCalled(status) { return GEBELD_SET.indexOf(status) >= 0; }
+
+  function findLead(id) {
+    for (var i = 0; i < state.leads.length; i++) if (state.leads[i].id === id) return state.leads[i];
+    return null;
+  }
+
+  /** Het "Gebeld"-vinkje verzet de status; die blijft de enige waarheid. */
+  function toggleCalled(id) {
+    var l = findLead(id);
+    if (!l) return;
+    var copy = {};
+    for (var k in l) copy[k] = l[k];
+    var was = l.status;
+
+    if (isCalled(was)) {
+      copy.status = l.callDate ? "gepland" : "wacht";
+      copy.calledAt = null;
+      // Een uitkomst terugdraaien is zelden de bedoeling: zeg wat er gebeurde.
+      if (was === "akkoord" || was === "af") {
+        toast(leadName(l) + " stond op \u201c" + stDef(was).label +
+          "\u201d en staat nu op \u201c" + stDef(copy.status).label + "\u201d.");
+      }
+    } else {
+      copy.status = "gebeld";
+      copy.calledAt = amsNow().date;
+    }
+    put("leads", copy);
+    render();
+  }
+
+  function statusPill(id) {
+    var d = stDef(id);
+    return '<span class="stat-pill" style="--st:' + stVar(id) + '">' +
+      icon(d.icon, 11) + esc(d.label) + '</span>';
+  }
+
+  function sortLeads(list) {
+    return list.slice().sort(function (a, b) {
+      if (a.date && b.date) {
+        var d = civ(a.date) - civ(b.date);
+        if (d !== 0) return d;
+      } else if (a.date && !b.date) return -1;
+      else if (!a.date && b.date) return 1;
+      var ac = a.callDate || "9999-99-99", bc = b.callDate || "9999-99-99";
+      if (ac !== bc) return ac < bc ? -1 : 1;
+      return leadName(a).localeCompare(leadName(b), "nl");
+    });
+  }
+
+  function statusCounts() {
+    var c = {};
+    for (var i = 0; i < STATUSES.length; i++) c[STATUSES[i].id] = 0;
+    for (var j = 0; j < state.leads.length; j++) {
+      if (c[state.leads[j].status] === undefined) c[state.leads[j].status] = 0;
+      c[state.leads[j].status]++;
+    }
+    return c;
+  }
+
+  function setStatusFilter(ids) {
+    state.stHidden = {};
+    if (ids) {
+      for (var i = 0; i < STATUSES.length; i++) {
+        if (ids.indexOf(STATUSES[i].id) < 0) state.stHidden[STATUSES[i].id] = true;
+      }
+    }
+    render();
+  }
+
+  function renderKlanten() {
+    var now = amsNow();
+    var counts = statusCounts();
+    var shown = sortLeads(visibleLeads());
+    var teBellen = counts.wacht + counts.gepland;
+
+    var chips = "";
+    for (var i = 0; i < STATUSES.length; i++) {
+      var st = STATUSES[i];
+      var on = !state.stHidden[st.id];
+      chips += '<button class="fchip" data-st="' + st.id + '" aria-pressed="' + (on ? "true" : "false") +
+        '" style="--st:' + stVar(st.id) + '">' + icon(st.icon, 12) +
+        esc(st.label) + '<span class="n">' + counts[st.id] + '</span></button>';
+    }
+
+    var html = '<div class="filterbar">' +
+      '<button class="fchip preset" data-preset="alles">Alles</button>' +
+      '<button class="fchip preset" data-preset="tebellen">Nog te bellen</button>' +
+      '<button class="fchip preset" data-preset="gebeld">Al gebeld</button>' +
+      '<span class="sep"></span>' + chips +
+      '<span class="tally"><button class="btn-primary" id="newLeadBtn">+ Klant</button></span>' +
+      '</div><div class="klantwrap">';
+
+    if (!state.leads.length) {
+      html += '<div style="padding:34px 18px;color:var(--ink-2);font-size:14px;max-width:60ch">' +
+        'Nog geen klanten. Voeg er een toe met <strong>+ Klant</strong>; je ziet ze hier op datum ' +
+        'onder elkaar, en klanten met een datum verschijnen ook in je agenda.</div>';
+    } else if (!shown.length) {
+      html += '<div style="padding:34px 18px;color:var(--ink-2);font-size:14px">' +
+        'Geen klanten in dit filter. Klik op <strong>Alles</strong> om alles te tonen.</div>';
+    }
+
+    for (var k = 0; k < shown.length; k++) {
+      var l = shown[k];
+      var gone = l.date && l.date < now.date;
+      var dateBlock = l.date
+        ? '<b>' + dayNum(l.date) + ' ' + MONTHS_S[monIdx(l.date)] + '</b>' +
+          '<span>' + DAYS_S[dowOf(l.date)] + ' ' + l.date.slice(0, 4) + '</span>'
+        : '<b class="unknown">Datum onbekend</b>';
+
+      var callChip = "";
+      if (l.callDate) {
+        var cd = diffD(l.callDate, now.date);
+        var when = cd === 0 ? "vandaag" : cd === 1 ? "morgen" : cd === -1 ? "gisteren" : fmtShort(l.callDate);
+        callChip = '<span class="k-call">' + icon("phone", 11) + 'bellen ' + esc(when) +
+          (l.callTime ? " om " + l.callTime : "") + '</span>';
+      }
+
+      html += '<div class="klant' + (gone ? " gone" : "") + '" style="--st:' + stVar(l.status) + '">' +
+        '<button class="k-main" data-lead="' + esc(l.id) + '">' +
+          '<span class="k-date">' + dateBlock + '</span>' +
+          '<span class="k-body">' +
+            '<span class="k-name' + (l.name && l.name.trim() ? "" : " anon") + '">' + esc(leadName(l)) + '</span>' +
+            '<span class="k-tags">' + statusPill(l.status) +
+              (l.calledAt ? '<span class="k-when">gebeld op ' + esc(fmtShort(l.calledAt)) + '</span>' : '') +
+              (gone ? '<span class="label">datum geweest</span>' : '') + callChip + '</span>' +
+            (l.note ? '<span class="k-note">' + esc(l.note) + '</span>' : '') +
+          '</span>' +
+        '</button>' +
+        '<div class="k-side">' +
+          '<label class="k-check' + (isCalled(l.status) ? " on" : "") + '">' +
+            '<input type="checkbox" data-called="' + esc(l.id) + '"' +
+            (isCalled(l.status) ? " checked" : "") + '>Gebeld</label>' +
+          (l.phone ? '<span class="k-phone">' + esc(l.phone) + '</span>' +
+                     '<button class="k-copy" data-copy="' + esc(l.phone) + '">Kopieer</button>' : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    html += '</div>';
+    canvas.innerHTML = html;
+    $("newLeadBtn").addEventListener("click", function () { openLead(null); });
+  }
+
+  function renderKlantCard() {
+    var counts = statusCounts();
+    var total = state.leads.length;
+    var html = '<header><span class="label">Klanten</span><span class="label">' + total +
+      ' totaal</span></header><div class="stlist">';
+    for (var i = 0; i < STATUSES.length; i++) {
+      var st = STATUSES[i];
+      html += '<button data-st="' + st.id + '" class="' + (state.stHidden[st.id] ? "off" : "") +
+        '" style="--st:' + stVar(st.id) + '" aria-pressed="' + (state.stHidden[st.id] ? "false" : "true") + '">' +
+        icon(st.icon, 13) + '<span>' + esc(st.label) + '</span>' +
+        '<span class="ct">' + counts[st.id] + '</span></button>';
+    }
+    html += '</div>';
+
+    // eerstvolgende belafspraak
+    var now = amsNow();
+    var soon = null;
+    for (var j = 0; j < state.leads.length; j++) {
+      var l = state.leads[j];
+      if (!l.callDate || l.callDate < now.date) continue;
+      if (l.callDate === now.date && l.callTime && toMin(l.callTime) + 30 <= now.min) continue;
+      if (!soon || l.callDate < soon.callDate ||
+          (l.callDate === soon.callDate && (l.callTime || "99:99") < (soon.callTime || "99:99"))) soon = l;
+    }
+    if (soon) {
+      var d = diffD(soon.callDate, now.date);
+      var when = d === 0 ? "vandaag" : d === 1 ? "morgen" : fmtShort(soon.callDate);
+      html += '<div class="now-count">Eerstvolgende call: ' + esc(leadName(soon)) + ' — ' +
+        esc(when) + (soon.callTime ? " om " + soon.callTime : "") + '</div>';
+    }
+    $("klantCard").innerHTML = html;
+  }
+
+  function copyText(t) {
+    function ok() { toast("Nummer gekopieerd: " + t); }
+    function fallback() {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = t;
+        ta.style.position = "fixed";
+        ta.style.top = "-1000px";
+        document.body.appendChild(ta);
+        ta.select();
+        var done = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (done) ok(); else toast("Kopiëren lukte niet — selecteer het nummer met de muis.");
+      } catch (e) { toast("Kopiëren lukte niet — selecteer het nummer met de muis."); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(ok, fallback);
+    } else fallback();
+  }
+
+  /* --- rail: nu / hierna ------------------------------------ */
+
+  function renderNowCard() {
+    var r = nextEvent();
+    var card = $("nowCard");
+    var todayEvs = dayItems(r.now.date);
+    var left = todayEvs.filter(function (e) {
+      return !e.allDay && toMin(e.end) > r.now.min;
+    }).length;
+
+    var html = "";
+    if (r.running) {
+      var rem = toMin(r.running.end) - r.now.min;
+      card.className = "card now-card";
+      html = '<span class="label">Nu bezig</span>' +
+        '<div class="now-title">' + esc(r.running.title) + '</div>' +
+        '<div class="now-meta">' + r.running.start + '–' + r.running.end +
+        ' · nog ' + durText(rem) + (r.running.loc ? ' · ' + esc(r.running.loc) : '') + '</div>';
+      if (r.next) {
+        html += '<div class="now-count">Daarna ' + esc(r.next.title) + ' om ' + r.next.start +
+          (r.next.date !== r.now.date ? " (" + fmtShort(r.next.date) + ")" : "") + '</div>';
+      }
+    } else if (r.next) {
+      var untilMin = (diffD(r.next.date, r.now.date) * 1440) + toMin(r.next.start) - r.now.min;
+      card.className = "card now-card idle";
+      html = '<span class="label">Hierna</span>' +
+        '<div class="now-title">' + esc(r.next.title) + '</div>' +
+        '<div class="now-meta">' +
+        (r.next.date === r.now.date ? "vandaag " : esc(fmtShort(r.next.date)) + " ") +
+        r.next.start + '–' + r.next.end + ' · over ' + durText(untilMin) + '</div>';
+      html += '<div class="now-count">' +
+        (left ? left + (left === 1 ? " afspraak" : " afspraken") + " nog te gaan vandaag"
+              : "Verder niets meer vandaag") + '</div>';
+    } else {
+      card.className = "card now-card idle";
+      html = '<span class="label">Hierna</span>' +
+        '<p class="now-empty" style="margin:6px 0 0">Geen afspraken meer gepland.</p>';
+    }
+    card.innerHTML = html;
+  }
+
+  /* --- rail: weekbelasting (één reeks, één tint) ------------- */
+
+  function renderLoadCard() {
+    var mon = mondayOf(state.anchor);
+    var now = amsNow();
+    var days = [], maxMin = 0, totalMin = 0, count = 0;
+
+    for (var i = 0; i < 7; i++) {
+      var d = addD(mon, i);
+      var evs = dayItems(d);
+      var mins = 0;
+      for (var j = 0; j < evs.length; j++) {
+        var e = evs[j];
+        if (e.allDay) { count++; continue; }
+        var s = toMin(e.start), en = toMin(e.end);
+        if (en <= s) en = s + 30;
+        mins += (en - s);
+        count++;
+      }
+      days.push({ date: d, mins: mins });
+      totalMin += mins;
+      if (mins > maxMin) maxMin = mins;
+    }
+
+    var scale = Math.max(maxMin, 8 * 60);
+    var openTasks = state.tasks.filter(function (t) { return !t.done; }).length;
+    var wk = isoWeek(mon);
+
+    var bars = "", labels = "";
+    for (i = 0; i < 7; i++) {
+      var pct = days[i].mins > 0 ? Math.max(3, (days[i].mins / scale) * 100) : 0;
+      var isMax = days[i].mins === maxMin && maxMin > 0;
+      var tipText = DAYS[i] + " " + dayNum(days[i].date) + " " + MONTHS_S[monIdx(days[i].date)] + " · " + hoursText(days[i].mins);
+      bars += '<div class="barcell" title="' + esc(tipText) + '" data-tip="' + esc(tipText) + '">' +
+        (isMax ? '<span class="bl">' + hoursText(days[i].mins) + '</span>' : '') +
+        '<div class="bar' + (days[i].mins === 0 ? " zero" : "") + '" style="height:' + pct + '%"></div>' +
+        '</div>';
+      labels += '<span' + (days[i].date === now.date ? ' class="today"' : '') + '>' + DAYS_S[i] + '</span>';
+    }
+
+    $("loadCard").innerHTML =
+      '<header><span class="label">Week ' + wk.week + ' in cijfers</span></header>' +
+      '<div class="stats">' +
+      '<div class="stat"><div class="v">' + count + '</div><div class="k">afspraken</div></div>' +
+      '<div class="stat"><div class="v">' + hoursText(totalMin).replace(" u", "") + '</div><div class="k">uur gepland</div></div>' +
+      '<div class="stat"><div class="v">' + openTasks + '</div><div class="k">open taken</div></div>' +
+      '</div>' +
+      '<div class="chart">' +
+      '<div class="chart-head"><span class="label">Belasting per dag</span>' +
+      '<span class="chart-max num">schaal ' + hoursText(scale) + '</span></div>' +
+      '<div class="bars">' + bars + '</div>' +
+      '<div class="barlabels">' + labels + '</div>' +
+      '</div>';
+  }
+
+  /* --- rail: taken ------------------------------------------ */
+
+  function renderTaskCard() {
+    var now = amsNow();
+    // wat de gebruiker aan het typen is niet weggooien bij een hertekening
+    var keepText = "", keepDate = "", hadFocus = false;
+    var oldInput = $("tkInput");
+    if (oldInput) {
+      keepText = oldInput.value;
+      keepDate = $("tkDate") ? $("tkDate").value : "";
+      hadFocus = document.activeElement === oldInput;
+    }
+    var open = state.tasks.filter(function (t) { return !t.done; });
+    var done = state.tasks.filter(function (t) { return t.done; });
+
+    open.sort(function (a, b) {
+      if (!a.due && !b.due) return 0;
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return civ(a.due) - civ(b.due);
+    });
+    done.sort(function (a, b) { return (b.doneAt || 0) - (a.doneAt || 0); });
+
+    var rows = "";
+    function row(t) {
+      var chip = "";
+      if (t.due) {
+        var delta = diffD(t.due, now.date);
+        var cls = delta < 0 ? " late" : delta === 0 ? " today" : "";
+        var txt = delta < 0 ? Math.abs(delta) + (delta === -1 ? " dag te laat" : " dagen te laat")
+          : delta === 0 ? "vandaag"
+          : delta === 1 ? "morgen"
+          : delta < 7 ? DAYS[dowOf(t.due)]
+          : fmtShort(t.due);
+        chip = '<span class="tk-d' + cls + '">' + esc(txt) + '</span>';
+      }
+      return '<li' + (t.done ? ' class="done"' : '') + ' data-task="' + esc(t.id) + '">' +
+        '<input type="checkbox"' + (t.done ? " checked" : "") + ' aria-label="Afgerond">' +
+        '<span><span class="tk-t">' + esc(t.title) + '</span>' + chip + '</span>' +
+        '<button class="tk-x" data-del-task="' + esc(t.id) + '" aria-label="Verwijderen">✕</button>' +
+        '</li>';
+    }
+    for (var i = 0; i < open.length; i++) rows += row(open[i]);
+    for (var j = 0; j < Math.min(done.length, 4); j++) rows += row(done[j]);
+
+    $("taskCard").innerHTML =
+      '<header><span class="label">Taken</span><span class="label">' + open.length + ' open</span></header>' +
+      '<div class="taskadd">' +
+      '<input type="text" id="tkInput" placeholder="Nieuwe taak…" autocomplete="off">' +
+      '<input type="date" id="tkDate" aria-label="Deadline">' +
+      '<button id="tkAdd" aria-label="Taak toevoegen">+</button>' +
+      '</div>' +
+      (rows ? '<ul class="tasklist">' + rows + '</ul>'
+            : '<p style="margin:2px 0 0;font-size:12.5px;color:var(--ink-3)">Nog geen taken.</p>');
+
+    $("tkInput").value = keepText;
+    $("tkDate").value = keepDate;
+    if (hadFocus) $("tkInput").focus();
+    $("tkAdd").addEventListener("click", addTask);
+    $("tkInput").addEventListener("keydown", function (e) { if (e.key === "Enter") addTask(); });
+  }
+
+  function addTask() {
+    var inp = $("tkInput"), dt = $("tkDate");
+    var title = inp.value.trim();
+    if (!title) { inp.focus(); return; }
+    put("tasks", {
+      id: uid("t"), title: title, due: dt.value || null,
+      done: false, createdAt: Date.now()
+    });
+    inp.value = "";
+    dt.value = "";
+    renderTaskCard();
+    renderLoadCard();
+    var ni = $("tkInput");
+    if (ni) ni.focus();
+  }
+
+  /* --- rail: legenda + filter -------------------------------- */
+
+  function renderLegend() {
+    var counts = {};
+    for (var i = 0; i < state.events.length; i++) {
+      counts[state.events[i].cat] = (counts[state.events[i].cat] || 0) + 1;
+    }
+    var html = '<header><span class="label">Categorieën</span><span class="label">tik om te filteren</span></header><div class="legend">';
+    for (var c = 0; c < CATS.length; c++) {
+      var id = CATS[c].id;
+      html += '<button data-cat="' + id + '" class="' + (state.hidden[id] ? "off" : "") +
+        '" style="--cat:' + catVar(id) + '" aria-pressed="' + (state.hidden[id] ? "false" : "true") + '">' +
+        '<span class="sw"></span><span>' + esc(CATS[c].label) + '</span>' +
+        '<span class="ct">' + (counts[id] || 0) + '</span></button>';
+    }
+    html += '</div>';
+    $("legendCard").innerHTML = html;
+  }
+
+  /* ==========================================================
+     6. Afspraak bewerken
+     ========================================================== */
+
+  var editingId = null;
+
+  function buildCatPicker() {
+    var wrap = $("fCat");
+    var html = "";
+    for (var i = 0; i < CATS.length; i++) {
+      html += '<button type="button" data-pick="' + CATS[i].id + '" style="--cat:' + catVar(CATS[i].id) +
+        '" aria-pressed="false"><span class="sw"></span>' + esc(CATS[i].label) + '</button>';
+    }
+    wrap.innerHTML = html;
+    wrap.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-pick]");
+      if (!b) return;
+      setCat(b.getAttribute("data-pick"));
+    });
+  }
+
+  function setCat(id) {
+    var btns = $("fCat").querySelectorAll("[data-pick]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-pick") === id ? "true" : "false");
+    }
+  }
+  function getCat() {
+    var b = $("fCat").querySelector('[aria-pressed="true"]');
+    return b ? b.getAttribute("data-pick") : "afspraak";
+  }
+
+  function syncAllDay() {
+    var on = $("fAllDay").checked;
+    var fields = document.querySelectorAll("[data-timefield]");
+    for (var i = 0; i < fields.length; i++) fields[i].style.display = on ? "none" : "";
+  }
+
+  function openEvent(id, prefill) {
+    editingId = id;
+    var ev = null;
+    if (id) {
+      for (var i = 0; i < state.events.length; i++) if (state.events[i].id === id) { ev = state.events[i]; break; }
+      if (!ev) return;
+    }
+    $("evTitle").textContent = ev ? "Afspraak bewerken" : "Nieuwe afspraak";
+    $("fTitle").value = ev ? ev.title : "";
+    $("fDate").value = ev ? ev.date : (prefill && prefill.date) || state.anchor;
+    $("fStart").value = ev ? (ev.start || "09:00") : (prefill && prefill.start) || "09:00";
+    $("fEnd").value = ev ? (ev.end || "10:00") : (prefill && prefill.end) || "10:00";
+    $("fAllDay").checked = ev ? !!ev.allDay : false;
+    $("fLoc").value = ev ? (ev.loc || "") : "";
+    $("fNote").value = ev ? (ev.note || "") : "";
+    setCat(ev ? ev.cat : "afspraak");
+    syncAllDay();
+    $("fDelete").hidden = !ev;
+    $("evOverlay").hidden = false;
+    setTimeout(function () { $("fTitle").focus(); $("fTitle").select(); }, 0);
+  }
+
+  function saveEvent() {
+    var title = $("fTitle").value.trim();
+    if (!title) { toast("Geef de afspraak eerst een titel."); $("fTitle").focus(); return; }
+    var date = $("fDate").value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast("Kies een geldige datum."); $("fDate").focus(); return; }
+
+    var allDay = $("fAllDay").checked;
+    var start = $("fStart").value || "09:00";
+    var end = $("fEnd").value || "10:00";
+    if (!allDay && toMin(end) <= toMin(start)) end = toTime(Math.min(1439, toMin(start) + 30));
+
+    var old = null;
+    if (editingId) for (var i = 0; i < state.events.length; i++) if (state.events[i].id === editingId) old = state.events[i];
+
+    put("events", {
+      id: editingId || uid("e"),
+      title: title, date: date,
+      start: allDay ? "00:00" : start,
+      end: allDay ? "23:59" : end,
+      allDay: allDay,
+      cat: getCat(),
+      loc: $("fLoc").value.trim(),
+      note: $("fNote").value.trim(),
+      createdAt: old && old.createdAt ? old.createdAt : Date.now()
+    });
+    $("evOverlay").hidden = true;
+    editingId = null;
+    render();
+  }
+
+  function deleteEvent() {
+    if (!editingId) return;
+    drop("events", editingId);
+    $("evOverlay").hidden = true;
+    editingId = null;
+    render();
+    toast("Afspraak verwijderd.");
+  }
+
+
+  /* ==========================================================
+     6b. Klant bewerken
+     ========================================================== */
+
+  var editingLead = null;
+
+  function buildStatusPicker() {
+    var wrap = $("lStatus");
+    var html = "";
+    for (var i = 0; i < STATUSES.length; i++) {
+      var v = stVar(STATUSES[i].id);
+      html += '<button type="button" data-pickst="' + STATUSES[i].id +
+        '" style="--cat:' + v + ';--st:' + v + '" aria-pressed="false">' +
+        icon(STATUSES[i].icon, 11) + esc(STATUSES[i].label) + '</button>';
+    }
+    wrap.innerHTML = html;
+    wrap.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-pickst]");
+      if (b) setStatusPick(b.getAttribute("data-pickst"));
+    });
+  }
+
+  function setStatusPick(id) {
+    var btns = $("lStatus").querySelectorAll("[data-pickst]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-pickst") === id ? "true" : "false");
+    }
+  }
+  function getStatusPick() {
+    var b = $("lStatus").querySelector('[aria-pressed="true"]');
+    return b ? b.getAttribute("data-pickst") : "wacht";
+  }
+
+  function openLead(id) {
+    editingLead = id;
+    var l = null;
+    if (id) {
+      for (var i = 0; i < state.leads.length; i++) if (state.leads[i].id === id) { l = state.leads[i]; break; }
+      if (!l) return;
+    }
+    $("ldTitle").textContent = l ? "Klant bewerken" : "Nieuwe klant";
+    $("lName").value = l ? (l.name || "") : "";
+    $("lPhone").value = l ? (l.phone || "") : "";
+    $("lDate").value = l && l.date ? l.date : "";
+    $("lCallDate").value = l && l.callDate ? l.callDate : "";
+    $("lCallTime").value = l && l.callTime ? l.callTime : "";
+    $("lNote").value = l ? (l.note || "") : "";
+    setStatusPick(l ? l.status : "wacht");
+    $("lDelete").hidden = !l;
+    $("ldOverlay").hidden = false;
+    setTimeout(function () { $("lName").focus(); $("lName").select(); }, 0);
+  }
+
+  function saveLead() {
+    var name = $("lName").value.trim();
+    var phone = $("lPhone").value.trim();
+    if (!name && !phone) {
+      toast("Vul minstens een naam of een telefoonnummer in.");
+      $("lName").focus();
+      return;
+    }
+    var old = editingLead ? findLead(editingLead) : null;
+    var status = getStatusPick();
+    var calledAt = old && old.calledAt ? old.calledAt : null;
+    if (isCalled(status)) { if (!calledAt) calledAt = amsNow().date; }
+    else calledAt = null;
+
+    put("leads", {
+      id: editingLead || uid("l"),
+      name: name,
+      phone: phone,
+      date: $("lDate").value || null,
+      status: status,
+      calledAt: calledAt,
+      callDate: $("lCallDate").value || null,
+      callTime: $("lCallDate").value ? ($("lCallTime").value || null) : null,
+      note: $("lNote").value.trim(),
+      createdAt: old && old.createdAt ? old.createdAt : Date.now()
+    });
+    $("ldOverlay").hidden = true;
+    editingLead = null;
+    render();
+  }
+
+  function deleteLead() {
+    if (!editingLead) return;
+    drop("leads", editingLead);
+    $("ldOverlay").hidden = true;
+    editingLead = null;
+    render();
+    toast("Klant verwijderd.");
+  }
+
+  /* --- eenmalig de bestaande lijst inladen ------------------- */
+
+  var SEED_LEADS = [
+    { id: "ld-lisa-van-duijn", name: "Lisa van Duijn", phone: "+31 6 11072509",
+      date: "2026-10-30", status: "wacht", callDate: null, callTime: null,
+      note: "Wachten op een datum voor de call." },
+    { id: "ld-arco-van-beek", name: "Arco van Beek", phone: "+31 6 30756081",
+      date: "2026-10-03", status: "wacht", callDate: null, callTime: null,
+      note: "Wachten op een datum voor de call." },
+    { id: "ld-34890705-nieuw", name: "", phone: "+31 6 34890705",
+      date: null, status: "gepland", callDate: "2026-09-02", callTime: "18:15",
+      note: "Datum van de klus nog onbekend. Zelfde nummer als David en Veerle — controleren of dit dezelfde aanvraag is." },
+    { id: "ld-david-en-veerle", name: "David en Veerle", phone: "+31 6 34890705",
+      date: "2026-05-29", status: "gebeld", callDate: null, callTime: null,
+      note: "Call al gehad. Hebben nog een gesprek met een andere videograaf. Let op: opgegeven datum ligt in het verleden — klopt 2027?" },
+    { id: "ld-juda-urk", name: "Juda Urk", phone: "+31 6 13007910",
+      date: "2026-10-05", status: "akkoord", callDate: "2026-09-04", callTime: null,
+      note: "Is al akkoord. Vrijdag bellen om het draaiboek door te nemen — tijd nog invullen." }
+  ];
+
+  function seedLeads() {
+    for (var i = 0; i < SEED_LEADS.length; i++) {
+      var src = SEED_LEADS[i], copy = {};
+      for (var k in src) copy[k] = src[k];
+      copy.createdAt = Date.now();
+      put("leads", copy);
+    }
+    render();
+  }
+
+  function seedLocallyIfNeeded() {
+    try {
+      if (localStorage.getItem(LS_SEEDED) === "1") return;
+      if (state.leads.length) { localStorage.setItem(LS_SEEDED, "1"); return; }
+      seedLeads();
+      localStorage.setItem(LS_SEEDED, "1");
+    } catch (e) {
+      if (!state.leads.length) seedLeads();
+    }
+  }
+
+  /* ==========================================================
+     7. ICS-import
+     ========================================================== */
+
+  function unfoldICS(text) {
+    return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\n[ \t]/g, "");
+  }
+
+  function unescapeICS(v) {
+    return v.replace(/\\n/gi, "\n").replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\\\/g, "\\");
+  }
+
+  function parseDT(value, params) {
+    var v = value.trim();
+    if ((params.VALUE && params.VALUE.toUpperCase() === "DATE") || /^\d{8}$/.test(v)) {
+      return { allDay: true, date: v.slice(0, 4) + "-" + v.slice(4, 6) + "-" + v.slice(6, 8), time: "00:00" };
+    }
+    var m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(Z)?$/.exec(v);
+    if (!m) return null;
+    var Y = +m[1], Mo = +m[2], D = +m[3], H = +m[4], Mi = +m[5], S = +(m[6] || 0);
+    if (m[7]) {
+      var r = instantToAms(new Date(Date.UTC(Y, Mo - 1, D, H, Mi, S)));
+      return { allDay: false, date: r.date, time: r.time };
+    }
+    var tz = params.TZID;
+    if (tz && tz !== AMS) {
+      var inst = wallToInstant(Y, Mo, D, H, Mi, S, tz);
+      if (inst) {
+        var r2 = instantToAms(inst);
+        return { allDay: false, date: r2.date, time: r2.time };
+      }
+    }
+    return { allDay: false, date: m[1] + "-" + m[2] + "-" + m[3], time: m[4] + ":" + m[5] };
+  }
+
+  function parseDuration(v) {
+    var m = /^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(v.trim());
+    if (!m) return 0;
+    return (+(m[1] || 0)) * 10080 + (+(m[2] || 0)) * 1440 + (+(m[3] || 0)) * 60 + (+(m[4] || 0));
+  }
+
+  function parseICS(text) {
+    var lines = unfoldICS(text).split("\n");
+    var out = [], cur = null;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].replace(/\s+$/, "");
+      if (!line) continue;
+      var upper = line.toUpperCase();
+      if (upper === "BEGIN:VEVENT") { cur = { ex: [] }; continue; }
+      if (upper === "END:VEVENT") { if (cur) out.push(cur); cur = null; continue; }
+      if (!cur) continue;
+
+      var ci = line.indexOf(":");
+      if (ci < 0) continue;
+      var left = line.slice(0, ci), value = line.slice(ci + 1);
+      var segs = left.split(";");
+      var name = segs[0].toUpperCase();
+      var params = {};
+      for (var s = 1; s < segs.length; s++) {
+        var eq = segs[s].indexOf("=");
+        if (eq > 0) params[segs[s].slice(0, eq).toUpperCase()] = segs[s].slice(eq + 1).replace(/^"|"$/g, "");
+      }
+
+      if (name === "SUMMARY") cur.title = unescapeICS(value);
+      else if (name === "LOCATION") cur.loc = unescapeICS(value);
+      else if (name === "DESCRIPTION") cur.note = unescapeICS(value);
+      else if (name === "UID") cur.uid = value.trim();
+      else if (name === "STATUS") cur.status = value.trim().toUpperCase();
+      else if (name === "TRANSP") cur.transp = value.trim().toUpperCase();
+      else if (name === "DTSTART") cur.start = parseDT(value, params);
+      else if (name === "DTEND") cur.end = parseDT(value, params);
+      else if (name === "DURATION") cur.duration = parseDuration(value);
+      else if (name === "RRULE") cur.rrule = value.trim();
+      else if (name === "EXDATE") {
+        var xs = value.split(",");
+        for (var x = 0; x < xs.length; x++) {
+          var p = parseDT(xs[x], params);
+          if (p) cur.ex.push(p.date);
+        }
+      }
+    }
+    return out;
+  }
+
+  var BYDAY_IDX = { MO: 0, TU: 1, WE: 2, TH: 3, FR: 4, SA: 5, SU: 6 };
+
+  function parseRule(s) {
+    var o = {}, parts = s.split(";");
+    for (var i = 0; i < parts.length; i++) {
+      var eq = parts[i].indexOf("=");
+      if (eq > 0) o[parts[i].slice(0, eq).toUpperCase()] = parts[i].slice(eq + 1);
+    }
+    return o;
+  }
+
+  /** Herhalingen uitrekenen binnen een venster. */
+  function expandRule(startDate, ruleStr, winStart, winEnd, cap) {
+    var r = parseRule(ruleStr);
+    var freq = (r.FREQ || "").toUpperCase();
+    var interval = Math.max(1, parseInt(r.INTERVAL || "1", 10) || 1);
+    var count = r.COUNT ? parseInt(r.COUNT, 10) : null;
+    var until = null;
+    if (r.UNTIL) {
+      var u = parseDT(r.UNTIL, {});
+      if (u) until = u.date;
+    }
+    var byday = r.BYDAY ? r.BYDAY.split(",") : null;
+    var dates = [];
+    var emitted = 0;
+    var guard = 0;
+
+    function push(d) {
+      if (until && d > until) return false;
+      if (count !== null && emitted >= count) return false;
+      emitted++;
+      if (d >= winStart && d <= winEnd && dates.length < cap) dates.push(d);
+      return d <= winEnd;
+    }
+
+    if (freq === "DAILY") {
+      var d = startDate;
+      while (guard++ < 4000) { if (!push(d)) break; d = addD(d, interval); }
+    } else if (freq === "WEEKLY") {
+      var offsets = [];
+      if (byday) {
+        for (var i = 0; i < byday.length; i++) {
+          var key = byday[i].replace(/^[-+]?\d+/, "").toUpperCase();
+          if (key in BYDAY_IDX) offsets.push(BYDAY_IDX[key]);
+        }
+        offsets.sort(function (a, b) { return a - b; });
+      }
+      if (!offsets.length) offsets = [dowOf(startDate)];
+      var weekMon = mondayOf(startDate);
+      var startDow = dowOf(startDate);
+      var going = true;
+      while (going && guard++ < 4000) {
+        for (var k = 0; k < offsets.length; k++) {
+          if (weekMon === mondayOf(startDate) && offsets[k] < startDow) continue;
+          if (!push(addD(weekMon, offsets[k]))) { going = false; break; }
+        }
+        weekMon = addD(weekMon, 7 * interval);
+      }
+    } else if (freq === "MONTHLY" || freq === "YEARLY") {
+      var step = freq === "MONTHLY" ? interval : interval * 12;
+      var y0 = parseInt(startDate.slice(0, 4), 10);
+      var m0 = parseInt(startDate.slice(5, 7), 10) - 1;
+      var day0 = dayNum(startDate);
+      var nth = null, nthDow = null;
+      if (byday && byday.length === 1 && /^[-+]?\d+/.test(byday[0])) {
+        nth = parseInt(byday[0], 10);
+        nthDow = BYDAY_IDX[byday[0].replace(/^[-+]?\d+/, "").toUpperCase()];
+      }
+      for (var n = 0; n < 400; n++) {
+        var mm = m0 + n * step;
+        var yy = y0 + Math.floor(mm / 12);
+        var mIdx = ((mm % 12) + 12) % 12;
+        var dstr2;
+        if (nth !== null && nthDow !== undefined && nthDow !== null) {
+          dstr2 = nthWeekday(yy, mIdx, nthDow, nth);
+          if (!dstr2) continue;
+        } else {
+          var dim = new Date(Date.UTC(yy, mIdx + 1, 0)).getUTCDate();
+          if (day0 > dim) continue;
+          dstr2 = yy + "-" + pad(mIdx + 1) + "-" + pad(day0);
+        }
+        if (!push(dstr2)) break;
+      }
+    } else {
+      dates.push(startDate);
+    }
+    return dates;
+  }
+
+  function nthWeekday(y, mIdx, dowIdx, nth) {
+    var first = Date.UTC(y, mIdx, 1);
+    var dim = new Date(Date.UTC(y, mIdx + 1, 0)).getUTCDate();
+    var hits = [];
+    for (var d = 1; d <= dim; d++) {
+      var ms = Date.UTC(y, mIdx, d);
+      if ((new Date(ms).getUTCDay() + 6) % 7 === dowIdx) hits.push(d);
+    }
+    var pick = nth > 0 ? hits[nth - 1] : hits[hits.length + nth];
+    if (!pick) return null;
+    return y + "-" + pad(mIdx + 1) + "-" + pad(pick);
+  }
+
+  function hash36(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h.toString(36);
+  }
+
+  function guessCat(title, loc) {
+    var s = ((title || "") + " " + (loc || "")).toLowerCase();
+    if (/vlucht|flight|trein|ns |reis|onderweg|rijden|airport|schiphol|taxi/.test(s)) return "reizen";
+    if (/focus|deep work|blok|schrijven|voorbereiden|werken aan|admin|inbox/.test(s)) return "focus";
+    if (/vakantie|verjaardag|tandarts|huisarts|dokter|prive|privé|sport|gym|ophalen|school/.test(s)) return "prive";
+    return "afspraak";
+  }
+
+  var IMPORT_CAP = 600;
+
+  function importICS(text) {
+    var raw;
+    try { raw = parseICS(text); }
+    catch (err) { toast("Dit bestand kon niet gelezen worden als iCalendar."); return; }
+
+    if (!raw.length) { toast("Geen afspraken gevonden in dit bestand."); return; }
+
+    var today = amsNow().date;
+    var winStart = addD(today, -56);   // 8 weken terug
+    var winEnd = addD(today, 182);     // 26 weken vooruit
+
+    var made = [], capped = false, seen = {};
+
+    for (var i = 0; i < raw.length && !capped; i++) {
+      var v = raw[i];
+      if (!v.start) continue;
+      if (v.status === "CANCELLED") continue;
+      var title = (v.title || "").trim() || "Zonder titel";
+
+      var durMin;
+      if (v.duration) durMin = v.duration;
+      else if (v.end) {
+        durMin = (diffD(v.end.date, v.start.date) * 1440) + toMin(v.end.time) - toMin(v.start.time);
+      } else durMin = v.start.allDay ? 1440 : 60;
+      if (durMin <= 0) durMin = v.start.allDay ? 1440 : 30;
+
+      var occ = v.rrule
+        ? expandRule(v.start.date, v.rrule, winStart, winEnd, 240)
+        : [v.start.date];
+
+      var uidBase = hash36(v.uid || (title + v.start.date + v.start.time));
+      var cat = guessCat(title, v.loc);
+
+      for (var o = 0; o < occ.length; o++) {
+        var d0 = occ[o];
+        if (d0 < winStart || d0 > winEnd) continue;
+        if (v.ex.indexOf(d0) >= 0) continue;
+
+        var segs = splitAcrossDays(d0, v.start.allDay ? "00:00" : v.start.time, durMin, v.start.allDay);
+        for (var sIdx = 0; sIdx < segs.length; sIdx++) {
+          if (made.length >= IMPORT_CAP) { capped = true; break; }
+          var sg = segs[sIdx];
+          var id = "i" + uidBase + "-" + sg.date.replace(/-/g, "") + "-" + sg.start.replace(":", "");
+          if (seen[id]) continue;
+          seen[id] = true;
+          made.push({
+            id: id,
+            title: title,
+            date: sg.date,
+            start: sg.start,
+            end: sg.end,
+            allDay: !!v.start.allDay,
+            cat: cat,
+            loc: (v.loc || "").trim(),
+            note: (v.note || "").trim().slice(0, 600),
+            createdAt: Date.now()
+          });
+        }
+        if (capped) break;
+      }
+    }
+
+    if (!made.length) {
+      toast("Geen afspraken binnen het venster van 8 weken terug tot 26 weken vooruit.");
+      return;
+    }
+
+    putMany("events", made);
+    render();
+    toast(made.length + " afspraken geïmporteerd" +
+      (capped ? " (maximum van " + IMPORT_CAP + " bereikt — importeer de rest apart)." : ".") );
+  }
+
+  /** Een afspraak die over middernacht loopt in dagdelen knippen. */
+  function splitAcrossDays(date, start, durMin, allDay) {
+    var out = [];
+    if (allDay) {
+      var days = Math.max(1, Math.round(durMin / 1440));
+      for (var i = 0; i < Math.min(days, 30); i++) {
+        out.push({ date: addD(date, i), start: "00:00", end: "23:59" });
+      }
+      return out;
+    }
+    var s = toMin(start);
+    var remaining = durMin;
+    var d = date;
+    var guard = 0;
+    while (remaining > 0 && guard++ < 14) {
+      var room = 1440 - s;
+      var take = Math.min(room, remaining);
+      var endMin = s + take;
+      out.push({ date: d, start: toTime(s), end: toTime(Math.min(1439, endMin)) });
+      remaining -= take;
+      if (remaining <= 0) break;
+      d = addD(d, 1);
+      s = 0;
+    }
+    return out;
+  }
+
+  /* ==========================================================
+     8. Exporteren
+     ========================================================== */
+
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function exportCsv() {
+    if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
+    var dates = state.view === "lijst"
+      ? null
+      : periodDates();
+    var evs = state.events.slice().filter(function (e) {
+      return dates ? dates.indexOf(e.date) >= 0 : true;
+    });
+    if (!evs.length) { toast("Geen afspraken in deze periode om te exporteren."); return; }
+    evs.sort(function (a, b) {
+      var d = civ(a.date) - civ(b.date);
+      return d !== 0 ? d : toMin(a.start) - toMin(b.start);
+    });
+    var rows = ["Datum;Dag;Van;Tot;Duur (min);Titel;Categorie;Locatie;Notitie"];
+    for (var i = 0; i < evs.length; i++) {
+      var e = evs[i];
+      var mins = e.allDay ? "" : (toMin(e.end) - toMin(e.start));
+      rows.push([
+        e.date, DAYS[dowOf(e.date)], e.allDay ? "hele dag" : e.start, e.allDay ? "" : e.end,
+        mins, e.title, catLabel(e.cat), e.loc || "", (e.note || "").replace(/\n/g, " ")
+      ].map(csvCell).join(";"));
+    }
+    var name = dates
+      ? "weekzicht-week-" + isoWeek(dates[0]).week + "-" + dates[0].slice(0, 4) + ".csv"
+      : "weekzicht-alles.csv";
+    downloads.save({ filename: name, data: "\uFEFF" + rows.join("\r\n") })
+      .then(function () { toast("Opgeslagen als " + name); })
+      .catch(function (err) { saveFailed(err); });
+  }
+
+  function exportLeadsCsv() {
+    if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
+    if (!state.leads.length) { toast("Nog geen klanten om te exporteren."); return; }
+    var list = sortLeads(state.leads);
+    var rows = ["Datum;Dag;Naam;Telefoon;Status;Gebeld;Gebeld op;Belafspraak;Beltijd;Notitie"];
+    for (var i = 0; i < list.length; i++) {
+      var l = list[i];
+      rows.push([
+        l.date || "", l.date ? DAYS[dowOf(l.date)] : "", l.name || "", l.phone || "",
+        stDef(l.status).label, isCalled(l.status) ? "ja" : "nee", l.calledAt || "",
+        l.callDate || "", l.callTime || "",
+        (l.note || "").replace(/\n/g, " ")
+      ].map(csvCell).join(";"));
+    }
+    downloads.save({ filename: "weekzicht-klanten.csv", data: "\uFEFF" + rows.join("\r\n") })
+      .then(function () { toast("Klantenlijst opgeslagen."); })
+      ["catch"](function (err) { saveFailed(err); });
+  }
+
+  function exportJson() {
+    if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
+    var data = JSON.stringify({
+      app: "weekzicht", version: 1, exportedAt: new Date().toISOString(),
+      timezone: AMS, events: state.events, tasks: state.tasks, leads: state.leads,
+      settings: state.settings
+    }, null, 2);
+    downloads.save({ filename: "weekzicht-backup.json", data: data })
+      .then(function () { toast("Back-up opgeslagen."); })
+      .catch(function (err) { saveFailed(err); });
+  }
+
+  function saveFailed(err) {
+    var code = err && err.code;
+    if (code === "declined") return;
+    if (code === "rate_limited") toast("Er staat al een opslagvenster open. Probeer het zo nog eens.");
+    else if (code === "too_large") toast("Het bestand is te groot om op te slaan.");
+    else if (code === "rejected_extension" || code === "extension_not_enabled") {
+      toast("Dit bestandstype kan hier niet opgeslagen worden.");
+    } else toast("Opslaan lukte niet.");
+  }
+
+  /* ==========================================================
+     9. Voorbeeldweek
+     ========================================================== */
+
+  function fillDemo() {
+    var mon = mondayOf(amsNow().date);
+    var demo = [
+      [0, "09:00", "09:30", "Weekstart met het team", "focus", "Kantoor"],
+      [0, "11:00", "12:30", "Klantgesprek Deskna", "afspraak", "Teams"],
+      [0, "14:00", "16:00", "Offertes uitwerken", "focus", ""],
+      [1, "08:30", "09:15", "Reistijd naar Utrecht", "reizen", "NS"],
+      [1, "10:00", "12:00", "Werksessie inrichting", "afspraak", "Utrecht"],
+      [1, "16:00", "17:00", "Administratie", "focus", ""],
+      [2, "09:30", "10:30", "Voortgang projecten", "afspraak", "Teams"],
+      [2, "13:00", "15:30", "Ontwerpblok", "focus", ""],
+      [3, "09:00", "10:00", "Leveranciersoverleg", "afspraak", "Telefonisch"],
+      [3, "12:00", "13:00", "Lunch met collega", "prive", "Centrum"],
+      [3, "15:00", "17:00", "Voorstel schrijven", "focus", ""],
+      [4, "09:00", "10:30", "Weekafsluiting", "afspraak", "Kantoor"],
+      [4, "11:00", "12:00", "Opruimen inbox", "focus", ""],
+      [5, "10:00", "11:30", "Sporten", "prive", "Sportschool"]
+    ];
+    var evs = [];
+    for (var i = 0; i < demo.length; i++) {
+      var r = demo[i];
+      evs.push({
+        id: uid("d"), title: r[3], date: addD(mon, r[0]),
+        start: r[1], end: r[2], allDay: false, cat: r[4], loc: r[5], note: "",
+        createdAt: Date.now()
+      });
+    }
+    putMany("events", evs);
+    putMany("tasks", [
+      { id: uid("t"), title: "Offerte Deskna nakijken", due: addD(mon, 1), done: false, createdAt: Date.now() },
+      { id: uid("t"), title: "Reis naar Utrecht boeken", due: addD(mon, 0), done: false, createdAt: Date.now() },
+      { id: uid("t"), title: "Kwartaalcijfers verzamelen", due: addD(mon, 4), done: false, createdAt: Date.now() }
+    ]);
+    render();
+    toast("Voorbeeldweek toegevoegd — je wist alles via het ⋯-menu.");
+  }
+
+  /* ==========================================================
+     10. Bediening
+     ========================================================== */
+
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.hidden = true; }, 4200);
+  }
+
+  function setView(v) {
+    state.view = v;
+    var btns = document.querySelectorAll(".viewswitch button");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-view") === v ? "true" : "false");
+    }
+    render();
+  }
+
+  function shift(n) {
+    if (state.view === "klanten") return;
+    if (state.view === "dag") state.anchor = addD(state.anchor, n);
+    else if (state.view === "lijst") state.anchor = addD(state.anchor, n * 14);
+    else state.anchor = addD(state.anchor, n * 7);
+    render();
+  }
+
+  function openImport() {
+    $("impOverlay").hidden = false;
+    $("icsText").value = "";
+    $("menu").hidden = true;
+    $("menuBtn").setAttribute("aria-expanded", "false");
+  }
+
+  function closeOverlays() {
+    $("evOverlay").hidden = true;
+    $("impOverlay").hidden = true;
+    $("ldOverlay").hidden = true;
+    editingId = null;
+    editingLead = null;
+  }
+
+  // weergaveknoppen
+  document.querySelector(".viewswitch").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-view]");
+    if (b) setView(b.getAttribute("data-view"));
+  });
+
+  $("prevBtn").addEventListener("click", function () { shift(-1); });
+  $("nextBtn").addEventListener("click", function () { shift(1); });
+  $("todayBtn").addEventListener("click", function () { state.anchor = amsNow().date; render(); });
+  $("newBtn").addEventListener("click", function () {
+    if (state.view === "klanten") openLead(null); else openEvent(null);
+  });
+
+  // menu
+  $("menuBtn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    var m = $("menu");
+    m.hidden = !m.hidden;
+    $("menuBtn").setAttribute("aria-expanded", m.hidden ? "false" : "true");
+  });
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".menuwrap")) {
+      $("menu").hidden = true;
+      $("menuBtn").setAttribute("aria-expanded", "false");
+      resetWipe();
+    }
+  });
+  $("miImport").addEventListener("click", openImport);
+  $("miWeekend").addEventListener("click", function () {
+    state.settings.weekend = !state.settings.weekend;
+    $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
+    saveSettings();
+    render();
+  });
+  $("miCsv").addEventListener("click", function () { $("menu").hidden = true; exportCsv(); });
+  $("miKlantCsv").addEventListener("click", function () { $("menu").hidden = true; exportLeadsCsv(); });
+  $("miJson").addEventListener("click", function () { $("menu").hidden = true; exportJson(); });
+  var wipeArmed = false, wipeTimer = null;
+  $("miWipe").addEventListener("click", function () {
+    if (!wipeArmed) {
+      wipeArmed = true;
+      $("miWipe").textContent = "Zeker weten? Klik nogmaals";
+      clearTimeout(wipeTimer);
+      wipeTimer = setTimeout(resetWipe, 5000);
+      return;
+    }
+    resetWipe();
+    $("menu").hidden = true;
+    $("menuBtn").setAttribute("aria-expanded", "false");
+    var evs = state.events.slice(), tks = state.tasks.slice(), lds = state.leads.slice();
+    for (var i = 0; i < evs.length; i++) drop("events", evs[i].id);
+    for (var j = 0; j < tks.length; j++) drop("tasks", tks[j].id);
+    for (var m = 0; m < lds.length; m++) drop("leads", lds[m].id);
+    render();
+    toast("Alles gewist.");
+  });
+  function resetWipe() {
+    wipeArmed = false;
+    clearTimeout(wipeTimer);
+    $("miWipe").textContent = "Alle gegevens wissen…";
+  }
+
+  // klikken in het raster, de lijst en de klantenweergave
+  canvas.addEventListener("click", function (e) {
+    var cp = e.target.closest("[data-copy]");
+    if (cp) { copyText(cp.getAttribute("data-copy")); return; }
+
+    var preset = e.target.closest("[data-preset]");
+    if (preset) {
+      var kind = preset.getAttribute("data-preset");
+      setStatusFilter(kind === "alles" ? null : kind === "tebellen" ? TE_BELLEN_SET : GEBELD_SET);
+      return;
+    }
+
+    var stBtn = e.target.closest("[data-st]");
+    if (stBtn) {
+      var sid = stBtn.getAttribute("data-st");
+      if (state.stHidden[sid]) delete state.stHidden[sid]; else state.stHidden[sid] = true;
+      render();
+      return;
+    }
+
+    var ldBtn = e.target.closest("[data-lead]");
+    if (ldBtn) { openLead(ldBtn.getAttribute("data-lead")); return; }
+
+    var evBtn = e.target.closest("[data-ev]");
+    if (evBtn) { openEvent(evBtn.getAttribute("data-ev")); return; }
+
+    var col = e.target.closest(".daycol");
+    if (col) {
+      var rect = col.getBoundingClientRect();
+      var rowh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--rowh")) || 56;
+      var lo = parseInt(col.getAttribute("data-lo"), 10);
+      var mins = lo * 60 + ((e.clientY - rect.top) / rowh) * 60;
+      mins = Math.max(0, Math.min(1410, Math.round(mins / 15) * 15));
+      openEvent(null, {
+        date: col.getAttribute("data-date"),
+        start: toTime(mins),
+        end: toTime(Math.min(1439, mins + 60))
+      });
+    }
+  });
+
+  // "Gebeld"-vinkje in de klantenlijst
+  canvas.addEventListener("change", function (e) {
+    var cb = e.target.closest("[data-called]");
+    if (cb) toggleCalled(cb.getAttribute("data-called"));
+  });
+
+  // taken
+  $("taskCard").addEventListener("click", function (e) {
+    var del = e.target.closest("[data-del-task]");
+    if (del) { drop("tasks", del.getAttribute("data-del-task")); renderTaskCard(); renderLoadCard(); return; }
+  });
+  $("taskCard").addEventListener("change", function (e) {
+    if (e.target.type !== "checkbox") return;
+    var li = e.target.closest("[data-task]");
+    if (!li) return;
+    var id = li.getAttribute("data-task");
+    for (var i = 0; i < state.tasks.length; i++) {
+      if (state.tasks[i].id === id) {
+        var t = state.tasks[i];
+        var copy = {};
+        for (var k in t) copy[k] = t[k];
+        copy.done = e.target.checked;
+        copy.doneAt = e.target.checked ? Date.now() : null;
+        put("tasks", copy);
+        break;
+      }
+    }
+    renderTaskCard();
+    renderLoadCard();
+  });
+
+  // statusfilter in de zijkolom
+  $("klantCard").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-st]");
+    if (!b) return;
+    var id = b.getAttribute("data-st");
+    if (state.stHidden[id]) delete state.stHidden[id]; else state.stHidden[id] = true;
+    render();
+  });
+
+  // legenda-filter
+  $("legendCard").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-cat]");
+    if (!b) return;
+    var id = b.getAttribute("data-cat");
+    if (state.hidden[id]) delete state.hidden[id]; else state.hidden[id] = true;
+    render();
+  });
+
+  // grafiek-tooltip
+  $("loadCard").addEventListener("mousemove", function (e) {
+    var cell = e.target.closest("[data-tip]");
+    var tip = $("tip");
+    if (!cell) { tip.hidden = true; return; }
+    tip.textContent = cell.getAttribute("data-tip");
+    tip.hidden = false;
+    var r = cell.getBoundingClientRect();
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2)) + "px";
+    tip.style.top = Math.max(8, r.top - tip.offsetHeight - 7) + "px";
+  });
+  $("loadCard").addEventListener("mouseleave", function () { $("tip").hidden = true; });
+
+  // afspraakvenster
+  buildCatPicker();
+  buildStatusPicker();
+  $("lSave").addEventListener("click", saveLead);
+  $("lDelete").addEventListener("click", deleteLead);
+  $("fAllDay").addEventListener("change", syncAllDay);
+  $("fSave").addEventListener("click", saveEvent);
+  $("fDelete").addEventListener("click", deleteEvent);
+  $("fStart").addEventListener("change", function () {
+    var s = $("fStart").value, en = $("fEnd").value;
+    if (s && (!en || toMin(en) <= toMin(s))) $("fEnd").value = toTime(Math.min(1439, toMin(s) + 60));
+  });
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-close]")) closeOverlays();
+  });
+  var ovs = document.querySelectorAll(".overlay");
+  for (var oi = 0; oi < ovs.length; oi++) {
+    ovs[oi].addEventListener("mousedown", function (e) {
+      if (e.target === e.currentTarget) closeOverlays();
+    });
+  }
+
+  // importvenster
+  $("pickFile").addEventListener("click", function () { $("fileInput").click(); });
+  $("fileInput").addEventListener("change", function () {
+    var f = $("fileInput").files && $("fileInput").files[0];
+    if (!f) return;
+    readFile(f);
+    $("fileInput").value = "";
+  });
+  var dz = $("dropzone");
+  ["dragenter", "dragover"].forEach(function (n) {
+    dz.addEventListener(n, function (e) { e.preventDefault(); dz.classList.add("hot"); });
+  });
+  ["dragleave", "drop"].forEach(function (n) {
+    dz.addEventListener(n, function (e) { e.preventDefault(); dz.classList.remove("hot"); });
+  });
+  dz.addEventListener("drop", function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) readFile(f);
+  });
+  function readFile(f) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      $("impOverlay").hidden = true;
+      importICS(String(fr.result || ""));
+    };
+    fr.onerror = function () { toast("Het bestand kon niet gelezen worden."); };
+    fr.readAsText(f);
+  }
+  $("impGo").addEventListener("click", function () {
+    var txt = $("icsText").value;
+    if (!txt.trim()) { toast("Plak eerst de inhoud van een .ics-bestand, of kies een bestand."); return; }
+    $("impOverlay").hidden = true;
+    importICS(txt);
+  });
+
+  // sneltoetsen
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeOverlays(); $("menu").hidden = true; return; }
+    var tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") {
+      if (e.key === "Enter" && tag !== "textarea") {
+        if (!$("evOverlay").hidden) saveEvent();
+        else if (!$("ldOverlay").hidden) saveLead();
+      }
+      return;
+    }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "ArrowLeft") { shift(-1); e.preventDefault(); }
+    else if (e.key === "ArrowRight") { shift(1); e.preventDefault(); }
+    else if (e.key === "n" || e.key === "N") {
+      if (state.view === "klanten") openLead(null); else openEvent(null);
+      e.preventDefault();
+    }
+    else if (e.key === "t" || e.key === "T") { state.anchor = amsNow().date; render(); }
+    else if (e.key === "1") setView("week");
+    else if (e.key === "2") setView("dag");
+    else if (e.key === "3") setView("lijst");
+    else if (e.key === "4") setView("klanten");
+    else if (e.key === "k" || e.key === "K") { openLead(null); e.preventDefault(); }
+  });
+
+  /* ==========================================================
+     11. Klok + periodieke verversing
+     ========================================================== */
+
+  var lastMinute = -1;
+  function tick() {
+    var n = amsNow();
+    $("clockTime").textContent = pad(n.h) + ":" + pad(n.m) + ":" + pad(n.s);
+    $("clockDate").textContent = fmtLong(n.date) + " " + n.date.slice(0, 4);
+    if (n.min !== lastMinute) {
+      lastMinute = n.min;
+      if ($("evOverlay").hidden && $("impOverlay").hidden && $("ldOverlay").hidden) {
+        if (state.view !== "lijst" && state.view !== "klanten") renderGrid();
+        renderNowCard();
+        renderKlantCard();
+      }
+    }
+  }
+
+  /* ==========================================================
+     12. Opslag koppelen (db) — de pagina werkt ook zonder
+     ========================================================== */
+
+  function setSync(on) {
+    var el = $("syncDot");
+    el.className = "syncdot" + (on ? " on" : "");
+    el.textContent = on ? "opgeslagen bij deze pagina" : "alleen op dit apparaat";
+  }
+
+  function docsToList(snap) {
+    var out = [];
+    for (var i = 0; i < snap.docs.length; i++) {
+      var d = snap.docs[i];
+      if (!d.exists) continue;
+      var body = d.data() || {};
+      var o = { id: d.id };
+      for (var k in body) o[k] = body[k];
+      out.push(o);
+    }
+    return out;
+  }
+
+  function connectDb() {
+    if (!window.claude || typeof window.claude.use !== "function") {
+      setSync(false); seedLocallyIfNeeded(); return;
+    }
+    window.claude.use("db").then(function (handle) {
+      if (!handle) { setSync(false); seedLocallyIfNeeded(); return; }
+      db = handle;
+
+      var first = { events: true, tasks: true };
+      // vóór markSynced() vastleggen: anders lijkt elke eerste koppeling al gesynct
+      var wasSynced = everSynced();
+
+      function subscribe(coll) {
+        db.collection(coll).onSnapshot(function (snap) {
+          var remote = docsToList(snap);
+
+          if (first[coll]) {
+            first[coll] = false;
+            var remoteIds = {};
+            for (var i = 0; i < remote.length; i++) remoteIds[remote[i].id] = true;
+
+            // Eerste keer ooit: neem lokaal werk mee. Daarna alleen wat
+            // tijdens deze sessie offline is gemaakt, zodat elders
+            // verwijderde items niet terugkomen.
+            var toPush = wasSynced
+              ? state[coll].filter(function (x) { return pendingIds[coll][x.id] && !remoteIds[x.id]; })
+              : state[coll].filter(function (x) { return !remoteIds[x.id]; });
+
+            for (var p = 0; p < toPush.length; p++) {
+              var body = {};
+              for (var key in toPush[p]) if (key !== "id") body[key] = toPush[p][key];
+              db.doc(coll + "/" + toPush[p].id).set(body).catch(dbTrouble);
+              remote.push(toPush[p]);
+            }
+            for (var q in pendingDeletes[coll]) {
+              db.doc(coll + "/" + q)["delete"]().catch(function () {});
+            }
+            pendingIds[coll] = {};
+            pendingDeletes[coll] = {};
+          }
+
+          state[coll] = remote;
+          saveLocal();
+          render();
+        }, function (err) {
+          if (err && (err.code === "revoked" || err.code === "not_granted")) {
+            setSync(false); db = null; dbReady = false;
+          }
+        });
+      }
+
+      db.doc("meta/settings").onSnapshot(function (snap) {
+        if (!snap.exists) return;
+        var s = snap.data() || {};
+        if (typeof s.weekend === "boolean") state.settings.weekend = s.weekend;
+        if (typeof s.dayStart === "number") state.settings.dayStart = s.dayStart;
+        if (typeof s.dayEnd === "number") state.settings.dayEnd = s.dayEnd;
+        $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
+        saveLocal();
+        render();
+      }, function () {});
+
+      // eerst kijken of de startlijst al eens is ingeladen, dan pas abonneren
+      db.doc("meta/seeded").get().then(function (snap) {
+        var alreadySeeded = snap && snap.exists;
+        subscribe("events");
+        subscribe("tasks");
+        subscribe("leads");
+        dbReady = true;
+        markSynced();
+        setSync(true);
+        if (!alreadySeeded) {
+          seedLeads();
+          db.doc("meta/seeded").set({ leads: 1, at: new Date().toISOString() })["catch"](function () {});
+          try { localStorage.setItem(LS_SEEDED, "1"); } catch (e) {}
+        }
+      })["catch"](function () {
+        subscribe("events");
+        subscribe("tasks");
+        subscribe("leads");
+        dbReady = true;
+        markSynced();
+        setSync(true);
+      });
+    })["catch"](function () { setSync(false); seedLocallyIfNeeded(); });
+  }
+
+  function connectDownloads() {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    window.claude.use("downloads").then(function (h) {
+      downloads = h;
+      if (!h) {
+        $("miCsv").hidden = true;
+        $("miKlantCsv").hidden = true;
+        $("miJson").hidden = true;
+      }
+    })["catch"](function () {});
+  }
+
+  /* ==========================================================
+     13. Start
+     ========================================================== */
+
+  loadLocal();
+  $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
+  setView(state.view);
+  tick();
+  setInterval(tick, 1000);
+  setSync(false);
+  connectDb();
+  connectDownloads();
+})();
+</script>
+
+</body>
+</html>

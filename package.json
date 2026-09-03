@@ -1,0 +1,13 @@
+{
+  "name": "weekzicht",
+  "version": "1.1.0",
+  "description": "Week-, dag- en klantenoverzicht op Nederlandse tijd",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "start": "python3 build.py && python3 -m http.server 8787 --bind 127.0.0.1",
+    "pretest": "python3 build.py && python3 tests/build-lib.py",
+    "test": "node tests/datum-en-ics.test.js && node tests/import.test.js && node tests/klanten.test.js && node tests/smoke.test.js"
+  },
+  "devDependencies": { "jsdom": "^26.0.0" }
+}
