@@ -1,17 +1,19 @@
 # Weekzicht
 
 Week-, dag- en klantenoverzicht voor een videografie-planning. Eén HTML-bestand,
-geen build-stap, geen afhankelijkheden in de browser. Alles rekent in
+geen build-stap, geen afhankelijkheden in de browser — plus één kleine
+serverfunctie voor het klantformulier. Alles rekent in
 **Europe/Amsterdam**, ongeacht de tijdzone van de browser — inclusief zomer- en
 wintertijd.
 
 ## Snel starten
 
 ```bash
-npm start          # bouwt public/ en serveert op http://localhost:8787
+npm start          # bouwt public/ en serveert op http://127.0.0.1:8787
 ```
 
-Of los: `node build.mjs` en dan een willekeurige statische server op `public/`.
+`dev.mjs` serveert `public/` én `api/formulier`, zodat de formulierlink ook
+lokaal werkt (formulieren blijven dan in het geheugen tot je de server stopt).
 
 De server bindt bewust alleen op `127.0.0.1`; er staan telefoonnummers van
 klanten in.
@@ -38,6 +40,20 @@ Het **Gebeld**-vinkje op elke regel verzet de status en noteert de datum. De
 status blijft de enige waarheid; het vinkje is een snelkoppeling. Klanten met
 een datum verschijnen ook in de agenda, mét hun statusicoon.
 
+Elke klant heeft een **datum van de klus** met **begin- en eindtijd**. Met
+tijden staat de klus op tijd in het weekraster; zonder tijden als hele dag. Een
+eindtijd vóór de begintijd (bijv. 10:00–00:30) geldt als na middernacht.
+
+**Klantformulier** — in het klantvenster maak je met *Maak formulierlink* een
+unieke link voor die klant (`…/?f=token`). De klant ziet op die link alléén het
+formulier, niet je planning: namen, e-mail, telefoon, trouwdatum, begin- en
+eindtijd van het filmen, tijd van de ceremonie, aantal gasten, dagplanning,
+locaties, welke momenten in de film moeten, fotograaf, sfeer en wensen. Na
+versturen komen de antwoorden terug in het klantvenster; datum en begin-/eindtijd
+worden meteen in de klant gezet. De app kijkt elke drie minuten of er nieuwe
+antwoorden zijn; *Ververs* doet dat meteen. Een klant kan de link later opnieuw
+openen en aanpassen.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
 **Import** van `.ics` uit Google Agenda, Outlook of Apple Agenda: terugkerende
@@ -53,14 +69,36 @@ gegevens leven bij de pagina en zijn op elk apparaat beschikbaar. Lokaal is er
 geen `window.claude`, dus valt de app terug op `localStorage` van die ene
 browser. **De twee delen hun gegevens niet** — ander adres, andere opslag.
 
+## Formulieren: de serverkant
+
+De planning zelf leeft in de browser, maar een formulier komt van het apparaat
+van de klant. Daarvoor is `api/formulier.js`, een Vercel-functie die per token
+één record bewaart in Redis (Upstash REST, twee jaar houdbaar). Eenmalig
+instellen:
+
+1. Vercel-project → **Storage** → **Create database** → **Redis** (Upstash).
+2. Koppel hem aan het project. Vercel zet dan `KV_REST_API_URL` en
+   `KV_REST_API_TOKEN` als omgevingsvariabelen; de functie leest die zelf.
+3. Opnieuw deployen.
+
+Zonder die store antwoordt de functie met 503 en meldt de app dat bij *Maak
+formulierlink*. De formulierpagina werkt dan nog wél: de klant krijgt de
+antwoorden als tekst om via WhatsApp of mail te sturen.
+
+Wie de link heeft, kan het formulier zien en invullen — dat is de bedoeling —
+maar ziet nooit de planning of andere klanten. Tokens zijn 22 willekeurige
+tekens. Een klant verwijderen wist ook het formulier op de server.
+
 ## Structuur
 
 ```
 src/weekzicht.html   bron: het artifact-fragment (zonder <head>)
 build.mjs            zet daar de <head> omheen → public/index.html
+api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
+dev.mjs              lokale server voor public/ + api/formulier
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
-tests/               156 controles, zie hieronder
+tests/               ~225 controles, zie hieronder
 ```
 
 `src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
@@ -87,9 +125,14 @@ npm test
   zomer-/wintertijd, omrekening vanuit andere tijdzones, ICS-parsing,
   RRULE-uitrekening, knippen over middernacht
 - **import** — kolomindeling bij overlap, volledige ICS-import van begin tot eind
-- **klanten** — sortering, statustellingen, klantitems in de agenda, filters
-- **smoke** — de gebouwde `public/index.html` in jsdom: elke weergave, elk
-  venster, de filters, het Gebeld-vinkje en de opslag
+- **klanten** — sortering, statustellingen, klantitems in de agenda (met en
+  zonder tijden), filters
+- **formulier** — `api/formulier.js` met een geheugenopslag: tokens, aanmaken,
+  invullen, opschonen van antwoorden, verwijderen, opslagfouten
+- **smoke** — de gebouwde `public/index.html` in jsdom met een bevroren klok
+  (1 sep 2026): elke weergave, elk venster, de filters, het Gebeld-vinkje, de
+  opslag, en de hele formulierketen: link maken → klant vult in op een eigen
+  pagina → antwoorden terug in de planning
 
 De tests draaien op verzonnen klanten uit `tests/fixture.js`.
 
@@ -106,5 +149,7 @@ de pagina zelf — de `db`-capability als artifact, anders `localStorage`.
   een bestand of plakken.
 - Export naar `.csv` en `.json` werkt alleen als artifact — lokaal ontbreekt de
   `downloads`-capability.
+- Formulierlinks werken alleen op de Vercel-deploy (of via `npm start`), niet
+  als artifact: daar is geen `api/formulier`.
 - Een geïmporteerde afspraak over meerdere dagen wordt per dag opgeslagen;
   bewerken raakt dan één dagdeel.

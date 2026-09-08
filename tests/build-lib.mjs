@@ -57,7 +57,7 @@ writeFileSync(join(HERE, "_lead-lib.js"),
   + cut("function pad(n)", TOESTAND)
   + cut("  function visibleEvents()", "  function periodDates()")
   + cut("  function isCalled(status)", "  function renderKlanten()")
-  + "\nmodule.exports={STATUSES,stVar,stDef,icon,leadName,visibleLeads,leadCallEnd,dayItems,"
+  + "\nmodule.exports={STATUSES,stVar,stDef,icon,leadName,visibleLeads,leadCallEnd,leadTimes,leadKlusItem,dayItems,"
   + "itemColor,itemAttr,itemTitleHtml,sortLeads,statusCounts,isCalled,toggleCalled,findLead,"
   + "state,addD,dowOf,diffD,civ,toMin,toTime,CAPTURED,get LAST_TOAST(){return LAST_TOAST;}};\n",
   "utf8");

@@ -3,6 +3,19 @@ const { JSDOM } = require('jsdom');
 
 const path = require('path');
 const FIXTURE = require('./fixture.js');
+const fakeApi = require('./fake-api.js');
+const fetchMock = fakeApi();
+// De klok staat stil op dinsdag 1 september 2026, 12:00 Nederlandse tijd:
+// zo hangt de test niet af van de echte datum.
+const FIXED = Date.UTC(2026, 8, 1, 10, 0, 0);
+function freezeClock(win) {
+  const RealDate = win.Date;
+  win.Date = class extends RealDate {
+    constructor(...a) { if (a.length) super(...a); else super(FIXED); }
+    static now() { return FIXED; }
+  };
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
 // De gebouwde pagina testen, niet de bron: zo dekt de test ook build.mjs.
 const doc = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
 
@@ -13,6 +26,8 @@ const dom = new JSDOM(doc, {
   url: 'https://example.test/',
   // De app kent geen startgegevens meer; zet ze klaar zoals een browser dat zou hebben.
   beforeParse(win) {
+    freezeClock(win);
+    win.fetch = fetchMock;
     win.localStorage.setItem('weekzicht.v1', JSON.stringify({
       events: [], tasks: [], leads: FIXTURE,
       settings: { weekend: true, dayStart: 7, dayEnd: 21 }
@@ -33,7 +48,7 @@ const q = sel => d.querySelector(sel);
 const qa = sel => Array.from(d.querySelectorAll(sel));
 function click(el) { el.dispatchEvent(new w.MouseEvent('click', { bubbles: true })); }
 
-setTimeout(() => {
+setTimeout(async () => {
   try {
     // ---- opstart ----
     ok('geen scriptfouten', errors.length === 0, errors.join(' | '));
@@ -124,7 +139,7 @@ setTimeout(() => {
     click($('newBtn'));
     ok('afspraakvenster open', !$('evOverlay').hidden);
     $('fTitle').value = 'Testafspraak';
-    $('fDate').value = $('clockDate') && new Date().toISOString().slice(0, 10);
+    $('fDate').value = '2026-09-01';
     click($('fSave'));
     ok('afspraakvenster dicht', $('evOverlay').hidden);
     ok('afspraak toegevoegd', qa('#canvas .ev[data-ev]').length > 0, qa('#canvas .ev[data-ev]').length);
@@ -191,6 +206,118 @@ setTimeout(() => {
     click($('lSave'));
     ok('via venster akkoord -> vinkje aan', rowByName('Eva Bakker').querySelector('[data-called]').checked);
     ok('via venster akkoord -> beldatum', /gebeld op/.test(rowByName('Eva Bakker').textContent));
+
+    // ---- begin- en eindtijd van de klus ----
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    ok('tijdvelden in klantvenster', !!$('lStart') && !!$('lEnd'));
+    ok('formulierblok zonder link', /Maak formulierlink/.test($('lFormBox').textContent), $('lFormBox').textContent.slice(0, 60));
+    $('lStart').value = '11:00';
+    $('lStart').dispatchEvent(new w.Event('change', { bubbles: true }));
+    ok('eindtijd voorgesteld', $('lEnd').value === '20:00', $('lEnd').value);
+    $('lEnd').value = '01:00';
+    click($('lSave'));
+    ok('tijden in klantenlijst', /11:00–01:00/.test(rowByName('Bram Jansen').textContent), rowByName('Bram Jansen').textContent.slice(0, 80));
+    let bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
+    ok('tijden bewaard', bram.start === '11:00' && bram.end === '01:00', JSON.stringify([bram.start, bram.end]));
+
+    // ---- formulierlink maken ----
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    click($('lMakeLink'));
+    await wait(30);
+    ok('link gemaakt', !!$('lLink') && /^https:\/\/example\.test\/\?f=[a-z0-9]{22}$/.test($('lLink').value), $('lLink') && $('lLink').value);
+    const token = $('lLink').value.split('?f=')[1];
+    ok('nog niet ingevuld, met tijdstip', /Nog niet ingevuld · link gemaakt op 1 sep 2026 om 12:00$/.test($('lFormBox').querySelector('.fstate').textContent), $('lFormBox').querySelector('.fstate').textContent);
+    ok('server kent de link', fetchMock.store.has('formulier:' + token));
+    ok('server kent naam en datum', (() => { const r = JSON.parse(fetchMock.store.get('formulier:' + token)); return r.naam === 'Bram Jansen' && r.datum === '2026-10-03'; })());
+    ok('venster blijft open', !$('ldOverlay').hidden);
+    click(q('#ldOverlay [data-close]'));
+    ok('chip "formulier gestuurd"', /formulier gestuurd/.test(rowByName('Bram Jansen').textContent));
+    bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
+    ok('token bij de klant bewaard', bram.formToken === token);
+
+    // server kwijt (bijv. herstart zonder Redis): verversen meldt de link opnieuw aan
+    fetchMock.store.delete('formulier:' + token);
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    click($('lCheckForm'));
+    await wait(30);
+    ok('link opnieuw aangemeld', /opnieuw aangemeld/.test($('toast').textContent), $('toast').textContent);
+    ok('server kent de link weer', (() => { const r = fetchMock.store.get('formulier:' + token); return r && JSON.parse(r).naam === 'Bram Jansen'; })());
+    click(q('#ldOverlay [data-close]'));
+
+    // ---- de klant opent de link op een eigen apparaat ----
+    const errors2 = [];
+    const dom2 = new JSDOM(doc, {
+      runScripts: 'dangerously', pretendToBeVisual: true,
+      url: 'https://example.test/?f=' + token,
+      beforeParse(win) { freezeClock(win); win.fetch = fetchMock; },
+      virtualConsole: new (require('jsdom').VirtualConsole)().on('jsdomError', e => errors2.push('jsdomError: ' + e.message))
+    });
+    const w2 = dom2.window, d2 = w2.document;
+    w2.addEventListener('error', e => errors2.push('window error: ' + e.message));
+    await wait(30);
+    const $2 = id => d2.getElementById(id);
+    ok('klant: geen scriptfouten', errors2.length === 0, errors2.join(' | '));
+    ok('klant: formulier zichtbaar', !$2('formPage').hidden && !$2('fpForm').hidden);
+    ok('klant: planning verborgen', d2.querySelector('.app').hidden);
+    ok('klant: geen klantgegevens op de pagina', !/Anna de Vries|00000001/.test(d2.body.textContent));
+    ok('klant: naam voor-ingevuld', $2('q_namen').value === 'Bram Jansen', $2('q_namen').value);
+    ok('klant: datum voor-ingevuld', $2('q_datum').value === '2026-10-03', $2('q_datum').value);
+    ok('klant: begin- en eindtijd gevraagd', $2('q_start').type === 'time' && $2('q_eind').type === 'time');
+    ok('klant: aangesproken met naam', /Bram Jansen/.test($2('fpTitle').textContent), $2('fpTitle').textContent);
+
+    function submit2() { $2('fpForm').dispatchEvent(new w2.Event('submit', { bubbles: true, cancelable: true })); }
+    submit2();
+    await wait(10);
+    ok('klant: verplicht veld gemeld', /e-mailadres/i.test($2('fpStatus').textContent), $2('fpStatus').textContent);
+    ok('klant: niets verstuurd', !JSON.parse(fetchMock.store.get('formulier:' + token)).ingevuld);
+
+    $2('q_email').value = 'bram@voorbeeld.nl';
+    $2('q_telefoon').value = '06 00000002';
+    $2('q_start').value = '10:00';
+    $2('q_start').dispatchEvent(new w2.Event('change', { bubbles: true }));
+    ok('klant: eindtijd voorgesteld', $2('q_eind').value === '19:00', $2('q_eind').value);
+    $2('q_eind').value = '00:30';
+    $2('q_locCeremonie').value = 'Kasteel Keukenhof';
+    d2.querySelector('input[name="q_momenten"][value="Ceremonie"]').checked = true;
+    d2.querySelector('input[name="q_momenten"][value="Openingsdans"]').checked = true;
+    $2('q_wensen').value = 'De speech van opa niet missen.';
+    submit2();
+    await wait(30);
+    ok('klant: bedankt-scherm', !$2('fpDone').hidden && /Bedankt, Bram Jansen/.test($2('fpDone').textContent), $2('fpDone').textContent.slice(0, 60));
+    ok('klant: formulier weg', $2('fpForm').hidden);
+    ok('klant: samenvatting toont wensen', /opa/.test($2('fpDone').textContent));
+    const rec = JSON.parse(fetchMock.store.get('formulier:' + token));
+    ok('server: antwoorden opgeslagen', rec.antwoorden && rec.antwoorden.start === '10:00' && rec.antwoorden.eind === '00:30', JSON.stringify(rec.antwoorden));
+    ok('server: vinkjes opgeslagen', JSON.stringify(rec.antwoorden.momenten) === JSON.stringify(['Ceremonie', 'Openingsdans']));
+    ok('klant: geen scriptfouten na versturen', errors2.length === 0, errors2.join(' | '));
+    w2.close();
+
+    // ---- de antwoorden komen terug in de planning ----
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    await wait(30);
+    ok('antwoorden in venster', /^Ingevuld op \d{1,2} [a-z]{3} \d{4} om \d{2}:\d{2}$/.test($('lFormBox').querySelector('.fstate').textContent), $('lFormBox').querySelector('.fstate').textContent);
+    ok('antwoorden leesbaar', /Kasteel Keukenhof/.test($('lFormBox').textContent) && /Ceremonie, Openingsdans/.test($('lFormBox').textContent));
+    ok('tijden overgenomen', $('lStart').value === '10:00' && $('lEnd').value === '00:30', JSON.stringify([$('lStart').value, $('lEnd').value]));
+    ok('melding ontvangen', /Formulier ontvangen van Bram Jansen/.test($('toast').textContent), $('toast').textContent);
+    click($('lSave'));
+    ok('chip "formulier ingevuld"', /formulier ingevuld/.test(rowByName('Bram Jansen').textContent));
+    ok('tijdchip bijgewerkt', /10:00–00:30/.test(rowByName('Bram Jansen').textContent));
+    bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
+    ok('formulier lokaal bewaard', bram.form && bram.form.wensen === 'De speech van opa niet missen.' && bram.formAt === rec.ingevuld);
+
+    // nogmaals verversen: niets nieuws, geen dubbel werk
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    click($('lCheckForm'));
+    await wait(30);
+    ok('ververs zonder nieuws', /Geen nieuwe antwoorden/.test($('toast').textContent), $('toast').textContent);
+    click(q('#ldOverlay [data-close]'));
+
+    // klus met tijden in de agenda: week van 3 oktober
+    click($('nextBtn')); click($('nextBtn')); click($('nextBtn')); click($('nextBtn')); click($('nextBtn'));
+    const klus = qa('#canvas [data-lead]').find(e => /Bram Jansen/.test(e.textContent));
+    ok('klus in agenda van die week', !!klus);
+    ok('klus staat op tijd, niet als hele dag', klus && !klus.closest('.allday, .ad, [data-allday]') && /10:00/.test(klus.getAttribute('title') || klus.textContent || ''),
+      klus && (klus.getAttribute('title') || klus.textContent));
 
     ok('nog steeds geen scriptfouten', errors.length === 0, errors.join(' | '));
   } catch (e) {

@@ -83,5 +83,18 @@ eq('iconen aanwezig', L.STATUSES.every(s => L.icon(s.icon, 12).includes('<path')
 eq('statuskleuren', L.STATUSES.map(s => L.stVar(s.id)),
   ['var(--st-wacht)', 'var(--st-gepland)', 'var(--st-gebeld)', 'var(--st-akkoord)', 'var(--st-af)']);
 
+// begin- en eindtijd van de klus
+load();
+eq('zonder tijden: hele dag', L.leadTimes(L.state.leads[0]), null);
+L.state.leads[1].start = '11:00'; L.state.leads[1].end = '20:00';           // Bram, 3 okt
+eq('met tijden', L.leadTimes(L.state.leads[1]), { start: '11:00', end: '20:00', label: '11:00–20:00', late: false });
+eq('klus op tijd in de agenda', L.dayItems('2026-10-03').map(i => `${i.title} ${i.start}-${i.end} allDay=${i.allDay}`),
+  ['Bram Jansen 11:00-20:00 allDay=false']);
+L.state.leads[1].end = '01:00';
+eq('eind na middernacht loopt tot 23:59', L.leadTimes(L.state.leads[1]), { start: '11:00', end: '23:59', label: '11:00–01:00', late: true });
+L.state.leads[1].end = null;
+eq('alleen begintijd telt niet', L.leadTimes(L.state.leads[1]), null);
+eq('dan weer hele dag', L.dayItems('2026-10-03')[0].allDay, true);
+
 console.log('\n' + pass + ' geslaagd, ' + fail + ' gefaald');
 process.exit(fail ? 1 : 0);

@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "build": "node build.mjs",
-    "start": "node build.mjs && python3 -m http.server 8787 --bind 127.0.0.1 --directory public",
+    "start": "node build.mjs && node dev.mjs",
     "pretest": "node build.mjs && node tests/build-lib.mjs",
-    "test": "node tests/datum-en-ics.test.js && node tests/import.test.js && node tests/klanten.test.js && node tests/smoke.test.js"
+    "test": "node tests/datum-en-ics.test.js && node tests/import.test.js && node tests/klanten.test.js && node tests/formulier.test.js && node tests/smoke.test.js"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"

@@ -960,6 +960,9 @@ button { cursor: pointer; }
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field > .label { display: block; }
 .field input[type="text"],
+.field input[type="email"],
+.field input[type="tel"],
+.field input[type="number"],
 .field input[type="date"],
 .field input[type="time"],
 .field textarea {
@@ -1299,6 +1302,84 @@ button { cursor: pointer; }
   .topbar-actions { grid-column: 2; }
 }
 
+/* --- klantformulier: link in het klantvenster, antwoorden, tijdchip --- */
+.k-time {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.formbox {
+  padding: 11px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  gap: 9px;
+}
+.formbox p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+.formbox .fstate { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+.formbox .fstate.on { color: var(--cat-focus); font-weight: 600; }
+.linkrow { display: flex; gap: 6px; }
+.linkrow input[type="text"] { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11px; background: var(--surface); }
+.linkrow .btn-line { height: 34px; padding: 0 10px; white-space: nowrap; }
+.answers {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(100px, 36%) 1fr;
+  gap: 6px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.answers dt { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink-3); padding-top: 2px; overflow-wrap: anywhere; }
+.answers dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* --- de formulierpagina die de klant ziet (?f=token) --- */
+.formpage { min-height: 100dvh; background: var(--paper); padding: 28px 14px 70px; }
+.formwrap {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+}
+.formhead { padding: 26px 26px 20px; border-bottom: 1px solid var(--line); }
+.formhead h1 { margin: 7px 0 9px; font-size: 27px; font-stretch: 112%; font-weight: 700; letter-spacing: -.015em; line-height: 1.1; }
+.formintro { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
+.formsec { padding: 18px 26px 20px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; }
+.formsec h2 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.formsec .field input, .formsec .field textarea { font-size: 15px; padding: 10px 11px; }
+.formsec .field input[type="date"], .formsec .field input[type="time"] { font-size: 14px; }
+.formsec .field textarea { min-height: 84px; font-size: 14px; }
+.formsec .hint { font-size: 12px; color: var(--ink-3); }
+.req { color: var(--now); }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.checks .check { font-size: 14px; }
+.ferr { color: var(--now); font-size: 13px; margin: 0; }
+.formfoot { padding: 18px 26px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.formfoot .btn-primary { height: 40px; padding: 0 22px; font-size: 14px; }
+.formfoot .fstatus { font-size: 13px; color: var(--ink-2); }
+.formdone { padding: 26px; display: flex; flex-direction: column; gap: 14px; }
+.formdone h2 { margin: 0; font-size: 20px; font-stretch: 112%; }
+.formdone p { margin: 0; color: var(--ink-2); line-height: 1.55; font-size: 14px; }
+.formdone textarea { width: 100%; min-height: 160px; font-family: var(--mono); font-size: 11.5px; padding: 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface-2); }
+.formdone .answers { font-size: 13.5px; }
+@media (max-width: 520px) {
+  .formpage { padding: 10px 8px 50px; }
+  .formhead, .formsec, .formfoot, .formdone { padding-left: 16px; padding-right: 16px; }
+  .checks { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 620px) {
   :root { --rowh: 48px; --gutter: 46px; }
   .topbar { grid-template-columns: 1fr; }
@@ -1374,6 +1455,18 @@ button { cursor: pointer; }
   </main>
 </div>
 
+<div class="formpage" id="formPage" hidden>
+  <div class="formwrap">
+    <header class="formhead">
+      <span class="label">Bruiloftsfilm</span>
+      <h1 id="fpTitle">Jullie trouwdag</h1>
+      <p class="formintro" id="fpIntro">Even laden…</p>
+    </header>
+    <form id="fpForm" novalidate hidden></form>
+    <div class="formdone" id="fpDone" hidden></div>
+  </div>
+</div>
+
 <div class="overlay" id="evOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTitle">
     <header>
@@ -1443,11 +1536,21 @@ button { cursor: pointer; }
         <span class="label">Status</span>
         <div class="catpick" id="lStatus"></div>
       </div>
-      <div class="field">
-        <label class="label" for="lDate">Datum van de klus</label>
-        <input type="date" id="lDate">
-        <span style="font-size:11.5px;color:var(--ink-3)">Laat leeg als de datum nog niet bekend is.</span>
+      <div class="row3">
+        <div class="field">
+          <label class="label" for="lDate">Datum van de klus</label>
+          <input type="date" id="lDate">
+        </div>
+        <div class="field">
+          <label class="label" for="lStart">Van</label>
+          <input type="time" id="lStart" step="300">
+        </div>
+        <div class="field">
+          <label class="label" for="lEnd">Tot</label>
+          <input type="time" id="lEnd" step="300">
+        </div>
       </div>
+      <span style="font-size:11.5px;color:var(--ink-3);margin-top:-8px">Laat de datum leeg als die nog niet bekend is. Begin- en eindtijd komen vanzelf binnen via het formulier.</span>
       <div class="row2">
         <div class="field">
           <label class="label" for="lCallDate">Belafspraak — datum</label>
@@ -1462,6 +1565,7 @@ button { cursor: pointer; }
         <label class="label" for="lNote">Notitie</label>
         <textarea id="lNote" placeholder="Waar staat het gesprek, wat is afgesproken…"></textarea>
       </div>
+      <div class="field formbox" id="lFormBox"></div>
     </div>
     <footer>
       <button class="btn-line danger" id="lDelete" hidden>Verwijderen</button>
@@ -1834,6 +1938,25 @@ button { cursor: pointer; }
     return toTime(Math.min(1439, toMin(l.callTime) + 30));
   }
 
+  /** Begin- en eindtijd van de klus, of null als (een van) beide ontbreekt. */
+  function leadTimes(l) {
+    if (!l.start || !l.end || !/^\d{2}:\d{2}$/.test(l.start) || !/^\d{2}:\d{2}$/.test(l.end)) return null;
+    // Eindtijd vóór de begintijd = na middernacht; in het raster loopt hij dan tot 23:59.
+    var late = toMin(l.end) <= toMin(l.start);
+    return { start: l.start, end: late ? "23:59" : l.end, label: l.start + "–" + l.end, late: late };
+  }
+
+  /** De klus van een klant als agenda-item: met tijden als die er zijn, anders hele dag. */
+  function leadKlusItem(l) {
+    var t = leadTimes(l);
+    return {
+      key: "lk" + l.id, kind: "lead", refId: l.id,
+      title: leadName(l), sub: "klus", allDay: !t,
+      start: t ? t.start : "00:00", end: t ? t.end : "23:59",
+      cat: null, status: l.status, loc: l.phone || ""
+    };
+  }
+
   /** Afspraken en klanten in één genormaliseerde stroom per dag. */
   function dayItems(date) {
     var out = [];
@@ -1850,14 +1973,7 @@ button { cursor: pointer; }
     var lds = visibleLeads();
     for (var j = 0; j < lds.length; j++) {
       var l = lds[j];
-      if (l.date === date) {
-        out.push({
-          key: "lk" + l.id, kind: "lead", refId: l.id,
-          title: leadName(l), sub: "klus", allDay: true,
-          start: "00:00", end: "23:59", cat: null, status: l.status,
-          loc: l.phone || ""
-        });
-      }
+      if (l.date === date) out.push(leadKlusItem(l));
       if (l.callDate === date) {
         out.push({
           key: "lc" + l.id, kind: "lead", refId: l.id,
@@ -2201,9 +2317,9 @@ button { cursor: pointer; }
         var lh = (leadName(ql[y]) + " " + (ql[y].phone || "") + " " + (ql[y].note || "")).toLowerCase();
         if (lh.indexOf(q) < 0) continue;
         if (ql[y].date) {
-          evs.push({ key: "lk" + ql[y].id, kind: "lead", refId: ql[y].id, title: leadName(ql[y]),
-                     date: ql[y].date, allDay: true, start: "00:00", end: "23:59",
-                     cat: null, status: ql[y].status, loc: ql[y].phone || "" });
+          var ki = leadKlusItem(ql[y]);
+          ki.date = ql[y].date;
+          evs.push(ki);
         }
         if (ql[y].callDate) {
           evs.push({ key: "lc" + ql[y].id, kind: "lead", refId: ql[y].id,
@@ -2432,6 +2548,12 @@ button { cursor: pointer; }
           (l.callTime ? " om " + l.callTime : "") + '</span>';
       }
 
+      var lt = leadTimes(l);
+      var timeChip = lt ? '<span class="k-time">' + esc(lt.label) + '</span>' : "";
+      var formChip = l.form
+        ? '<span class="k-when">formulier ingevuld</span>'
+        : (l.formToken ? '<span class="k-when">formulier gestuurd</span>' : "");
+
       html += '<div class="klant' + (gone ? " gone" : "") + '" style="--st:' + stVar(l.status) + '">' +
         '<button class="k-main" data-lead="' + esc(l.id) + '">' +
           '<span class="k-date">' + dateBlock + '</span>' +
@@ -2439,7 +2561,7 @@ button { cursor: pointer; }
             '<span class="k-name' + (l.name && l.name.trim() ? "" : " anon") + '">' + esc(leadName(l)) + '</span>' +
             '<span class="k-tags">' + statusPill(l.status) +
               (l.calledAt ? '<span class="k-when">gebeld op ' + esc(fmtShort(l.calledAt)) + '</span>' : '') +
-              (gone ? '<span class="label">datum geweest</span>' : '') + callChip + '</span>' +
+              (gone ? '<span class="label">datum geweest</span>' : '') + timeChip + formChip + callChip + '</span>' +
             (l.note ? '<span class="k-note">' + esc(l.note) + '</span>' : '') +
           '</span>' +
         '</button>' +
@@ -2491,8 +2613,8 @@ button { cursor: pointer; }
     $("klantCard").innerHTML = html;
   }
 
-  function copyText(t) {
-    function ok() { toast("Nummer gekopieerd: " + t); }
+  function copyText(t, msg) {
+    function ok() { toast(msg || ("Nummer gekopieerd: " + t)); }
     function fallback() {
       try {
         var ta = document.createElement("textarea");
@@ -2848,22 +2970,27 @@ button { cursor: pointer; }
     $("lName").value = l ? (l.name || "") : "";
     $("lPhone").value = l ? (l.phone || "") : "";
     $("lDate").value = l && l.date ? l.date : "";
+    $("lStart").value = l && l.start ? l.start : "";
+    $("lEnd").value = l && l.end ? l.end : "";
     $("lCallDate").value = l && l.callDate ? l.callDate : "";
     $("lCallTime").value = l && l.callTime ? l.callTime : "";
     $("lNote").value = l ? (l.note || "") : "";
     setStatusPick(l ? l.status : "wacht");
     $("lDelete").hidden = !l;
+    renderLeadFormBox(l);
     $("ldOverlay").hidden = false;
     setTimeout(function () { $("lName").focus(); $("lName").select(); }, 0);
+    if (l && l.formToken && !l.form) checkForm(l.id);
   }
 
-  function saveLead() {
+  /** Leest het klantvenster uit. Geeft null (met melding) als er te weinig is ingevuld. */
+  function collectLead() {
     var name = $("lName").value.trim();
     var phone = $("lPhone").value.trim();
     if (!name && !phone) {
       toast("Vul minstens een naam of een telefoonnummer in.");
       $("lName").focus();
-      return;
+      return null;
     }
     var old = editingLead ? findLead(editingLead) : null;
     var status = getStatusPick();
@@ -2871,18 +2998,34 @@ button { cursor: pointer; }
     if (isCalled(status)) { if (!calledAt) calledAt = amsNow().date; }
     else calledAt = null;
 
-    put("leads", {
+    var obj = {
       id: editingLead || uid("l"),
       name: name,
       phone: phone,
       date: $("lDate").value || null,
+      start: $("lStart").value || null,
+      end: $("lEnd").value || null,
       status: status,
       calledAt: calledAt,
       callDate: $("lCallDate").value || null,
       callTime: $("lCallDate").value ? ($("lCallTime").value || null) : null,
       note: $("lNote").value.trim(),
       createdAt: old && old.createdAt ? old.createdAt : Date.now()
-    });
+    };
+    // formuliergegevens reizen mee; die bewerk je niet in dit venster
+    if (old) {
+      if (old.formToken) obj.formToken = old.formToken;
+      if (old.formLinkAt) obj.formLinkAt = old.formLinkAt;
+      if (old.form) obj.form = old.form;
+      if (old.formAt) obj.formAt = old.formAt;
+    }
+    return obj;
+  }
+
+  function saveLead() {
+    var obj = collectLead();
+    if (!obj) return;
+    put("leads", obj);
     $("ldOverlay").hidden = true;
     editingLead = null;
     render();
@@ -2890,6 +3033,10 @@ button { cursor: pointer; }
 
   function deleteLead() {
     if (!editingLead) return;
+    var gone = findLead(editingLead);
+    if (gone && gone.formToken) {
+      api("POST", "", { t: gone.formToken, actie: "verwijderen" })["catch"](function () {});
+    }
     drop("leads", editingLead);
     $("ldOverlay").hidden = true;
     editingLead = null;
@@ -2938,6 +3085,405 @@ button { cursor: pointer; }
     } catch (e) {
       if (!state.leads.length) seedLeads();
     }
+  }
+
+  /* ==========================================================
+     6c. Klantformulier — link per klant, antwoorden terug in de klant
+     ========================================================== */
+
+  // Het formulier leeft op dezelfde pagina (?f=token); de antwoorden gaan
+  // via api/formulier (een Vercel-functie) heen en weer. Zonder die functie
+  // — lokaal, of als artifact — werkt de rest van de app gewoon door.
+  var API_URL = "api/formulier";
+
+  function api(method, query, body) {
+    if (typeof fetch !== "function") return Promise.reject({ code: "geen_fetch" });
+    var opts = { method: method, headers: { "Accept": "application/json" } };
+    if (body) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(API_URL + (query || ""), opts).then(function (r) {
+      return r.text().then(function (txt) {
+        var data = null;
+        try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
+        return { ok: r.ok, status: r.status, data: data || {} };
+      });
+    });
+  }
+
+  function apiReason(r) {
+    if (!r) return "Geen verbinding met de server.";
+    if (r.status === 503) return "De server heeft nog geen opslag. Koppel een Redis-store in Vercel (zie README).";
+    if (r.status === 404 || r.status === 405 || r.status === 501) {
+      return "Deze versie heeft geen formulier-API. Formulierlinks werken alleen op de online versie (Vercel).";
+    }
+    return "De server gaf een fout (" + r.status + "). Probeer het zo nog eens.";
+  }
+
+  function newToken() {
+    var abc = "abcdefghijklmnopqrstuvwxyz0123456789", out = "";
+    var n = 22;
+    if (window.crypto && window.crypto.getRandomValues) {
+      var buf = new Uint8Array(n);
+      window.crypto.getRandomValues(buf);
+      for (var i = 0; i < n; i++) out += abc[buf[i] % abc.length];
+    } else {
+      for (var j = 0; j < n; j++) out += abc[Math.floor(Math.random() * abc.length)];
+    }
+    return out;
+  }
+
+  function formLink(l) {
+    return location.origin + location.pathname + "?f=" + l.formToken;
+  }
+
+  // De vragen — één lijst voor de pagina van de klant én voor het tonen
+  // van de antwoorden in het klantvenster.
+  var FORM_SECTIONS = [
+    { title: "Wie zijn jullie", fields: [
+      { id: "namen", label: "Jullie namen", type: "text", req: true, ph: "Bijv. Sanne & Thomas" },
+      { id: "email", label: "E-mailadres", type: "email", req: true, ph: "naam@voorbeeld.nl" },
+      { id: "telefoon", label: "Telefoonnummer", type: "tel", req: true, ph: "06 12345678" }
+    ]},
+    { title: "De dag", fields: [
+      { id: "datum", label: "Trouwdatum", type: "date", req: true },
+      { id: "start", label: "Begintijd filmen", type: "time", req: true, hint: "Vanaf hoe laat wil je dat ik erbij ben?" },
+      { id: "eind", label: "Eindtijd filmen", type: "time", req: true, hint: "Tot hoe laat? Na middernacht mag ook." },
+      { id: "tijdCeremonie", label: "Tijd van de ceremonie", type: "time" },
+      { id: "gasten", label: "Aantal gasten (ongeveer)", type: "number", ph: "80" },
+      { id: "planning", label: "Globale planning van de dag", type: "textarea",
+        ph: "10:00 aankleden bij de bruid\n13:30 ceremonie\n15:00 fotoshoot\n17:00 borrel\n19:00 diner\n21:00 feest" }
+    ]},
+    { title: "Locaties", fields: [
+      { id: "locVoorbereiding", label: "Waar zijn de voorbereidingen?", type: "text", ph: "Adres of naam van de locatie" },
+      { id: "locCeremonie", label: "Locatie ceremonie", type: "text", ph: "Adres of naam van de locatie" },
+      { id: "locFeest", label: "Locatie diner en feest", type: "text", ph: "Adres of naam van de locatie" }
+    ]},
+    { title: "Wat wil je terugzien", fields: [
+      { id: "momenten", label: "Welke momenten moeten zeker in de film?", type: "checks", options: [
+        "Voorbereidingen", "First look", "Ceremonie", "Fotoshoot", "Borrel en felicitaties",
+        "Diner", "Speeches", "Openingsdans", "Feest", "Vertrek"
+      ]},
+      { id: "fotograaf", label: "Wie is jullie fotograaf?", type: "text", ph: "Naam of website, zodat ik kan afstemmen" },
+      { id: "stijl", label: "Welke sfeer of muziek past bij jullie film?", type: "textarea", ph: "Rustig en romantisch, energiek, documentair…" },
+      { id: "wensen", label: "Bijzondere momenten of wensen die ik niet mag missen", type: "textarea", ph: "Een verrassing, een speech, een dierbaar familielid…" },
+      { id: "opmerkingen", label: "Nog iets wat ik moet weten?", type: "textarea" }
+    ]}
+  ];
+
+  function formFields() {
+    var out = [];
+    for (var i = 0; i < FORM_SECTIONS.length; i++) out = out.concat(FORM_SECTIONS[i].fields);
+    return out;
+  }
+
+  function answerText(f, v) {
+    if (v == null || v === "") return "";
+    if (Array.isArray(v)) return v.join(", ");
+    if (typeof v === "boolean") return v ? "ja" : "nee";
+    if (f && f.type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(v)) return fmtLong(v) + " " + v.slice(0, 4);
+    return String(v);
+  }
+
+  function answersHtml(a) {
+    var fields = formFields(), html = '<dl class="answers">';
+    for (var i = 0; i < fields.length; i++) {
+      var txt = answerText(fields[i], a[fields[i].id]);
+      if (!txt) continue;
+      html += '<dt>' + esc(fields[i].label) + '</dt><dd>' + esc(txt) + '</dd>';
+    }
+    return html + '</dl>';
+  }
+
+  function answersPlain(a) {
+    var fields = formFields(), lines = [];
+    for (var i = 0; i < fields.length; i++) {
+      var txt = answerText(fields[i], a[fields[i].id]);
+      if (txt) lines.push(fields[i].label + ": " + txt);
+    }
+    return lines.join("\n");
+  }
+
+  function fmtStamp(iso) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d.getTime())) return "";
+    var p = instantToAms(d);
+    return fmtShort(p.date) + " " + p.date.slice(0, 4) + " om " + p.time;
+  }
+
+  /* --- in het klantvenster --------------------------------- */
+
+  function renderLeadFormBox(l) {
+    var box = $("lFormBox");
+    if (!l || !l.formToken) {
+      box.innerHTML = '<span class="label">Formulier voor de klant</span>' +
+        '<p>Maak een link en stuur die naar de klant. Daar vullen ze hun trouwdatum, ' +
+        'begin- en eindtijd, locaties en wensen in. De antwoorden komen hier vanzelf terug.</p>' +
+        '<div><button type="button" class="btn-line" id="lMakeLink">Maak formulierlink</button></div>';
+      return;
+    }
+    var html = '<span class="label">Formulier voor de klant</span>' +
+      '<div class="linkrow"><input type="text" id="lLink" readonly value="' + esc(formLink(l)) + '" aria-label="Formulierlink">' +
+      '<button type="button" class="btn-line" id="lCopyLink">Kopieer</button>' +
+      '<button type="button" class="btn-line" id="lCheckForm" title="Kijk of de klant het formulier al heeft ingevuld">Ververs</button></div>';
+    if (l.form) {
+      html += '<span class="fstate on">Ingevuld op ' + esc(fmtStamp(l.formAt)) + '</span>' + answersHtml(l.form);
+    } else {
+      html += '<span class="fstate">Nog niet ingevuld' +
+        (l.formLinkAt ? ' · link gemaakt op ' + esc(fmtStamp(new Date(l.formLinkAt).toISOString())) : '') + '</span>';
+    }
+    box.innerHTML = html;
+  }
+
+  function makeFormLink() {
+    var obj = collectLead();
+    if (!obj) return;
+    var btn = $("lMakeLink");
+    if (btn) { btn.disabled = true; btn.textContent = "Bezig…"; }
+    var t = newToken();
+    api("POST", "", { t: t, actie: "aanmaken", naam: obj.name, datum: obj.date || "" }).then(function (r) {
+      if (!r.ok) { toast(apiReason(r)); renderLeadFormBox(null); return; }
+      obj.formToken = t;
+      obj.formLinkAt = Date.now();
+      put("leads", obj);
+      editingLead = obj.id;
+      $("ldTitle").textContent = "Klant bewerken";
+      $("lDelete").hidden = false;
+      renderLeadFormBox(obj);
+      render();
+      copyText(formLink(obj), "Formulierlink gekopieerd — plak hem in je bericht aan de klant.");
+    })["catch"](function () {
+      toast(apiReason(null));
+      renderLeadFormBox(null);
+    });
+  }
+
+  /* --- antwoorden ophalen ------------------------------------ */
+
+  function applyForm(id, rec) {
+    var l = findLead(id);
+    if (!l) return;
+    var a = rec.antwoorden || {};
+    var upd = {};
+    for (var k in l) upd[k] = l[k];
+    upd.form = a;
+    upd.formAt = rec.ingevuld;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(a.datum || "")) upd.date = a.datum;
+    if (/^\d{2}:\d{2}$/.test(a.start || "")) upd.start = a.start;
+    if (/^\d{2}:\d{2}$/.test(a.eind || "")) upd.end = a.eind;
+    if (!upd.name && a.namen) upd.name = a.namen;
+    if (!upd.phone && a.telefoon) upd.phone = a.telefoon;
+    put("leads", upd);
+    if (editingLead === id && !$("ldOverlay").hidden) {
+      if (upd.date) $("lDate").value = upd.date;
+      if (upd.start) $("lStart").value = upd.start;
+      if (upd.end) $("lEnd").value = upd.end;
+      if (!$("lName").value.trim() && upd.name) $("lName").value = upd.name;
+      if (!$("lPhone").value.trim() && upd.phone) $("lPhone").value = upd.phone;
+      renderLeadFormBox(upd);
+    }
+    render();
+  }
+
+  /** Haalt het formulier van één klant op. Belooft true als er (nieuwe) antwoorden waren. */
+  function checkForm(id, loud) {
+    var l = findLead(id);
+    if (!l || !l.formToken) return Promise.resolve(false);
+    return api("GET", "?t=" + l.formToken).then(function (r) {
+      if (r.status === 404) {
+        // De server kent de link niet (meer): meld hem opnieuw aan, dan blijft
+        // de link die de klant al heeft gewoon werken.
+        return api("POST", "", { t: l.formToken, actie: "aanmaken", naam: l.name || "", datum: l.date || "" })
+          .then(function (r2) {
+            if (loud) toast(r2.ok ? "De link was onbekend op de server en is opnieuw aangemeld. Nog niet ingevuld." : apiReason(r2));
+            return false;
+          });
+      }
+      if (!r.ok) { if (loud) toast(apiReason(r)); return false; }
+      if (!r.data.ingevuld) { if (loud) toast("Nog niet ingevuld."); return false; }
+      if (l.formAt === r.data.ingevuld) { if (loud) toast("Geen nieuwe antwoorden."); return false; }
+      applyForm(id, r.data);
+      toast("Formulier ontvangen van " + leadName(findLead(id) || l) + ".");
+      return true;
+    })["catch"](function () { if (loud) toast(apiReason(null)); return false; });
+  }
+
+  var pollingForms = false;
+  function pollForms() {
+    if (pollingForms) return;
+    var open = state.leads.filter(function (l) { return l.formToken && !l.form; });
+    if (!open.length) return;
+    pollingForms = true;
+    var chain = Promise.resolve();
+    open.forEach(function (l) { chain = chain.then(function () { return checkForm(l.id); }); });
+    chain.then(function () { pollingForms = false; }, function () { pollingForms = false; });
+  }
+
+  /* --- de pagina van de klant -------------------------------- */
+
+  function fieldHtml(f, val) {
+    var id = "q_" + f.id;
+    var lab = '<label class="label" for="' + id + '">' + esc(f.label) + (f.req ? ' <span class="req">*</span>' : '') + '</label>';
+    var hint = f.hint ? '<span class="hint">' + esc(f.hint) + '</span>' : '';
+    if (f.type === "checks") {
+      var picked = Array.isArray(val) ? val : [];
+      var boxes = '';
+      for (var i = 0; i < f.options.length; i++) {
+        boxes += '<label class="check"><input type="checkbox" name="' + id + '" value="' + esc(f.options[i]) + '"' +
+          (picked.indexOf(f.options[i]) >= 0 ? ' checked' : '') + '> ' + esc(f.options[i]) + '</label>';
+      }
+      return '<div class="field"><span class="label">' + esc(f.label) + '</span><div class="checks">' + boxes + '</div>' + hint + '</div>';
+    }
+    if (f.type === "textarea") {
+      return '<div class="field">' + lab + '<textarea id="' + id + '" placeholder="' + esc(f.ph || '') + '">' + esc(val || '') + '</textarea>' + hint + '</div>';
+    }
+    var extra = f.type === "time" ? ' step="300"' : f.type === "number" ? ' min="0" inputmode="numeric"' : '';
+    return '<div class="field">' + lab + '<input type="' + f.type + '" id="' + id + '" value="' + esc(val || '') +
+      '" placeholder="' + esc(f.ph || '') + '"' + extra + (f.req ? ' required' : '') + '>' + hint + '</div>';
+  }
+
+  function buildFormHtml(prefill) {
+    var html = '';
+    for (var s = 0; s < FORM_SECTIONS.length; s++) {
+      var sec = FORM_SECTIONS[s];
+      html += '<section class="formsec"><h2>' + esc(sec.title) + '</h2>';
+      var i = 0;
+      while (i < sec.fields.length) {
+        var f = sec.fields[i], g = sec.fields[i + 1];
+        // begin- en eindtijd naast elkaar
+        if (f.id === "start" && g && g.id === "eind") {
+          html += '<div class="row2">' + fieldHtml(f, prefill[f.id]) + fieldHtml(g, prefill[g.id]) + '</div>';
+          i += 2;
+        } else if (f.id === "tijdCeremonie" && g && g.id === "gasten") {
+          html += '<div class="row2">' + fieldHtml(f, prefill[f.id]) + fieldHtml(g, prefill[g.id]) + '</div>';
+          i += 2;
+        } else {
+          html += fieldHtml(f, prefill[f.id]);
+          i += 1;
+        }
+      }
+      html += '</section>';
+    }
+    html += '<div class="formfoot"><button type="submit" class="btn-primary" id="fpSend">Versturen</button>' +
+      '<span class="fstatus" id="fpStatus"></span></div>';
+    return html;
+  }
+
+  function readForm() {
+    var out = {}, fields = formFields();
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      if (f.type === "checks") {
+        var picked = [], boxes = document.querySelectorAll('input[name="q_' + f.id + '"]:checked');
+        for (var b = 0; b < boxes.length; b++) picked.push(boxes[b].value);
+        out[f.id] = picked;
+      } else {
+        var el = $("q_" + f.id);
+        out[f.id] = el ? el.value.trim() : "";
+      }
+    }
+    return out;
+  }
+
+  function validateForm(a) {
+    var fields = formFields();
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      if (f.req && !a[f.id]) return { id: f.id, msg: "Vul " + f.label.toLowerCase() + " in." };
+    }
+    if (a.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email)) return { id: "email", msg: "Dat e-mailadres ziet er niet goed uit." };
+    if (a.datum && !/^\d{4}-\d{2}-\d{2}$/.test(a.datum)) return { id: "datum", msg: "Kies een geldige datum." };
+    return null;
+  }
+
+  function bootForm(token) {
+    document.querySelector(".app").hidden = true;
+    $("formPage").hidden = false;
+    document.title = "Bruiloftsfilm — formulier";
+    var form = $("fpForm");
+    var rec = null;
+
+    function show(data) {
+      rec = data || {};
+      var prefill = {};
+      if (rec.antwoorden) for (var k in rec.antwoorden) prefill[k] = rec.antwoorden[k];
+      if (!prefill.namen && rec.naam) prefill.namen = rec.naam;
+      if (!prefill.datum && rec.datum) prefill.datum = rec.datum;
+      var wie = rec.naam || prefill.namen;
+      $("fpTitle").textContent = wie ? "Jullie trouwdag, " + wie : "Jullie trouwdag";
+      $("fpIntro").innerHTML = (wie ? "Hoi " + esc(wie) + "! " : "Hoi! ") +
+        "Vul dit formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. " +
+        "Velden met een <span class=\"req\">*</span> zijn nodig; de rest mag je overslaan." +
+        (rec.ingevuld ? "<br><br><strong>Je hebt dit al ingevuld op " + esc(fmtStamp(rec.ingevuld)) +
+          ".</strong> Je kunt het aanpassen en opnieuw versturen." : "");
+      form.innerHTML = buildFormHtml(prefill);
+      form.hidden = false;
+      $("q_start").addEventListener("change", function () {
+        var st = $("q_start").value, en = $("q_eind");
+        if (st && !en.value) en.value = toTime(Math.min(1439, toMin(st) + 9 * 60));
+      });
+    }
+
+    api("GET", "?t=" + token).then(function (r) {
+      if (r.status === 404) {
+        $("fpIntro").textContent = "Deze link is niet (meer) geldig. Vraag een nieuwe link aan.";
+        return;
+      }
+      show(r.ok ? r.data : null);
+    })["catch"](function () { show(null); });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var a = readForm();
+      var err = validateForm(a);
+      var status = $("fpStatus");
+      if (err) {
+        status.textContent = err.msg;
+        status.className = "ferr";
+        var el = $("q_" + err.id);
+        if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        return;
+      }
+      status.className = "fstatus";
+      status.textContent = "Versturen…";
+      $("fpSend").disabled = true;
+      api("POST", "", { t: token, actie: "invullen", antwoorden: a }).then(function (r) {
+        if (!r.ok) throw r;
+        form.hidden = true;
+        $("fpDone").innerHTML = '<h2>Bedankt' + (a.namen ? ', ' + esc(a.namen) : '') + '!</h2>' +
+          '<p>Jullie antwoorden zijn verstuurd. Ik neem ze door en kom erop terug. ' +
+          'Iets vergeten? Open deze link later nog eens; je kunt alles aanpassen.</p>' + answersHtml(a) +
+          '<div><button type="button" class="btn-line" id="fpEdit">Toch nog iets aanpassen</button></div>';
+        $("fpDone").hidden = false;
+        if ($("formPage").scrollIntoView) $("formPage").scrollIntoView();
+        $("fpEdit").addEventListener("click", function () {
+          $("fpDone").hidden = true;
+          form.hidden = false;
+          $("fpSend").disabled = false;
+          status.textContent = "";
+        });
+      })["catch"](function (r) {
+        $("fpSend").disabled = false;
+        status.className = "ferr";
+        status.textContent = "Versturen lukte niet.";
+        form.hidden = true;
+        $("fpDone").innerHTML = '<h2>Versturen lukte niet</h2>' +
+          '<p>' + esc(r && r.status ? "De server gaf een fout (" + r.status + ")." : "Er is geen verbinding met de server.") +
+          ' Kopieer de tekst hieronder en stuur die naar mij via WhatsApp of mail, dan heb ik alles alsnog.</p>' +
+          '<textarea id="fpPlain" readonly>' + esc(answersPlain(a)) + '</textarea>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-primary" id="fpCopy">Kopieer tekst</button>' +
+          '<button type="button" class="btn-line" id="fpRetry">Nog eens proberen</button></div>';
+        $("fpDone").hidden = false;
+        if ($("formPage").scrollIntoView) $("formPage").scrollIntoView();
+        $("fpCopy").addEventListener("click", function () { copyText(answersPlain(a), "Tekst gekopieerd."); });
+        $("fpRetry").addEventListener("click", function () {
+          $("fpDone").hidden = true;
+          form.hidden = false;
+          status.textContent = "";
+        });
+      });
+    });
   }
 
   /* ==========================================================
@@ -3288,13 +3834,14 @@ button { cursor: pointer; }
     if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
     if (!state.leads.length) { toast("Nog geen klanten om te exporteren."); return; }
     var list = sortLeads(state.leads);
-    var rows = ["Datum;Dag;Naam;Telefoon;Status;Gebeld;Gebeld op;Belafspraak;Beltijd;Notitie"];
+    var rows = ["Datum;Dag;Van;Tot;Naam;Telefoon;Status;Gebeld;Gebeld op;Belafspraak;Beltijd;Formulier;Notitie"];
     for (var i = 0; i < list.length; i++) {
       var l = list[i];
       rows.push([
-        l.date || "", l.date ? DAYS[dowOf(l.date)] : "", l.name || "", l.phone || "",
+        l.date || "", l.date ? DAYS[dowOf(l.date)] : "", l.start || "", l.end || "", l.name || "", l.phone || "",
         stDef(l.status).label, isCalled(l.status) ? "ja" : "nee", l.calledAt || "",
         l.callDate || "", l.callTime || "",
+        l.form ? "ingevuld" : (l.formToken ? "gestuurd" : ""),
         (l.note || "").replace(/\n/g, " ")
       ].map(csvCell).join(";"));
     }
@@ -3580,6 +4127,17 @@ button { cursor: pointer; }
   buildStatusPicker();
   $("lSave").addEventListener("click", saveLead);
   $("lDelete").addEventListener("click", deleteLead);
+  $("lFormBox").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "lMakeLink") makeFormLink();
+    else if (b.id === "lCopyLink") copyText($("lLink").value, "Formulierlink gekopieerd.");
+    else if (b.id === "lCheckForm" && editingLead) checkForm(editingLead, true);
+  });
+  $("lStart").addEventListener("change", function () {
+    var s = $("lStart").value, en = $("lEnd").value;
+    if (s && !en) $("lEnd").value = toTime(Math.min(1439, toMin(s) + 9 * 60));
+  });
   $("fAllDay").addEventListener("change", syncAllDay);
   $("fSave").addEventListener("click", saveEvent);
   $("fDelete").addEventListener("click", deleteEvent);
@@ -3669,6 +4227,7 @@ button { cursor: pointer; }
     $("clockDate").textContent = fmtLong(n.date) + " " + n.date.slice(0, 4);
     if (n.min !== lastMinute) {
       lastMinute = n.min;
+      if (n.min % 3 === 0) pollForms();
       if ($("evOverlay").hidden && $("impOverlay").hidden && $("ldOverlay").hidden) {
         if (state.view !== "lijst" && state.view !== "klanten") renderGrid();
         renderNowCard();
@@ -3803,6 +4362,18 @@ button { cursor: pointer; }
      13. Start
      ========================================================== */
 
+  var FORM_TOKEN = null;
+  try {
+    var m = /(?:^|[?&])f=([a-z0-9]{12,40})(?:&|$)/.exec(location.search || "");
+    if (m) FORM_TOKEN = m[1];
+  } catch (e) { FORM_TOKEN = null; }
+
+  if (FORM_TOKEN) {
+    // De klant ziet alleen het formulier; de planning blijft dicht.
+    bootForm(FORM_TOKEN);
+    return;
+  }
+
   loadLocal();
   $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
   setView(state.view);
@@ -3811,5 +4382,6 @@ button { cursor: pointer; }
   setSync(false);
   connectDb();
   connectDownloads();
+  setTimeout(pollForms, 1500);
 })();
 </script>
