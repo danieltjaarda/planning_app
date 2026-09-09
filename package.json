@@ -7,7 +7,7 @@
     "build": "node build.mjs",
     "start": "node build.mjs && node dev.mjs",
     "pretest": "node build.mjs && node tests/build-lib.mjs",
-    "test": "node tests/datum-en-ics.test.js && node tests/import.test.js && node tests/klanten.test.js && node tests/formulier.test.js && node tests/draaiboek.test.js && node tests/smoke.test.js"
+    "test": "node tests/datum-en-ics.test.js && node tests/import.test.js && node tests/klanten.test.js && node tests/formulier.test.js && node tests/draaiboek.test.js && node tests/toegang.test.mjs && node tests/smoke.test.js"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"

@@ -1694,6 +1694,8 @@ button { cursor: pointer; }
           <button id="miJson">Back-up alles (.json)</button>
           <hr>
           <button id="miWipe" class="danger">Alle gegevens wissen…</button>
+          <hr>
+          <button id="miUit">Uitloggen</button>
         </div>
       </div>
     </div>
@@ -3393,6 +3395,7 @@ button { cursor: pointer; }
   function apiReason(r) {
     if (!r) return "Geen verbinding met de server.";
     if (r.status === 503) return "De server heeft nog geen opslag. Koppel een Redis-store in Vercel (zie README).";
+    if (r.status === 401) return "Je bent niet (meer) ingelogd. Laad de pagina opnieuw en log in.";
     if (r.status === 404 || r.status === 405 || r.status === 501) {
       return "Deze versie heeft geen formulier-API. Formulierlinks werken alleen op de online versie (Vercel).";
     }
@@ -4488,6 +4491,10 @@ button { cursor: pointer; }
   $("miKlantCsv").addEventListener("click", function () { $("menu").hidden = true; exportLeadsCsv(); });
   $("miJson").addEventListener("click", function () { $("menu").hidden = true; exportJson(); });
   var wipeArmed = false, wipeTimer = null;
+  $("miUit").addEventListener("click", function () {
+    $("menu").hidden = true;
+    location.href = "api/inloggen?uit=1";
+  });
   $("miWipe").addEventListener("click", function () {
     if (!wipeArmed) {
       wipeArmed = true;
@@ -4841,6 +4848,7 @@ button { cursor: pointer; }
 
   function connectDownloads() {
     if (!window.claude || typeof window.claude.use !== "function") return;
+    $("miUit").hidden = true; // als artifact is er geen wachtwoord
     window.claude.use("downloads").then(function (h) {
       downloads = h;
       if (!h) {

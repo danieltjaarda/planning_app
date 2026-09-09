@@ -18,6 +18,7 @@ const MAX_CALLS = 25;                // per formulierlink
 const MODEL = "google/gemini-2.5-flash"; // snel, goedkoop, leest foto's en PDF's zelf
 const TTL_SEC = 60 * 60 * 24 * 730;
 const bestanden = require("./_bestanden.js");
+const sessie = require("./_sessie.js");
 
 const IMAGE = /^image\/(jpeg|png|webp|gif|heic|heif)$/;
 const TEXT = /^text\/(plain|markdown|csv)$/;
@@ -99,6 +100,12 @@ function cleanTimeline(text) {
 
 /** Het bewaarde bestand teruggeven — alleen met het formulier-token. */
 async function serveFile(req, res, db, files) {
+  if (!sessie.ingelogd(req)) {
+    // niet ingelogd: naar de inlogpagina, daarna kom je hier terug
+    res.statusCode = 401;
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.end('<meta http-equiv="refresh" content="0; url=/inloggen.html">Log eerst in.');
+  }
   if (!db) return send(res, 503, { error: "geen_opslag" });
   const t = String((req.query && req.query.t) || "");
   const i = parseInt((req.query && req.query.i) || "", 10);

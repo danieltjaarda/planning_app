@@ -69,6 +69,25 @@ gegevens leven bij de pagina en zijn op elk apparaat beschikbaar. Lokaal is er
 geen `window.claude`, dus valt de app terug op `localStorage` van die ene
 browser. **De twee delen hun gegevens niet** — ander adres, andere opslag.
 
+## Toegang: een wachtwoord op de planning
+
+De planning staat achter een wachtwoord; de formulierlinks (`?f=token`) niet.
+Zet in Vercel de omgevingsvariabele `WEEKZICHT_WACHTWOORD` (Settings →
+Environment Variables, Production en Preview) en deploy opnieuw. Daarna:
+
+- `middleware.js` stuurt iedereen zonder geldige cookie van `/` naar
+  `inloggen.html`; een geldige formulierlink mag altijd door.
+- `api/inloggen.js` controleert het wachtwoord en zet een ondertekende,
+  HttpOnly-cookie die 30 dagen geldig is. Verander je het wachtwoord, dan
+  vervallen alle sessies.
+- Links maken, klanten verwijderen en geüploade draaiboeken bekijken kan
+  alleen ingelogd. Het formulier ophalen, invullen en uploaden kan de klant
+  met alleen zijn link.
+- *Uitloggen* staat in het ⋯-menu.
+
+Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen. Lokaal zet je
+hem in `.env`; `dev.mjs` doet dan hetzelfde als de middleware.
+
 ## Formulieren: de serverkant
 
 De planning zelf leeft in de browser, maar een formulier komt van het apparaat
@@ -119,6 +138,10 @@ tekens. Een klant verwijderen wist ook het formulier op de server.
 ```
 src/weekzicht.html   bron: het artifact-fragment (zonder <head>)
 build.mjs            zet daar de <head> omheen → public/index.html
+middleware.js        wachtwoordcontrole vóór de planning (formulierlinks vrij)
+api/inloggen.js      inloggen/uitloggen, zet de sessiecookie
+api/_sessie.js       cookie ondertekenen en controleren
+src/inloggen.html    de inlogpagina → public/inloggen.html
 api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
@@ -156,6 +179,8 @@ npm test
   zonder tijden), filters
 - **formulier** — `api/formulier.js` met een geheugenopslag: tokens, aanmaken,
   invullen, opschonen van antwoorden, verwijderen, opslagfouten
+- **toegang** — wachtwoord, cookie (Node én Web Crypto geven dezelfde
+  handtekening), middleware, en welke API-acties ingelogd vereisen
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
   groottes, de opbouw van de aanroep (foto, PDF, tekst), opschonen van het
   antwoord, fouten van het model, limiet per link

@@ -36,4 +36,5 @@ const HEAD = `<!doctype html>
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT, HEAD + readFileSync(SRC, "utf8") + "\n</body>\n</html>\n", "utf8");
+writeFileSync(join(OUT_DIR, "inloggen.html"), readFileSync(join(ROOT, "src", "inloggen.html"), "utf8"), "utf8");
 console.log(`public/index.html gebouwd (${statSync(OUT).size} bytes)`);

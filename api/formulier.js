@@ -14,6 +14,7 @@
 //   POST /api/formulier { t, actie: "verwijderen" }
 
 const bestanden = require("./_bestanden.js");
+const sessie = require("./_sessie.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const TTL_SEC = 60 * 60 * 24 * 730; // twee jaar: bruiloften worden ver vooruit geboekt
 const MAX_TEXT = 4000;
@@ -118,6 +119,11 @@ async function handle(req, res, db, files) {
   }
 
   const actie = clean(body.actie, 20);
+
+  // Links maken en klanten verwijderen doet alleen de planner zelf.
+  if ((actie === "aanmaken" || actie === "verwijderen") && !sessie.ingelogd(req)) {
+    return send(res, 401, { error: "niet_ingelogd", melding: "Je bent niet (meer) ingelogd. Laad de pagina opnieuw en log in." });
+  }
 
   if (actie === "aanmaken") {
     const old = await db.get(key);

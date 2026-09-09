@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Inloggen — Weekzicht</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Martian+Mono:wght@300..700&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #E9EBF0; --surface: #FBFBFD; --surface-2: #F2F3F7; --ink: #13151C; --ink-2: #565E70; --ink-3: #858DA0;
+    --line: #D6DAE3; --line-2: #B9BFCC; --accent: #2B45D4; --now: #D93A1E; --now-soft: #FBE4DF;
+    --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--sans); }
+  .card { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line-2); border-radius: 4px; box-shadow: 0 1px 2px rgba(19,21,28,.06), 0 8px 24px -12px rgba(19,21,28,.18); }
+  header { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .mark { width: 34px; height: 34px; display: grid; place-items: center; background: var(--ink); color: #fff; font: 700 12px var(--mono); letter-spacing: .04em; border-radius: 3px; }
+  h1 { margin: 0; font-size: 14px; font-stretch: 115%; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  header span { display: block; font: 500 9.5px var(--mono); letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin-top: 2px; }
+  form { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  label { font: 500 9.5px var(--mono); letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); }
+  input { width: 100%; padding: 9px 11px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; font: 14px var(--sans); color: var(--ink); }
+  input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(43,69,212,.18); }
+  button { height: 34px; padding: 0 14px; background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 2px; font: 600 12.5px var(--sans); cursor: pointer; }
+  button:hover { filter: brightness(1.08); }
+  .fout { display: none; padding: 9px 11px; background: var(--now-soft); border-left: 2px solid var(--now); border-radius: 0 2px 2px 0; color: var(--ink); font-size: 12.5px; }
+  .fout.on { display: block; }
+  p.note { margin: 0; padding: 0 18px 16px; font-size: 11.5px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <div class="mark">WZ</div>
+    <div><h1>Weekzicht</h1><span>Alleen voor de planner</span></div>
+  </header>
+  <form method="post" action="/api/inloggen">
+    <div class="fout" id="fout">Dat wachtwoord klopt niet. Probeer het nog eens.</div>
+    <label for="w">Wachtwoord</label>
+    <input type="password" id="w" name="wachtwoord" autocomplete="current-password" autofocus required>
+    <div><button type="submit">Inloggen</button></div>
+  </form>
+  <p class="note">Klanten hoeven hier niet in te loggen: zij gebruiken de formulierlink die je ze stuurt.</p>
+</div>
+<script>
+  if (/[?&]fout=1/.test(location.search)) document.getElementById("fout").className = "fout on";
+</script>
+</body>
+</html>

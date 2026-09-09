@@ -28,6 +28,8 @@ const require = createRequire(import.meta.url);
 const formulier = require("./api/formulier.js");
 const draaiboek = require("./api/draaiboek.js");
 const bestanden = require("./api/_bestanden.js");
+const inloggen = require("./api/inloggen.js");
+const sessie = require("./api/_sessie.js");
 const files = bestanden.blobStore() || bestanden.memoryFiles();
 const hasRedis = !!((process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL) &&
                     (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN));
@@ -47,6 +49,24 @@ function readBody(req, limit) {
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://127.0.0.1");
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
+
+  if (url.pathname === "/api/inloggen") {
+    req.query = Object.fromEntries(url.searchParams);
+    req.body = req.method === "POST" ? await readBody(req) : undefined;
+    await inloggen.handle(req, res);
+    return;
+  }
+
+  // wat middleware.js op Vercel doet: planning alleen ingelogd, formulierlink vrij
+  if (url.pathname === "/" || url.pathname === "/index.html") {
+    const f = url.searchParams.get("f") || "";
+    if (!/^[a-z0-9]{12,40}$/.test(f) && !sessie.ingelogd(req)) {
+      res.statusCode = 302;
+      res.setHeader("Location", "/inloggen.html");
+      res.end();
+      return;
+    }
+  }
 
   if (url.pathname === "/api/formulier") {
     req.query = Object.fromEntries(url.searchParams);
@@ -79,5 +99,5 @@ createServer(async (req, res) => {
     res.end("niet gevonden");
   }
 }).listen(PORT, "127.0.0.1", () => {
-  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"})`);
+  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"}, wachtwoord: ${sessie.beveiligd() ? "aan" : "uit — zet WEEKZICHT_WACHTWOORD in .env"})`);
 });
