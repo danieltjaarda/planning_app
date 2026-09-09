@@ -288,6 +288,8 @@ setTimeout(async () => {
     d2.querySelector('input[name="q_momenten"][value="Openingsdans"]').checked = true;
     ok('klant: keuzevraag over geluid van de ceremonie', d2.querySelectorAll('input[name="q_audioCeremonie"][type="radio"]').length === 3);
     d2.querySelector('input[name="q_audioCeremonie"][value="Ja, graag"]').checked = true;
+    d2.querySelector('input[name="q_fotograafBij"][value="Ja"]').checked = true;
+    $2('q_fotograaf').value = 'Studio Licht';
     $2('q_wensen').value = 'De speech van opa niet missen.';
     next2();
     ok('klant: naar stap 2', $2('fpStepNo').textContent === 'Stap 2 van 4' && d2.querySelector('.ms-step[data-step="1"]').classList.contains('in-fwd'), $2('fpStepNo').textContent);
@@ -323,6 +325,7 @@ setTimeout(async () => {
     ok('server: antwoorden opgeslagen', rec.antwoorden && rec.antwoorden.start === '10:00' && rec.antwoorden.eind === '00:30', JSON.stringify(rec.antwoorden));
     ok('server: vinkjes opgeslagen', JSON.stringify(rec.antwoorden.momenten) === JSON.stringify(['Ceremonie', 'Openingsdans']));
     ok('server: keuze geluid opgeslagen', rec.antwoorden.audioCeremonie === 'Ja, graag', rec.antwoorden.audioCeremonie);
+    ok('server: fotograaf opgeslagen', rec.antwoorden.fotograafBij === 'Ja' && rec.antwoorden.fotograaf === 'Studio Licht');
     ok('klant: geen scriptfouten na versturen', errors2.length === 0, errors2.join(' | '));
     w2.close();
 

@@ -3473,7 +3473,10 @@ button { cursor: pointer; }
       { id: "audioCeremonie", label: "Wil je geluidsfragmenten van de ceremonie door de film heen?", type: "choice",
         options: ["Ja, graag", "Nee, liever alleen muziek", "Weet ik nog niet"],
         hint: "Denk aan de geloften of het ja-woord, te horen over de beelden van de dag." },
-      { id: "fotograaf", label: "Wie is jullie fotograaf?", type: "text", ph: "Naam of website, zodat ik kan afstemmen" },
+      { id: "fotograafBij", label: "Is er een fotograaf bij?", type: "choice",
+        options: ["Ja", "Nee", "Weet ik nog niet"],
+        hint: "Dan stem ik met de fotograaf af, zodat we elkaar niet in de weg lopen." },
+      { id: "fotograaf", label: "Naam van de fotograaf", type: "text", ph: "Naam of website, zodat ik contact kan opnemen" },
       { id: "stijl", label: "Welke sfeer of muziek past bij jullie film?", type: "textarea", ph: "Rustig en romantisch, energiek, documentair…" },
       { id: "wensen", label: "Bijzondere momenten of wensen die ik niet mag missen", type: "textarea", ph: "Een verrassing, een speech, een dierbaar familielid…" },
       { id: "opmerkingen", label: "Nog iets wat ik moet weten?", type: "textarea" }
