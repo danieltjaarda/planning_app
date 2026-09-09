@@ -29,13 +29,14 @@ const formulier = require("./api/formulier.js");
 const draaiboek = require("./api/draaiboek.js");
 const bestanden = require("./api/_bestanden.js");
 const inloggen = require("./api/inloggen.js");
+const { previewHtml, isCrawler } = await import("./middleware.js");
 const sessie = require("./api/_sessie.js");
 const files = bestanden.blobStore() || bestanden.memoryFiles();
 const hasRedis = !!((process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL) &&
                     (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN));
 const memory = hasRedis ? null : formulier.memoryStore();
 
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".ico": "image/x-icon" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".ico": "image/x-icon", ".png": "image/png" };
 
 function readBody(req, limit) {
   return new Promise((resolve) => {
@@ -60,6 +61,12 @@ createServer(async (req, res) => {
   // wat middleware.js op Vercel doet: planning alleen ingelogd, formulierlink vrij
   if (url.pathname === "/" || url.pathname === "/index.html") {
     const f = url.searchParams.get("f") || "";
+    if (/^[a-z0-9]{12,40}$/.test(f) && isCrawler(req.headers["user-agent"])) {
+      const rec = memory ? await memory.get("formulier:" + f) : null;
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.end(previewHtml(rec && rec.naam ? rec.naam : "", "http://127.0.0.1:" + PORT + "/?f=" + f));
+      return;
+    }
     if (!/^[a-z0-9]{12,40}$/.test(f) && !sessie.ingelogd(req)) {
       res.statusCode = 302;
       res.setHeader("Location", "/inloggen.html");

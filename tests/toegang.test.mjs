@@ -8,7 +8,7 @@ const formulier = require("../api/formulier.js");
 const draaiboek = require("../api/draaiboek.js");
 const bestanden = require("../api/_bestanden.js");
 const middleware = (await import("../middleware.js")).default;
-const { sessieGeldig } = await import("../middleware.js");
+const { sessieGeldig, previewHtml, isCrawler } = await import("../middleware.js");
 
 let pass = 0, fail = 0;
 function eq(n, g, w) {
@@ -97,6 +97,22 @@ eq("verwijderen zonder cookie → 401", (await fcall({ method: "POST", headers: 
   eq("bestand bekijken met cookie", g2.statusCode, 200);
 }
 eq("verwijderen met cookie", (await fcall({ method: "POST", headers: { cookie: "wz_sessie=" + cookie }, body: { t: T, actie: "verwijderen" } })).status, 200);
+
+// voorvertoning voor WhatsApp e.d.
+eq("crawler herkend", [isCrawler("WhatsApp/2.23.20.0 A"), isCrawler("facebookexternalhit/1.1"), isCrawler("Mozilla/5.0 (iPhone) Safari")], [true, true, false]);
+{
+  const r = await middleware(new Request("https://x.test/?f=abcdefghijklmnopqrstuv", { headers: { "user-agent": "WhatsApp/2.23.20.0 A" } }));
+  const html = await r.text();
+  eq("crawler krijgt voorvertoning zonder wachtwoord/cookie", [r.status, r.headers.get("content-type")], [200, "text/html; charset=utf-8"]);
+  eq("voorvertoning: og-tags", [/og:title" content="Vertel me over jullie trouwdag"/.test(html), /og:image" content="https:\/\/planning-app-three\.vercel\.app\/og-formulier\.png"/.test(html), /og:url" content="https:\/\/x\.test\/\?f=abcdefghijklmnopqrstuv"/.test(html)], [true, true, true]);
+  eq("voorvertoning: geen formulier-inhoud", /fpForm|ms-nav/.test(html), false);
+  const r2 = await middleware(new Request("https://x.test/?f=abcdefghijklmnopqrstuv", { headers: { "user-agent": "Mozilla/5.0 Safari" } }));
+  eq("gewone bezoeker met link gaat gewoon door", r2, undefined);
+  const r3 = await middleware(new Request("https://x.test/", { headers: { "user-agent": "WhatsApp/2.23" } }));
+  eq("crawler zonder link → inloggen, geen voorvertoning", r3 && r3.status, 302);
+}
+eq("voorvertoning op naam", /og:title" content="Sanne &amp; Thomas, vertel me over jullie trouwdag"/.test(previewHtml("Sanne & Thomas", "https://x.test/?f=a")), true);
+eq("voorvertoning: html-veilig", /<script>/.test(previewHtml("<script>alert(1)</script>", "https://x.test/?f=a")), false);
 
 console.log("\n" + pass + " geslaagd, " + fail + " gefaald");
 process.exit(fail ? 1 : 0);

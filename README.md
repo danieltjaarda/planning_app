@@ -85,7 +85,14 @@ Environment Variables, Production en Preview) en deploy opnieuw. Daarna:
   met alleen zijn link.
 - *Uitloggen* staat in het ⋯-menu.
 
-Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen. Lokaal zet je
+Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen.
+
+**Voorvertoning in WhatsApp.** Stuur je een formulierlink via WhatsApp, iMessage
+of Slack, dan haalt die app de link op voor een kaartje. `middleware.js` herkent
+die crawlers en geeft ze een klein pagina'tje met titel op naam van het
+bruidspaar, een omschrijving en `og-formulier.png` (1200×630, huisstijl).
+Gewone bezoekers krijgen gewoon het formulier. WhatsApp bewaart zo'n kaartje
+een tijdje; een nieuwe link laat altijd de actuele versie zien. Lokaal zet je
 hem in `.env`; `dev.mjs` doet dan hetzelfde als de middleware.
 
 ## Formulieren: de serverkant
