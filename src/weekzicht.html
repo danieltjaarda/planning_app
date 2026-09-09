@@ -3256,7 +3256,8 @@ button { cursor: pointer; }
     renderLeadFormBox(l);
     $("ldOverlay").hidden = false;
     setTimeout(function () { $("lName").focus(); $("lName").select(); }, 0);
-    if (l && l.formToken && !l.form) checkForm(l.id);
+    // ook na het invullen even kijken: de klant kan later nog een draaiboek uploaden
+    if (l && l.formToken) checkForm(l.id);
   }
 
   /** Leest het klantvenster uit. Geeft null (met melding) als er te weinig is ingevuld. */
