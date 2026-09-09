@@ -1422,7 +1422,7 @@ button { cursor: pointer; }
 }
 .ms-form { padding: 6px 28px 28px; }
 .ms-sec { padding-top: 24px; display: flex; flex-direction: column; gap: 16px; }
-.ms-sec + .ms-sec { margin-top: 26px; padding-top: 28px; border-top: 1px solid var(--ms-line); }
+.ms-step { margin-top: 0; padding-top: 22px; border-top: 0; }
 .ms-sec h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
 
 .ms-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1532,6 +1532,75 @@ button { cursor: pointer; }
 }
 .ms-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .ms-copy { margin: 32px 0 0; text-align: center; font-size: 12.5px; color: var(--ms-ink-3); }
+
+/* het logomerk van de site als zacht watermerk in de hoek van de kaarten */
+.ms-card { position: relative; overflow: hidden; }
+.ms-card::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  bottom: -18px;
+  width: 120px;
+  height: 120px;
+  background: url("https://www.mediaspot.nl/images/logo-mark.png") center / contain no-repeat;
+  opacity: .05;
+  pointer-events: none;
+}
+.ms-card > * { position: relative; z-index: 1; }
+
+/* stappen: voortgang bovenin, één sectie tegelijk */
+.ms-progress { padding: 24px 0 4px; display: flex; flex-direction: column; gap: 10px; }
+.ms-progress-txt { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; color: var(--ms-ink-3); }
+.ms-progress-txt b { font-weight: 600; color: var(--ms-ink); font-size: 14px; }
+.ms-progress-bar { height: 6px; border-radius: 999px; background: var(--ms-bg); overflow: hidden; }
+.ms-progress-bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--ms-accent); transition: width .5s cubic-bezier(.2, .7, .2, 1); }
+.ms-steps { position: relative; }
+.ms-step[hidden] { display: none !important; }
+.ms-step.in-fwd { animation: ms-in-right .45s cubic-bezier(.2, .7, .2, 1) both; }
+.ms-step.in-back { animation: ms-in-left .45s cubic-bezier(.2, .7, .2, 1) both; }
+.ms-step .ms-field { animation: ms-rise .5s cubic-bezier(.2, .7, .2, 1) both; }
+.ms-step .ms-field:nth-child(2) { animation-delay: .05s; }
+.ms-step .ms-field:nth-child(3) { animation-delay: .1s; }
+.ms-step .ms-field:nth-child(4) { animation-delay: .15s; }
+.ms-step .ms-field:nth-child(5) { animation-delay: .2s; }
+.ms-step .ms-field:nth-child(6) { animation-delay: .25s; }
+.ms-step .ms-row2 { animation: ms-rise .5s cubic-bezier(.2, .7, .2, 1) .08s both; }
+.ms-foot .ms-spacer { flex: 1; }
+.ms-btn.dark { background: var(--ms-ink); }
+.ms-btn .arr { transition: transform .2s; }
+.ms-btn:hover .arr { transform: translateX(3px); }
+.ms-btn.ghost:hover .arr { transform: translateX(-3px); }
+.ms-chip:active { transform: scale(.96); }
+.ms-chip:has(input:checked) { animation: ms-pop .3s cubic-bezier(.2, .7, .2, 1); }
+
+/* binnenkomst van de pagina */
+.ms-nav { animation: ms-drop .6s cubic-bezier(.2, .7, .2, 1) both; }
+.ms-hero { animation: ms-rise .6s cubic-bezier(.2, .7, .2, 1) .1s both; }
+.ms-grid > .ms-card { animation: ms-rise .6s cubic-bezier(.2, .7, .2, 1) .2s both; }
+.ms-grid > .ms-side { animation-delay: .3s; }
+
+/* bedankt-scherm */
+.ms-done .ms-done-logo { height: 40px; width: auto; margin-bottom: 4px; }
+.ms-done .ms-check {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--ms-accent); color: #fff;
+  animation: ms-pop .6s cubic-bezier(.2, .7, .2, 1) .1s both;
+}
+.ms-done > * { animation: ms-rise .5s cubic-bezier(.2, .7, .2, 1) both; }
+.ms-done > *:nth-child(2) { animation-delay: .1s; }
+.ms-done > *:nth-child(3) { animation-delay: .2s; }
+.ms-done > *:nth-child(4) { animation-delay: .3s; }
+.ms-done > *:nth-child(5) { animation-delay: .4s; }
+
+@keyframes ms-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes ms-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes ms-in-right { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes ms-in-left { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: none; } }
+@keyframes ms-pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .formpage *, .formpage *::before, .formpage *::after { animation: none !important; transition: none !important; }
+}
 
 @media (max-width: 860px) {
   .ms-grid { grid-template-columns: 1fr; }
@@ -3539,11 +3608,14 @@ button { cursor: pointer; }
       '" placeholder="' + esc(f.ph || '') + '"' + extra + (f.req ? ' required' : '') + '>' + hint + '</div>';
   }
 
+  function plainTitle(t) { return t.replace(/\*/g, ""); }
+
   function buildFormHtml(prefill) {
-    var html = '';
+    var html = '<div class="ms-progress"><div class="ms-progress-txt"><b id="fpStepName"></b>' +
+      '<span id="fpStepNo"></span></div><div class="ms-progress-bar"><i id="fpBar"></i></div></div><div class="ms-steps">';
     for (var s = 0; s < FORM_SECTIONS.length; s++) {
       var sec = FORM_SECTIONS[s];
-      html += '<section class="ms-sec"><h2>' + accentHtml(sec.title) + '</h2>';
+      html += '<section class="ms-sec ms-step" data-step="' + s + '"' + (s ? ' hidden' : '') + '><h2>' + accentHtml(sec.title) + '</h2>';
       var i = 0;
       while (i < sec.fields.length) {
         var f = sec.fields[i], g = sec.fields[i + 1];
@@ -3561,9 +3633,22 @@ button { cursor: pointer; }
       }
       html += '</section>';
     }
-    html += '<div class="ms-foot"><button type="submit" class="ms-btn" id="fpSend">Verstuur formulier</button>' +
-      '<span class="ms-status" id="fpStatus">Ik gebruik je gegevens alleen voor jullie film.</span></div>';
+    var arrR = '<svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+    var arrL = '<svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+    html += '</div><div class="ms-foot">' +
+      '<button type="button" class="ms-btn ghost" id="fpPrev" hidden>' + arrL + 'Vorige</button>' +
+      '<span class="ms-status" id="fpStatus"></span><span class="ms-spacer"></span>' +
+      '<button type="button" class="ms-btn dark" id="fpNext">Volgende' + arrR + '</button>' +
+      '<button type="submit" class="ms-btn" id="fpSend" hidden>Verstuur formulier' + arrR + '</button></div>';
     return html;
+  }
+
+  /** In welke stap staat een veld? */
+  function stepOf(fieldId) {
+    for (var s = 0; s < FORM_SECTIONS.length; s++) {
+      for (var i = 0; i < FORM_SECTIONS[s].fields.length; i++) if (FORM_SECTIONS[s].fields[i].id === fieldId) return s;
+    }
+    return 0;
   }
 
   function readForm() {
@@ -3582,14 +3667,16 @@ button { cursor: pointer; }
     return out;
   }
 
-  function validateForm(a) {
-    var fields = formFields();
+  /** Controleert alle velden, of alleen die van één stap. */
+  function validateForm(a, step) {
+    var fields = typeof step === "number" ? FORM_SECTIONS[step].fields : formFields();
     for (var i = 0; i < fields.length; i++) {
       var f = fields[i];
       if (f.req && !a[f.id]) return { id: f.id, msg: "Vul " + f.label.toLowerCase() + " in." };
     }
-    if (a.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email)) return { id: "email", msg: "Dat e-mailadres ziet er niet goed uit." };
-    if (a.datum && !/^\d{4}-\d{2}-\d{2}$/.test(a.datum)) return { id: "datum", msg: "Kies een geldige datum." };
+    var has = function (id) { for (var k = 0; k < fields.length; k++) if (fields[k].id === id) return true; return false; };
+    if (has("email") && a.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email)) return { id: "email", msg: "Dat e-mailadres ziet er niet goed uit." };
+    if (has("datum") && a.datum && !/^\d{4}-\d{2}-\d{2}$/.test(a.datum)) return { id: "datum", msg: "Kies een geldige datum." };
     return null;
   }
 
@@ -3599,6 +3686,43 @@ button { cursor: pointer; }
     document.title = "Jullie trouwdag | Mediaspot";
     var form = $("fpForm");
     var rec = null;
+    var step = 0, LAST = FORM_SECTIONS.length - 1;
+
+    function showStep(n, dir) {
+      step = Math.max(0, Math.min(LAST, n));
+      var secs = form.querySelectorAll(".ms-step");
+      for (var i = 0; i < secs.length; i++) {
+        secs[i].hidden = i !== step;
+        secs[i].classList.remove("in-fwd", "in-back");
+      }
+      if (dir) secs[step].classList.add(dir === "back" ? "in-back" : "in-fwd");
+      $("fpStepName").textContent = plainTitle(FORM_SECTIONS[step].title);
+      $("fpStepNo").textContent = "Stap " + (step + 1) + " van " + (LAST + 1);
+      $("fpBar").style.width = Math.round(((step + 1) / (LAST + 1)) * 100) + "%";
+      $("fpPrev").hidden = step === 0;
+      $("fpNext").hidden = step === LAST;
+      $("fpSend").hidden = step !== LAST;
+      $("fpStatus").textContent = "";
+      $("fpStatus").className = "ms-status";
+      if (dir) {
+        var top = form.querySelector(".ms-progress");
+        if (top && top.scrollIntoView && top.getBoundingClientRect().top < 0) top.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function showError(err) {
+      var status = $("fpStatus");
+      status.textContent = err.msg;
+      status.className = "ms-status err";
+      var el = $("q_" + err.id);
+      if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+    }
+
+    function goNext() {
+      var err = validateForm(readForm(), step);
+      if (err) { showError(err); return; }
+      showStep(step + 1, "fwd");
+    }
 
     // Het echte logo van de site; lukt laden niet, dan blijft het woordmerk staan.
     var logo = $("fpLogo");
@@ -3622,6 +3746,9 @@ button { cursor: pointer; }
           ".</strong> Je kunt alles aanpassen en opnieuw versturen." : "");
       form.innerHTML = buildFormHtml(prefill);
       form.hidden = false;
+      showStep(0, null);
+      $("fpNext").addEventListener("click", goNext);
+      $("fpPrev").addEventListener("click", function () { showStep(step - 1, "back"); });
       $("q_start").addEventListener("change", function () {
         var st = $("q_start").value, en = $("q_eind");
         if (st && !en.value) en.value = toTime(Math.min(1439, toMin(st) + 9 * 60));
@@ -3638,14 +3765,15 @@ button { cursor: pointer; }
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
+      // Enter in een veld = volgende stap, niet meteen versturen
+      if (step < LAST) { goNext(); return; }
       var a = readForm();
       var err = validateForm(a);
       var status = $("fpStatus");
       if (err) {
-        status.textContent = err.msg;
-        status.className = "ms-status err";
-        var el = $("q_" + err.id);
-        if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        var at = stepOf(err.id);
+        if (at !== step) showStep(at, "back");
+        showError(err);
         return;
       }
       status.className = "ms-status";
@@ -3654,17 +3782,19 @@ button { cursor: pointer; }
       api("POST", "", { t: token, actie: "invullen", antwoorden: a }).then(function (r) {
         if (!r.ok) throw r;
         form.hidden = true;
-        $("fpDone").innerHTML = '<h2>Bedankt' + (a.namen ? ', <em>' + esc(a.namen) + '</em>' : '') + '!</h2>' +
+        $("fpDone").innerHTML = '<div class="ms-check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>' +
+          '<h2>Bedankt' + (a.namen ? ', <em>' + esc(a.namen) + '</em>' : '') + '!</h2>' +
           '<p>Jullie antwoorden zijn verstuurd. Ik neem ze door en kom erop terug. ' +
           'Iets vergeten? Open deze link later nog eens; je kunt alles aanpassen.</p>' + answersHtml(a) +
-          '<div class="ms-actions"><button type="button" class="ms-btn ghost" id="fpEdit">Toch nog iets aanpassen</button></div>';
+          '<div class="ms-actions"><button type="button" class="ms-btn ghost" id="fpEdit">Toch nog iets aanpassen</button></div>' +
+          '<img class="ms-done-logo" src="https://www.mediaspot.nl/mediaspot-logo-dark.svg" alt="Mediaspot" width="230" height="86">';
         $("fpDone").hidden = false;
         if ($("formPage").scrollIntoView) $("formPage").scrollIntoView();
         $("fpEdit").addEventListener("click", function () {
           $("fpDone").hidden = true;
           form.hidden = false;
           $("fpSend").disabled = false;
-          status.textContent = "";
+          showStep(0, "back");
         });
       })["catch"](function (r) {
         $("fpSend").disabled = false;

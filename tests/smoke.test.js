@@ -266,6 +266,12 @@ setTimeout(async () => {
     ok('klant: aangesproken met naam', /Bram Jansen/.test($2('fpTitle').textContent), $2('fpTitle').textContent);
 
     function submit2() { $2('fpForm').dispatchEvent(new w2.Event('submit', { bubbles: true, cancelable: true })); }
+    ok('klant: stap 1 van 4', $2('fpStepNo').textContent === 'Stap 1 van 4' && /Wie zijn jullie/.test($2('fpStepName').textContent), $2('fpStepNo').textContent + ' ' + $2('fpStepName').textContent);
+    ok('klant: alleen stap 1 zichtbaar', d2.querySelectorAll('.ms-step:not([hidden])').length === 1 && !d2.querySelector('.ms-step[data-step="0"]').hidden);
+    ok('klant: verstuurknop nog verborgen', $2('fpSend').hidden && !$2('fpNext').hidden && $2('fpPrev').hidden);
+    function next2() { $2('fpNext').dispatchEvent(new w2.MouseEvent('click', { bubbles: true })); }
+    next2();
+    ok('klant: niet verder zonder e-mail', /e-mailadres/i.test($2('fpStatus').textContent) && $2('fpStepNo').textContent === 'Stap 1 van 4', $2('fpStatus').textContent);
     submit2();
     await wait(10);
     ok('klant: verplicht veld gemeld', /e-mailadres/i.test($2('fpStatus').textContent), $2('fpStatus').textContent);
@@ -281,11 +287,19 @@ setTimeout(async () => {
     d2.querySelector('input[name="q_momenten"][value="Ceremonie"]').checked = true;
     d2.querySelector('input[name="q_momenten"][value="Openingsdans"]').checked = true;
     $2('q_wensen').value = 'De speech van opa niet missen.';
+    next2();
+    ok('klant: naar stap 2', $2('fpStepNo').textContent === 'Stap 2 van 4' && d2.querySelector('.ms-step[data-step="1"]').classList.contains('in-fwd'), $2('fpStepNo').textContent);
+    ok('klant: voortgangsbalk groeit', $2('fpBar').style.width === '50%', $2('fpBar').style.width);
+    $2('fpPrev').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
+    ok('klant: terug naar stap 1', $2('fpStepNo').textContent === 'Stap 1 van 4' && d2.querySelector('.ms-step[data-step="0"]').classList.contains('in-back'));
+    next2(); next2(); next2();
+    ok('klant: laatste stap', $2('fpStepNo').textContent === 'Stap 4 van 4' && !$2('fpSend').hidden && $2('fpNext').hidden);
     submit2();
     await wait(30);
     ok('klant: bedankt-scherm', !$2('fpDone').hidden && /Bedankt, Bram Jansen/.test($2('fpDone').textContent), $2('fpDone').textContent.slice(0, 60));
     ok('klant: formulier weg', $2('fpForm').hidden);
     ok('klant: samenvatting toont wensen', /opa/.test($2('fpDone').textContent));
+    ok('klant: logo op bedankt-scherm', !!d2.querySelector('#fpDone img.ms-done-logo'));
     const rec = JSON.parse(fetchMock.store.get('formulier:' + token));
     ok('server: antwoorden opgeslagen', rec.antwoorden && rec.antwoorden.start === '10:00' && rec.antwoorden.eind === '00:30', JSON.stringify(rec.antwoorden));
     ok('server: vinkjes opgeslagen', JSON.stringify(rec.antwoorden.momenten) === JSON.stringify(['Ceremonie', 'Openingsdans']));
