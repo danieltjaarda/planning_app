@@ -266,12 +266,12 @@ setTimeout(async () => {
     ok('klant: aangesproken met naam', /Bram Jansen/.test($2('fpTitle').textContent), $2('fpTitle').textContent);
 
     function submit2() { $2('fpForm').dispatchEvent(new w2.Event('submit', { bubbles: true, cancelable: true })); }
-    ok('klant: stap 1 van 4', $2('fpStepNo').textContent === 'Stap 1 van 4' && /Wie zijn jullie/.test($2('fpStepName').textContent), $2('fpStepNo').textContent + ' ' + $2('fpStepName').textContent);
+    ok('klant: stap 1 van 5', $2('fpStepNo').textContent === 'Stap 1 van 5' && /Wie zijn jullie/.test($2('fpStepName').textContent), $2('fpStepNo').textContent + ' ' + $2('fpStepName').textContent);
     ok('klant: alleen stap 1 zichtbaar', d2.querySelectorAll('.ms-step:not([hidden])').length === 1 && !d2.querySelector('.ms-step[data-step="0"]').hidden);
     ok('klant: verstuurknop nog verborgen', $2('fpSend').hidden && !$2('fpNext').hidden && $2('fpPrev').hidden);
     function next2() { $2('fpNext').dispatchEvent(new w2.MouseEvent('click', { bubbles: true })); }
     next2();
-    ok('klant: niet verder zonder e-mail', /e-mailadres/i.test($2('fpStatus').textContent) && $2('fpStepNo').textContent === 'Stap 1 van 4', $2('fpStatus').textContent);
+    ok('klant: niet verder zonder e-mail', /e-mailadres/i.test($2('fpStatus').textContent) && $2('fpStepNo').textContent === 'Stap 1 van 5', $2('fpStatus').textContent);
     submit2();
     await wait(10);
     ok('klant: verplicht veld gemeld', /e-mailadres/i.test($2('fpStatus').textContent), $2('fpStatus').textContent);
@@ -290,9 +290,11 @@ setTimeout(async () => {
     d2.querySelector('input[name="q_audioCeremonie"][value="Ja, graag"]').checked = true;
     d2.querySelector('input[name="q_fotograafBij"][value="Ja"]').checked = true;
     $2('q_fotograaf').value = 'Studio Licht';
+    d2.querySelector('input[name="q_drone"][value="Nee"]').checked = true;
+    $2('q_feedback').value = 'Vraag naar de kleur van het thema.';
     $2('q_wensen').value = 'De speech van opa niet missen.';
     next2();
-    ok('klant: naar stap 2', $2('fpStepNo').textContent === 'Stap 2 van 4' && d2.querySelector('.ms-step[data-step="1"]').classList.contains('in-fwd'), $2('fpStepNo').textContent);
+    ok('klant: naar stap 2', $2('fpStepNo').textContent === 'Stap 2 van 5' && d2.querySelector('.ms-step[data-step="1"]').classList.contains('in-fwd'), $2('fpStepNo').textContent);
 
     // draaiboek uploaden: foto → tijdlijn in het planningsveld
     ok('klant: uploadknop bij de planning', !!$2('fpUploadBtn') && !!$2('fpFile') && $2('fpFile').accept.indexOf('application/pdf') >= 0);
@@ -310,11 +312,11 @@ setTimeout(async () => {
     ok('server telt de aanroep', JSON.parse(fetchMock.store.get('formulier:' + token)).draaiboek === 1);
     ok('server bewaart het bestand', JSON.parse(fetchMock.store.get('formulier:' + token)).bestanden.length === 1 && fetchMock.files.map.size === 1);
     ok('klant ziet het geüploade bestand', !$2('fpFiles').hidden && /draaiboek.jpg/.test($2('fpFiles').textContent), $2('fpFiles').textContent);
-    ok('klant: voortgangsbalk groeit', $2('fpBar').style.width === '50%', $2('fpBar').style.width);
+    ok('klant: voortgangsbalk groeit', $2('fpBar').style.width === '40%', $2('fpBar').style.width);
     $2('fpPrev').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
-    ok('klant: terug naar stap 1', $2('fpStepNo').textContent === 'Stap 1 van 4' && d2.querySelector('.ms-step[data-step="0"]').classList.contains('in-back'));
-    next2(); next2(); next2();
-    ok('klant: laatste stap', $2('fpStepNo').textContent === 'Stap 4 van 4' && !$2('fpSend').hidden && $2('fpNext').hidden);
+    ok('klant: terug naar stap 1', $2('fpStepNo').textContent === 'Stap 1 van 5' && d2.querySelector('.ms-step[data-step="0"]').classList.contains('in-back'));
+    next2(); next2(); next2(); next2();
+    ok('klant: laatste stap', $2('fpStepNo').textContent === 'Stap 5 van 5' && !$2('fpSend').hidden && $2('fpNext').hidden);
     submit2();
     await wait(30);
     ok('klant: bedankt-scherm', !$2('fpDone').hidden && /Bedankt, Bram Jansen/.test($2('fpDone').textContent), $2('fpDone').textContent.slice(0, 60));
@@ -326,6 +328,7 @@ setTimeout(async () => {
     ok('server: vinkjes opgeslagen', JSON.stringify(rec.antwoorden.momenten) === JSON.stringify(['Ceremonie', 'Openingsdans']));
     ok('server: keuze geluid opgeslagen', rec.antwoorden.audioCeremonie === 'Ja, graag', rec.antwoorden.audioCeremonie);
     ok('server: fotograaf opgeslagen', rec.antwoorden.fotograafBij === 'Ja' && rec.antwoorden.fotograaf === 'Studio Licht');
+    ok('server: drone en feedback opgeslagen', rec.antwoorden.drone === 'Nee' && /kleur van het thema/.test(rec.antwoorden.feedback));
     ok('klant: geen scriptfouten na versturen', errors2.length === 0, errors2.join(' | '));
     w2.close();
 

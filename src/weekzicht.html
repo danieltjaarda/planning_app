@@ -3449,7 +3449,11 @@ button { cursor: pointer; }
     { title: "Wie zijn *jullie*", fields: [
       { id: "namen", label: "Jullie namen", type: "text", req: true, ph: "Bijv. Sanne & Thomas" },
       { id: "email", label: "E-mailadres", type: "email", req: true, ph: "naam@voorbeeld.nl" },
-      { id: "telefoon", label: "Telefoonnummer", type: "tel", req: true, ph: "06 12345678" }
+      { id: "telefoon", label: "Telefoonnummer", type: "tel", req: true, ph: "06 12345678" },
+      { id: "contactpersoon", label: "Contactpersoon op de dag zelf", type: "text", ph: "Naam en telefoonnummer, bijv. de ceremoniemeester",
+        hint: "Jullie zijn die dag niet bereikbaar; wie kan ik dan bellen?" },
+      { id: "verhaal", label: "Jullie verhaal", type: "textarea", ph: "Hoe hebben jullie elkaar ontmoet, en hoe ging het aanzoek?",
+        hint: "Geeft de film een rode draad. Een paar zinnen is genoeg." }
     ]},
     { title: "De *dag* zelf", fields: [
       { id: "datum", label: "Trouwdatum", type: "date", req: true },
@@ -3457,15 +3461,25 @@ button { cursor: pointer; }
       { id: "eind", label: "Eindtijd filmen", type: "time", req: true, hint: "Tot hoe laat? Na middernacht mag ook." },
       { id: "tijdCeremonie", label: "Tijd van de ceremonie", type: "time" },
       { id: "gasten", label: "Aantal gasten (ongeveer)", type: "number", ph: "80" },
+      { id: "taal", label: "In welke taal is de ceremonie?", type: "choice",
+        options: ["Nederlands", "Engels", "Tweetalig", "Anders"],
+        hint: "Handig voor de geluidsfragmenten en eventuele ondertitels." },
       { id: "planning", label: "Globale planning van de dag", type: "textarea",
         ph: "10:00 aankleden bij de bruid\n13:30 ceremonie\n15:00 fotoshoot\n17:00 borrel\n19:00 diner\n21:00 feest" }
     ]},
     { title: "Waar het *gebeurt*", fields: [
       { id: "locVoorbereiding", label: "Hoofdlocatie", type: "text", ph: "Adres of naam van de locatie waar de dag vooral plaatsvindt" },
+      { id: "ochtend", label: "Waar kleden jullie je 's ochtends aan?", type: "textarea", ph: "Adres(sen) van de voorbereidingen",
+        hint: "Zijn dat twee adressen, noem ze dan allebei. Dan weet ik waar ik moet beginnen." },
       { id: "locCeremonie", label: "Locatie ceremonie", type: "text", ph: "Adres of naam van de locatie" },
-      { id: "locFeest", label: "Locatie diner en feest", type: "text", ph: "Adres of naam van de locatie" }
+      { id: "locFeest", label: "Locatie diner en feest", type: "text", ph: "Adres of naam van de locatie" },
+      { id: "drone", label: "Willen jullie luchtbeelden met een drone?", type: "choice",
+        options: ["Ja, graag", "Nee", "Weet ik nog niet"],
+        hint: "Ik check dan of het op de locatie mag; niet elke plek staat het toe." }
     ]},
     { title: "Wat je wilt *terugzien*", fields: [
+      { id: "typeFilm", label: "Wat voor film hebben jullie voor ogen?", type: "choice",
+        options: ["Korte highlightfilm", "Lange film van de hele dag", "Allebei", "Weet ik nog niet"] },
       { id: "momenten", label: "Welke momenten moeten zeker in de film?", type: "checks", options: [
         "Voorbereidingen", "First look", "Ceremonie", "Fotoshoot", "Borrel en felicitaties",
         "Diner", "Speeches", "Openingsdans", "Feest", "Vertrek"
@@ -3473,13 +3487,28 @@ button { cursor: pointer; }
       { id: "audioCeremonie", label: "Wil je geluidsfragmenten van de ceremonie door de film heen?", type: "choice",
         options: ["Ja, graag", "Nee, liever alleen muziek", "Weet ik nog niet"],
         hint: "Denk aan de geloften of het ja-woord, te horen over de beelden van de dag." },
+      { id: "nietMissen", label: "Wie mogen zeker niet ontbreken in de film?", type: "textarea",
+        ph: "Bijv. opa Jan, de ouders van Sanne, de beste vrienden…", hint: "Namen en wie ze voor jullie zijn." },
+      { id: "verrassingen", label: "Zijn er verrassingen gepland?", type: "textarea",
+        ph: "Een speech, een dans, een optreden…", hint: "Dan sta ik klaar en verklap ik niets." },
+      { id: "nietInBeeld", label: "Is er iets wat juist níet in beeld mag?", type: "textarea",
+        ph: "Bijv. een gast die liever niet gefilmd wordt" },
+      { id: "stijl", label: "Welke sfeer of muziek past bij jullie film?", type: "textarea", ph: "Rustig en romantisch, energiek, documentair…" },
+      { id: "wensen", label: "Bijzondere momenten of wensen die ik niet mag missen", type: "textarea", ph: "Een verrassing, een speech, een dierbaar familielid…" }
+    ]},
+    { title: "Afstemmen en *afronden*", fields: [
       { id: "fotograafBij", label: "Is er een fotograaf bij?", type: "choice",
         options: ["Ja", "Nee", "Weet ik nog niet"],
         hint: "Dan stem ik met de fotograaf af, zodat we elkaar niet in de weg lopen." },
       { id: "fotograaf", label: "Naam van de fotograaf", type: "text", ph: "Naam of website, zodat ik contact kan opnemen" },
-      { id: "stijl", label: "Welke sfeer of muziek past bij jullie film?", type: "textarea", ph: "Rustig en romantisch, energiek, documentair…" },
-      { id: "wensen", label: "Bijzondere momenten of wensen die ik niet mag missen", type: "textarea", ph: "Een verrassing, een speech, een dierbaar familielid…" },
-      { id: "opmerkingen", label: "Nog iets wat ik moet weten?", type: "textarea" }
+      { id: "leveranciers", label: "Andere leveranciers", type: "text", ph: "DJ, band, ceremoniemeester, weddingplanner…",
+        hint: "Met de DJ stem ik af over geluid en licht bij de openingsdans." },
+      { id: "toestemming", label: "Mag ik (een stukje van) jullie film laten zien op mijn website en Instagram?", type: "choice",
+        options: ["Ja, prima", "Liever niet", "Overleg eerst met ons"] },
+      { id: "opmerkingen", label: "Nog iets wat ik moet weten?", type: "textarea" },
+      { id: "feedback", label: "Welke vraag miste je in dit formulier?", type: "textarea",
+        ph: "Iets wat ik had moeten vragen, of wat onduidelijk was",
+        hint: "Daar maak ik het formulier mee beter voor de volgende bruidsparen. Bedankt!" }
     ]}
   ];
 
