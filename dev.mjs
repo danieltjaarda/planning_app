@@ -27,6 +27,8 @@ const PORT = Number(process.env.PORT || 8787);
 const require = createRequire(import.meta.url);
 const formulier = require("./api/formulier.js");
 const draaiboek = require("./api/draaiboek.js");
+const bestanden = require("./api/_bestanden.js");
+const files = bestanden.blobStore() || bestanden.memoryFiles();
 const hasRedis = !!((process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL) &&
                     (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN));
 const memory = hasRedis ? null : formulier.memoryStore();
@@ -50,7 +52,7 @@ createServer(async (req, res) => {
     req.query = Object.fromEntries(url.searchParams);
     req.body = req.method === "POST" ? await readBody(req) : undefined;
     if (memory) {
-      try { await formulier.handle(req, res, memory); }
+      try { await formulier.handle(req, res, memory, files); }
       catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: "server", melding: String(e) })); }
     } else {
       await formulier(req, res);
@@ -59,8 +61,9 @@ createServer(async (req, res) => {
   }
 
   if (url.pathname === "/api/draaiboek") {
+    req.query = Object.fromEntries(url.searchParams);
     req.body = req.method === "POST" ? await readBody(req, 6 * 1024 * 1024) : undefined;
-    try { await draaiboek.handle(req, res, memory || null, process.env.OPENROUTER_API_KEY); }
+    try { await draaiboek.handle(req, res, memory || null, process.env.OPENROUTER_API_KEY, null, files); }
     catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: "server", melding: String(e) })); }
     return;
   }
@@ -76,5 +79,5 @@ createServer(async (req, res) => {
     res.end("niet gevonden");
   }
 }).listen(PORT, "127.0.0.1", () => {
-  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"})`);
+  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"})`);
 });

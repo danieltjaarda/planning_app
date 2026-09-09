@@ -304,6 +304,8 @@ setTimeout(async () => {
     const sent = fetchMock.openrouter[0];
     ok('server kreeg foto met token', sent && sent.t === token && sent.mime === 'image/jpeg' && sent.naam === 'draaiboek.jpg' && sent.data.length > 4, JSON.stringify(sent).slice(0, 120));
     ok('server telt de aanroep', JSON.parse(fetchMock.store.get('formulier:' + token)).draaiboek === 1);
+    ok('server bewaart het bestand', JSON.parse(fetchMock.store.get('formulier:' + token)).bestanden.length === 1 && fetchMock.files.map.size === 1);
+    ok('klant ziet het geüploade bestand', !$2('fpFiles').hidden && /draaiboek.jpg/.test($2('fpFiles').textContent), $2('fpFiles').textContent);
     ok('klant: voortgangsbalk groeit', $2('fpBar').style.width === '50%', $2('fpBar').style.width);
     $2('fpPrev').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
     ok('klant: terug naar stap 1', $2('fpStepNo').textContent === 'Stap 1 van 4' && d2.querySelector('.ms-step[data-step="0"]').classList.contains('in-back'));
@@ -327,12 +329,15 @@ setTimeout(async () => {
     ok('antwoorden in venster', /^Ingevuld op \d{1,2} [a-z]{3} \d{4} om \d{2}:\d{2}$/.test($('lFormBox').querySelector('.fstate').textContent), $('lFormBox').querySelector('.fstate').textContent);
     ok('antwoorden leesbaar', /Kasteel Keukenhof/.test($('lFormBox').textContent) && /Ceremonie, Openingsdans/.test($('lFormBox').textContent));
     ok('tijden overgenomen', $('lStart').value === '10:00' && $('lEnd').value === '00:30', JSON.stringify([$('lStart').value, $('lEnd').value]));
+    const fileLink = q('#lFormBox .ffiles a');
+    ok('draaiboek te openen in klantvenster', !!fileLink && fileLink.getAttribute('href') === 'https://example.test/api/draaiboek?t=' + token + '&i=0' && /draaiboek.jpg/.test(fileLink.textContent) && fileLink.target === '_blank', fileLink && fileLink.getAttribute('href'));
     ok('melding ontvangen', /Formulier ontvangen van Bram Jansen/.test($('toast').textContent), $('toast').textContent);
     click($('lSave'));
     ok('chip "formulier ingevuld"', /formulier ingevuld/.test(rowByName('Bram Jansen').textContent));
     ok('tijdchip bijgewerkt', /10:00–00:30/.test(rowByName('Bram Jansen').textContent));
     bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
     ok('formulier lokaal bewaard', bram.form && bram.form.wensen === 'De speech van opa niet missen.' && bram.formAt === rec.ingevuld);
+    ok('bestandenlijst lokaal bewaard', bram.formFiles && bram.formFiles.length === 1 && bram.formFiles[0].naam === 'draaiboek.jpg' && !bram.formFiles[0].url);
 
     // nogmaals verversen: niets nieuws, geen dubbel werk
     click(rowByName('Bram Jansen').querySelector('.k-main'));

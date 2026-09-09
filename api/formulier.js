@@ -13,6 +13,7 @@
 //   POST /api/formulier { t, actie: "invullen", antwoorden }
 //   POST /api/formulier { t, actie: "verwijderen" }
 
+const bestanden = require("./_bestanden.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const TTL_SEC = 60 * 60 * 24 * 730; // twee jaar: bruiloften worden ver vooruit geboekt
 const MAX_TEXT = 4000;
@@ -91,7 +92,7 @@ function tokenOf(req, body) {
   return TOKEN_RE.test(t) ? t : null;
 }
 
-async function handle(req, res, db) {
+async function handle(req, res, db, files) {
   if (!db) return send(res, 503, { error: "geen_opslag", melding: "Er is nog geen opslag gekoppeld (KV_REST_API_URL / KV_REST_API_TOKEN)." });
 
   const method = (req.method || "GET").toUpperCase();
@@ -111,7 +112,8 @@ async function handle(req, res, db) {
       naam: rec.naam || "", datum: rec.datum || "",
       aangemaakt: rec.aangemaakt || null,
       ingevuld: rec.ingevuld || null,
-      antwoorden: rec.antwoorden || null
+      antwoorden: rec.antwoorden || null,
+      bestanden: bestanden.publicFiles(rec)
     });
   }
 
@@ -124,7 +126,9 @@ async function handle(req, res, db) {
       datum: /^\d{4}-\d{2}-\d{2}$/.test(String(body.datum || "")) ? body.datum : "",
       aangemaakt: old && old.aangemaakt ? old.aangemaakt : new Date().toISOString(),
       ingevuld: old ? old.ingevuld || null : null,
-      antwoorden: old ? old.antwoorden || null : null
+      antwoorden: old ? old.antwoorden || null : null,
+      bestanden: old && old.bestanden ? old.bestanden : [],
+      draaiboek: old && old.draaiboek ? old.draaiboek : 0
     };
     await db.set(key, rec);
     return send(res, 200, { ok: true, t });
@@ -141,6 +145,10 @@ async function handle(req, res, db) {
   }
 
   if (actie === "verwijderen") {
+    const old = await db.get(key);
+    if (files && old && Array.isArray(old.bestanden) && old.bestanden.length) {
+      try { await files.remove(old.bestanden.map((b) => b.url)); } catch (e) { /* opslag opruimen mag mislukken */ }
+    }
     await db.del(key);
     return send(res, 200, { ok: true });
   }
@@ -150,7 +158,7 @@ async function handle(req, res, db) {
 
 module.exports = async function (req, res) {
   try {
-    await handle(req, res, store());
+    await handle(req, res, store(), bestanden.blobStore());
   } catch (e) {
     send(res, 502, { error: "opslag", melding: String(e && e.message || e) });
   }

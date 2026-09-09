@@ -1321,6 +1321,13 @@ button { cursor: pointer; }
 .formbox p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
 .formbox .fstate { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
 .formbox .fstate.on { color: var(--cat-focus); font-weight: 600; }
+.ffiles { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.ffiles a { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--accent); text-decoration: none; }
+.ffiles a:hover { text-decoration: underline; }
+.ffiles .fmeta { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.ms-files { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.ms-files li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: var(--ms-bg); font-size: 12.5px; color: var(--ms-ink-2); }
+.ms-files li svg { flex: none; color: var(--ms-accent); }
 .linkrow { display: flex; gap: 6px; }
 .linkrow input[type="text"] { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11px; background: var(--surface); }
 .linkrow .btn-line { height: 34px; padding: 0 10px; white-space: nowrap; }
@@ -1934,6 +1941,7 @@ button { cursor: pointer; }
   }
 
   var ICON_PATHS = {
+    file: '<path d="M4 2.5h5.5L13 6v7.5H4z"/><path d="M9.5 2.5V6H13"/>',
     hourglass: '<path d="M4.5 2h7M4.5 14h7M5.6 2v3.1L8 7.6l2.4-2.5V2M5.6 14v-3.1L8 8.4l2.4 2.5V14"/>',
     phone: '<path d="M5.7 2.7 3.6 3.5c-.5.2-.8.7-.7 1.2.4 2.4 1.5 4.5 3.2 6.2s3.8 2.8 6.2 3.2c.5.1 1-.2 1.2-.7l.8-2.1-3-1.4-1.2 1.3a9.3 9.3 0 0 1-3.4-3.4l1.3-1.2z"/>',
     check: '<path d="M2.9 8.5 6.3 11.9 13.1 4.5"/>',
@@ -3286,6 +3294,7 @@ button { cursor: pointer; }
       if (old.formLinkAt) obj.formLinkAt = old.formLinkAt;
       if (old.form) obj.form = old.form;
       if (old.formAt) obj.formAt = old.formAt;
+      if (old.formFiles) obj.formFiles = old.formFiles;
     }
     return obj;
   }
@@ -3406,6 +3415,30 @@ button { cursor: pointer; }
     return location.origin + location.pathname + "?f=" + l.formToken;
   }
 
+  /** Het bewaarde draaiboek van een klant, via de server en met het token. */
+  function formFileUrl(l, i) {
+    var base = location.pathname.replace(/[^\/]*$/, "");
+    return location.origin + base + "api/draaiboek?t=" + l.formToken + "&i=" + i;
+  }
+
+  function fmtBytes(n) {
+    if (!(n > 0)) return "";
+    return n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " kB" : (n / (1024 * 1024)).toFixed(1).replace(".", ",") + " MB";
+  }
+
+  function filesHtml(l) {
+    var list = l.formFiles || [];
+    if (!list.length) return "";
+    var html = '<span class="label">Draaiboek van de klant</span><ul class="ffiles">';
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i];
+      html += '<li><a href="' + esc(formFileUrl(l, i)) + '" target="_blank" rel="noopener">' + icon("file", 12) +
+        '<span>' + esc(b.naam || "bestand") + '</span>' +
+        '<span class="fmeta">' + esc(fmtBytes(b.grootte)) + (b.at ? ' · ' + esc(fmtStamp(b.at)) : '') + '</span></a></li>';
+    }
+    return html + '</ul>';
+  }
+
   // De vragen — één lijst voor de pagina van de klant én voor het tonen
   // van de antwoorden in het klantvenster.
   var FORM_SECTIONS = [
@@ -3501,6 +3534,7 @@ button { cursor: pointer; }
       html += '<span class="fstate">Nog niet ingevuld' +
         (l.formLinkAt ? ' · link gemaakt op ' + esc(fmtStamp(new Date(l.formLinkAt).toISOString())) : '') + '</span>';
     }
+    html += filesHtml(l);
     box.innerHTML = html;
   }
 
@@ -3537,6 +3571,7 @@ button { cursor: pointer; }
     for (var k in l) upd[k] = l[k];
     upd.form = a;
     upd.formAt = rec.ingevuld;
+    if (Array.isArray(rec.bestanden)) upd.formFiles = rec.bestanden;
     if (/^\d{4}-\d{2}-\d{2}$/.test(a.datum || "")) upd.date = a.datum;
     if (/^\d{2}:\d{2}$/.test(a.start || "")) upd.start = a.start;
     if (/^\d{2}:\d{2}$/.test(a.eind || "")) upd.end = a.eind;
@@ -3554,6 +3589,20 @@ button { cursor: pointer; }
     render();
   }
 
+  /** Geüploade draaiboeken bij de klant bewaren zodra de server ze noemt. */
+  function syncFiles(id, lijst) {
+    if (!Array.isArray(lijst)) return;
+    var l = findLead(id);
+    if (!l) return;
+    var cur = JSON.stringify(l.formFiles || []);
+    if (cur === JSON.stringify(lijst)) return;
+    var upd = {};
+    for (var k in l) upd[k] = l[k];
+    upd.formFiles = lijst;
+    put("leads", upd);
+    if (editingLead === id && !$("ldOverlay").hidden) renderLeadFormBox(upd);
+  }
+
   /** Haalt het formulier van één klant op. Belooft true als er (nieuwe) antwoorden waren. */
   function checkForm(id, loud) {
     var l = findLead(id);
@@ -3569,6 +3618,7 @@ button { cursor: pointer; }
           });
       }
       if (!r.ok) { if (loud) toast(apiReason(r)); return false; }
+      syncFiles(id, r.data.bestanden);
       if (!r.data.ingevuld) { if (loud) toast("Nog niet ingevuld."); return false; }
       if (l.formAt === r.data.ingevuld) { if (loud) toast("Geen nieuwe antwoorden."); return false; }
       applyForm(id, r.data);
@@ -3618,7 +3668,8 @@ button { cursor: pointer; }
           '<button type="button" class="ms-btn ghost small" id="fpUploadBtn">' +
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>' +
           'Upload je draaiboek</button>' +
-          '<span class="ms-status" id="fpUploadStatus">Heb je al een draaiboek? Stuur een foto, PDF of tekstbestand; ik zet het om in een tijdlijn.</span></div>';
+          '<span class="ms-status" id="fpUploadStatus">Heb je al een draaiboek? Stuur een foto, PDF of tekstbestand; ik zet het om in een tijdlijn en bewaar het bestand voor de videograaf.</span></div>' +
+          '<ul class="ms-files" id="fpFiles" hidden></ul>';
       }
       return '<div class="ms-field">' + lab + '<textarea id="' + id + '" placeholder="' + esc(f.ph || '') + '">' + esc(val || '') + '</textarea>' + hint + extraUi + '</div>';
     }
@@ -3729,6 +3780,18 @@ button { cursor: pointer; }
     })["catch"](function () { return file; });
   }
 
+  function renderClientFiles(lijst) {
+    var ul = $("fpFiles");
+    if (!ul) return;
+    if (!Array.isArray(lijst) || !lijst.length) { ul.hidden = true; ul.innerHTML = ""; return; }
+    var html = "";
+    for (var i = 0; i < lijst.length; i++) {
+      html += '<li>' + icon("file", 13) + '<span>' + esc(lijst[i].naam || "bestand") + '</span></li>';
+    }
+    ul.innerHTML = html;
+    ul.hidden = false;
+  }
+
   function uploadDraaiboek(token, file) {
     var status = $("fpUploadStatus"), btn = $("fpUploadBtn"), ta = $("q_planning");
     var spinner = '<svg class="ms-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
@@ -3752,16 +3815,17 @@ button { cursor: pointer; }
       });
     }).then(function (r) {
       if (!r.ok) throw { melding: (r.data && r.data.melding) || apiReason(r) };
-      if (!r.data.tekst) throw { melding: r.data.melding || "Ik kon geen planning in dit bestand vinden." };
+      renderClientFiles(r.data.bestanden);
+      if (!r.data.tekst) throw { melding: r.data.melding || "Ik kon geen planning in dit bestand vinden.", zacht: !!r.data.bestand };
       var cur = ta.value.trim();
       ta.value = cur ? cur + "\n\n" + r.data.tekst : r.data.tekst;
       ta.classList.remove("ms-flash");
       void ta.offsetWidth;
       ta.classList.add("ms-flash");
-      say("Gelezen uit " + file.name + ". Controleer even of de tijden en locaties kloppen; je kunt alles aanpassen.", "ok");
+      say("Gelezen uit " + file.name + (r.data.bestand ? " en bewaard" : "") + ". Controleer even of de tijden en locaties kloppen; je kunt alles aanpassen.", "ok");
       ta.focus();
     })["catch"](function (e) {
-      say((e && e.melding) || "Uploaden lukte niet. Typ de planning dan even zelf over.", "err");
+      say((e && e.melding) || "Uploaden lukte niet. Typ de planning dan even zelf over.", e && e.zacht ? "" : "err");
     }).then(function () {
       btn.disabled = false;
       btn.innerHTML = label;
@@ -3835,6 +3899,7 @@ button { cursor: pointer; }
       form.innerHTML = buildFormHtml(prefill);
       form.hidden = false;
       showStep(0, null);
+      renderClientFiles(rec.bestanden);
       $("fpUploadBtn").addEventListener("click", function () { $("fpFile").click(); });
       $("fpFile").addEventListener("change", function () {
         var f = $("fpFile").files && $("fpFile").files[0];

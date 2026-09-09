@@ -99,6 +99,14 @@ Environment Variables) en deploy opnieuw. Lokaal: zet hem in `.env` in de
 projectmap; dat bestand staat in `.gitignore`. Zonder sleutel blijft de
 uploadknop staan en meldt hij dat omzetten nog niet aanstaat.
 
+Het bestand zelf wordt ook bewaard, in Vercel Blob (`api/_bestanden.js`), zodat
+je het originele draaiboek in het klantvenster kunt openen onder *Draaiboek van
+de klant*. Daarvoor koppel je in Vercel een **Blob**-store aan het project
+(Storage → Create Database → Blob); die zet `BLOB_READ_WRITE_TOKEN`. De bestanden
+worden nooit rechtstreeks gelinkt: de app haalt ze op via `api/draaiboek?t=…&i=…`
+met het formulier-token. Een klant verwijderen wist ook de bestanden. Lokaal
+blijven ze in het geheugen tot je de server stopt.
+
 Misbruik is begrensd: omzetten kan alleen met een geldig formulier-token en
 hoogstens 25 keer per link.
 
@@ -112,7 +120,8 @@ tekens. Een klant verwijderen wist ook het formulier op de server.
 src/weekzicht.html   bron: het artifact-fragment (zonder <head>)
 build.mjs            zet daar de <head> omheen → public/index.html
 api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
-api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter
+api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
+api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
 dev.mjs              lokale server voor public/ + api/formulier
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git

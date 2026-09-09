@@ -2,7 +2,11 @@
 // het draaiboek; een model via OpenRouter zet dat om in een nette dagplanning
 // die in het formulier komt te staan.
 //
-//   POST /api/draaiboek { t, naam, mime, data (base64) }  → { tekst }
+//   POST /api/draaiboek { t, naam, mime, data (base64) }  → { tekst, bestand }
+//   GET  /api/draaiboek?t=TOKEN&i=0                       → het bewaarde bestand zelf
+//
+// Het bestand wordt bewaard (Blob-opslag, zie _bestanden.js) zodat de
+// videograaf het originele draaiboek in het klantvenster kan openen.
 //
 // Sleutel: OPENROUTER_API_KEY (omgevingsvariabele, nooit in de code).
 // Alleen bruikbaar met een geldig formulier-token, en per token begrensd,
@@ -13,6 +17,7 @@ const MAX_BYTES = 3 * 1024 * 1024;   // ruim genoeg voor een foto of een paar pa
 const MAX_CALLS = 25;                // per formulierlink
 const MODEL = "google/gemini-2.5-flash"; // snel, goedkoop, leest foto's en PDF's zelf
 const TTL_SEC = 60 * 60 * 24 * 730;
+const bestanden = require("./_bestanden.js");
 
 const IMAGE = /^image\/(jpeg|png|webp|gif|heic|heif)$/;
 const TEXT = /^text\/(plain|markdown|csv)$/;
@@ -92,10 +97,32 @@ function cleanTimeline(text) {
   return t.split("\n").map(l => l.replace(/^\s*[-*•]\s*/, "").trimEnd()).filter(Boolean).join("\n");
 }
 
-async function handle(req, res, db, apiKey, fetchFn) {
+/** Het bewaarde bestand teruggeven — alleen met het formulier-token. */
+async function serveFile(req, res, db, files) {
+  if (!db) return send(res, 503, { error: "geen_opslag" });
+  const t = String((req.query && req.query.t) || "");
+  const i = parseInt((req.query && req.query.i) || "", 10);
+  if (!TOKEN_RE.test(t) || !(i >= 0)) return send(res, 400, { error: "ongeldig" });
+  const rec = await db.get("formulier:" + t);
+  const b = rec && Array.isArray(rec.bestanden) ? rec.bestanden[i] : null;
+  if (!b) return send(res, 404, { error: "onbekend" });
+  if (!files) return send(res, 503, { error: "geen_bestandsopslag", melding: "Er is geen bestandsopslag gekoppeld." });
+  const buf = await files.open(b.url);
+  if (!buf) return send(res, 404, { error: "weg", melding: "Het bestand is niet meer beschikbaar." });
+  res.statusCode = 200;
+  res.setHeader("Content-Type", b.mime || "application/octet-stream");
+  res.setHeader("Content-Disposition", "inline; filename=\"" + bestanden.safeName(b.naam) + "\"");
+  res.setHeader("Cache-Control", "private, max-age=300");
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  res.end(buf);
+}
+
+async function handle(req, res, db, apiKey, fetchFn, files) {
   const doFetch = fetchFn || fetch;
-  if ((req.method || "GET").toUpperCase() !== "POST") return send(res, 405, { error: "methode" });
-  if (!apiKey) return send(res, 503, { error: "geen_sleutel", melding: "Het omzetten van draaiboeken staat nog niet aan (OPENROUTER_API_KEY ontbreekt)." });
+  const method = (req.method || "GET").toUpperCase();
+  if (method === "GET") return serveFile(req, res, db, files);
+  if (method !== "POST") return send(res, 405, { error: "methode" });
+  if (!apiKey && !files) return send(res, 503, { error: "geen_sleutel", melding: "Het omzetten van draaiboeken staat nog niet aan (OPENROUTER_API_KEY ontbreekt)." });
   if (!db) return send(res, 503, { error: "geen_opslag", melding: "Er is nog geen opslag gekoppeld." });
 
   const body = parseBody(req);
@@ -113,11 +140,30 @@ async function handle(req, res, db, apiKey, fetchFn) {
   if (!orBody) return send(res, 415, { error: "bestandstype", melding: "Dit bestandstype kan ik niet lezen. Stuur een foto, PDF of tekstbestand." });
 
   const key = "formulier:" + t;
-  const rec = await db.get(key);
+  let rec = await db.get(key);
   if (!rec) return send(res, 404, { error: "onbekend" });
   const calls = (rec.draaiboek || 0) + 1;
   if (calls > MAX_CALLS) return send(res, 429, { error: "limiet", melding: "Je hebt dit al vaak gebruikt; typ de planning even zelf over." });
-  await db.set(key, Object.assign({}, rec, { draaiboek: calls }));
+  rec = Object.assign({}, rec, { draaiboek: calls });
+
+  // Eerst het bestand zelf bewaren: dat wil de videograaf later kunnen openen.
+  let bestand = null;
+  if (files) {
+    try {
+      const buf = Buffer.from(data, "base64");
+      const url = await files.save(buf, mime, naam);
+      rec = bestanden.withFile(rec, { naam: naam || "draaiboek", mime, grootte: buf.length, url, at: new Date().toISOString() });
+      bestand = { naam: naam || "draaiboek", i: rec.bestanden.length - 1 };
+    } catch (e) {
+      bestand = null; // omzetten kan gewoon door
+    }
+  }
+  await db.set(key, rec);
+
+  if (!apiKey) {
+    return send(res, 200, { tekst: "", bestand, bestanden: bestanden.publicFiles(rec),
+      melding: "Het bestand is bewaard. Automatisch omzetten staat nog niet aan; typ de planning even zelf." });
+  }
 
   let r, j;
   try {
@@ -141,13 +187,14 @@ async function handle(req, res, db, apiKey, fetchFn) {
   }
   const raw = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
   const tekst = cleanTimeline(typeof raw === "string" ? raw : Array.isArray(raw) ? raw.map(p => p.text || "").join("\n") : "");
-  if (!tekst) return send(res, 200, { tekst: "", melding: "Ik kon geen planning in dit bestand vinden. Probeer een duidelijkere foto, of typ de planning zelf." });
-  return send(res, 200, { tekst, model: MODEL });
+  const lijst = bestanden.publicFiles(rec);
+  if (!tekst) return send(res, 200, { tekst: "", bestand, bestanden: lijst, melding: (bestand ? "Het bestand is bewaard, maar ik" : "Ik") + " kon geen planning in dit bestand vinden. Probeer een duidelijkere foto, of typ de planning zelf." });
+  return send(res, 200, { tekst, model: MODEL, bestand, bestanden: lijst });
 }
 
 module.exports = async function (req, res) {
   try {
-    await handle(req, res, store(), process.env.OPENROUTER_API_KEY);
+    await handle(req, res, store(), process.env.OPENROUTER_API_KEY, null, bestanden.blobStore());
   } catch (e) {
     send(res, 502, { error: "server", melding: String(e && e.message || e) });
   }

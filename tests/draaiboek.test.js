@@ -1,6 +1,7 @@
 // Draaiboek → tijdlijn: de serverfunctie met een nep-OpenRouter en geheugenopslag.
 const handler = require('../api/draaiboek.js');
 const formulier = require('../api/formulier.js');
+const bestanden = require('../api/_bestanden.js');
 
 let pass = 0, fail = 0;
 function eq(n, g, w) {
@@ -8,10 +9,12 @@ function eq(n, g, w) {
   if (a === b) pass++; else { fail++; console.log('FAIL', n, '\n  kreeg   ', a, '\n  verwacht', b); }
 }
 function fakeRes() { const r = { statusCode: 200, body: '', setHeader() {}, end(s) { r.body = s; } }; return r; }
-async function call(db, key, body, fetchFn, method) {
+async function call(db, key, body, fetchFn, method, files, query) {
   const res = fakeRes();
-  await handler.handle({ method: method || 'POST', body }, res, db, key, fetchFn);
-  return { status: res.statusCode, data: res.body ? JSON.parse(res.body) : null };
+  await handler.handle({ method: method || 'POST', body, query }, res, db, key, fetchFn, files);
+  let data = null;
+  try { data = res.body ? JSON.parse(res.body) : null; } catch (e) { data = res.body; }
+  return { status: res.statusCode, data, res };
 }
 const b64 = s => Buffer.from(s).toString('base64');
 
@@ -29,7 +32,8 @@ const b64 = s => Buffer.from(s).toString('base64');
 
   eq('geen sleutel → 503', (await call(db, '', { t: T, mime: 'image/jpeg', data: b64('x') })).status, 503);
   eq('geen opslag → 503', (await call(null, 'k', { t: T, mime: 'image/jpeg', data: b64('x') })).status, 503);
-  eq('alleen POST', (await call(db, 'k', {}, null, 'GET')).status, 405);
+  eq('alleen GET en POST', (await call(db, 'k', {}, null, 'PUT')).status, 405);
+  eq('GET zonder token', (await call(db, 'k', null, null, 'GET', null, {})).status, 400);
   eq('ongeldig token', (await call(db, 'k', { t: 'abc', mime: 'image/jpeg', data: b64('x') })).status, 400);
   eq('onbekend token', (await call(db, 'k', { t: 'zzzzzzzzzzzzzzzz', mime: 'image/jpeg', data: b64('x') })).status, 404);
   eq('leeg bestand', (await call(db, 'k', { t: T, mime: 'image/jpeg', data: '' })).status, 400);
@@ -75,6 +79,37 @@ const b64 = s => Buffer.from(s).toString('base64');
   eq('limiet per link', (await call(db, 'sleutel', { t: T, mime: 'image/png', data: b64('x') }, okFetch('x'))).status, 429);
 
   eq('cleanTimeline strip', handler.cleanTimeline('  • 10:00  A  \n\n- 11:00 B\r\n'), '10:00  A\n11:00 B');
+
+  // ---- het bestand zelf bewaren en terugkijken ----
+  const T2 = 'bestandentest0000001';
+  await db.set('formulier:' + T2, { naam: 'Eva', datum: '', aangemaakt: 'x', ingevuld: null, antwoorden: null });
+  const files = bestanden.memoryFiles();
+  const foto = Buffer.from([255, 216, 255, 224, 1, 2, 3, 4]);
+  const r7 = await call(db, 'sleutel', { t: T2, mime: 'image/jpeg', naam: 'mijn draaiboek (1).jpg', data: foto.toString('base64') }, okFetch('10:00  Start'), 'POST', files);
+  eq('bestand bewaard: antwoord', [r7.status, r7.data.bestand, r7.data.bestanden.length], [200, { naam: 'mijn draaiboek (1).jpg', i: 0 }, 1]);
+  const rec7 = await db.get('formulier:' + T2);
+  eq('bestand in record', [rec7.bestanden[0].naam, rec7.bestanden[0].mime, rec7.bestanden[0].grootte, /^mem:\/\//.test(rec7.bestanden[0].url), typeof rec7.bestanden[0].at], ['mijn draaiboek (1).jpg', 'image/jpeg', 8, true, 'string']);
+  eq('lijst naar buiten zonder url', Object.keys(r7.data.bestanden[0]).sort(), ['at', 'grootte', 'mime', 'naam']);
+
+  const g1 = await call(db, 'sleutel', null, null, 'GET', files, { t: T2, i: '0' });
+  eq('bestand ophalen', [g1.status, Buffer.isBuffer(g1.res.body) && g1.res.body.equals(foto)], [200, true]);
+  eq('bestand ophalen: index bestaat niet', (await call(db, 'sleutel', null, null, 'GET', files, { t: T2, i: '3' })).status, 404);
+  eq('bestand ophalen: verkeerd token', (await call(db, 'sleutel', null, null, 'GET', files, { t: 'zzzzzzzzzzzzzzzz', i: '0' })).status, 404);
+  eq('bestand ophalen: geen index', (await call(db, 'sleutel', null, null, 'GET', files, { t: T2 })).status, 400);
+
+  // zonder AI-sleutel wordt het bestand tóch bewaard
+  const r8 = await call(db, '', { t: T2, mime: 'application/pdf', naam: 'plan.pdf', data: b64('%PDF') }, null, 'POST', files);
+  eq('zonder sleutel: bewaard, geen tekst', [r8.status, r8.data.tekst, r8.data.bestand.i, /bewaard/.test(r8.data.melding)], [200, '', 1, true]);
+
+  // formulier ophalen noemt de bestanden; verwijderen ruimt ze op
+  const fres = fakeRes();
+  await formulier.handle({ method: 'GET', query: { t: T2 } }, fres, db, files);
+  eq('formulier noemt bestanden', JSON.parse(fres.body).bestanden.map(b => b.naam), ['mijn draaiboek (1).jpg', 'plan.pdf']);
+  eq('twee bestanden in opslag', files.map.size, 2);
+  const dres = fakeRes();
+  await formulier.handle({ method: 'POST', body: { t: T2, actie: 'verwijderen' } }, dres, db, files);
+  eq('verwijderen ruimt bestanden op', [JSON.parse(dres.body).ok, files.map.size], [true, 0]);
+  eq('veilige bestandsnaam', bestanden.safeName('../raar naam?.pdf'), 'raar-naam-.pdf');
 
   console.log('\n' + pass + ' geslaagd, ' + fail + ' gefaald');
   process.exit(fail ? 1 : 0);
