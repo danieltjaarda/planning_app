@@ -4,3 +4,5 @@ public/
 tests/_lib.js
 tests/_lead-lib.js
 .DS_Store
+.env
+.env.*

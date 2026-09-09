@@ -289,6 +289,21 @@ setTimeout(async () => {
     $2('q_wensen').value = 'De speech van opa niet missen.';
     next2();
     ok('klant: naar stap 2', $2('fpStepNo').textContent === 'Stap 2 van 4' && d2.querySelector('.ms-step[data-step="1"]').classList.contains('in-fwd'), $2('fpStepNo').textContent);
+
+    // draaiboek uploaden: foto → tijdlijn in het planningsveld
+    ok('klant: uploadknop bij de planning', !!$2('fpUploadBtn') && !!$2('fpFile') && $2('fpFile').accept.indexOf('application/pdf') >= 0);
+    $2('q_planning').value = 'Eigen notitie';
+    const foto = new w2.File([new Uint8Array([255, 216, 255, 224, 1, 2, 3])], 'draaiboek.jpg', { type: 'image/jpeg' });
+    Object.defineProperty($2('fpFile'), 'files', { value: [foto], configurable: true });
+    $2('fpFile').dispatchEvent(new w2.Event('change', { bubbles: true }));
+    ok('klant: knop tijdens uploaden uit', $2('fpUploadBtn').disabled);
+    await wait(60);
+    ok('klant: tijdlijn in het planningsveld', $2('q_planning').value === 'Eigen notitie\n\n10:00  Aankleden — Hotel De Zon\n13:30  Ceremonie — Stadhuis', JSON.stringify($2('q_planning').value));
+    ok('klant: melding na omzetten', /Gelezen uit draaiboek.jpg/.test($2('fpUploadStatus').textContent) && /ok/.test($2('fpUploadStatus').className), $2('fpUploadStatus').textContent);
+    ok('klant: knop weer aan', !$2('fpUploadBtn').disabled);
+    const sent = fetchMock.openrouter[0];
+    ok('server kreeg foto met token', sent && sent.t === token && sent.mime === 'image/jpeg' && sent.naam === 'draaiboek.jpg' && sent.data.length > 4, JSON.stringify(sent).slice(0, 120));
+    ok('server telt de aanroep', JSON.parse(fetchMock.store.get('formulier:' + token)).draaiboek === 1);
     ok('klant: voortgangsbalk groeit', $2('fpBar').style.width === '50%', $2('fpBar').style.width);
     $2('fpPrev').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
     ok('klant: terug naar stap 1', $2('fpStepNo').textContent === 'Stap 1 van 4' && d2.querySelector('.ms-step[data-step="0"]').classList.contains('in-back'));

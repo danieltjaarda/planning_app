@@ -85,6 +85,23 @@ Zonder die store antwoordt de functie met 503 en meldt de app dat bij *Maak
 formulierlink*. De formulierpagina werkt dan nog wél: de klant krijgt de
 antwoorden als tekst om via WhatsApp of mail te sturen.
 
+### Draaiboek laten omzetten door AI
+
+Bij *Globale planning van de dag* kan de klant een foto, PDF of tekstbestand
+van het draaiboek uploaden. `api/draaiboek.js` stuurt dat naar OpenRouter
+(model `google/gemini-2.5-flash`: snel, goedkoop, leest foto's en PDF's zelf)
+en zet het antwoord als tijdlijn in het tekstvak, waar de klant het nog kan
+nakijken. Foto's worden in de browser eerst verkleind tot 1800 px; bestanden
+tot 3 MB.
+
+Zet daarvoor `OPENROUTER_API_KEY` als omgevingsvariabele in Vercel (Settings →
+Environment Variables) en deploy opnieuw. Lokaal: zet hem in `.env` in de
+projectmap; dat bestand staat in `.gitignore`. Zonder sleutel blijft de
+uploadknop staan en meldt hij dat omzetten nog niet aanstaat.
+
+Misbruik is begrensd: omzetten kan alleen met een geldig formulier-token en
+hoogstens 25 keer per link.
+
 Wie de link heeft, kan het formulier zien en invullen — dat is de bedoeling —
 maar ziet nooit de planning of andere klanten. Tokens zijn 22 willekeurige
 tekens. Een klant verwijderen wist ook het formulier op de server.
@@ -95,6 +112,7 @@ tekens. Een klant verwijderen wist ook het formulier op de server.
 src/weekzicht.html   bron: het artifact-fragment (zonder <head>)
 build.mjs            zet daar de <head> omheen → public/index.html
 api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
+api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter
 dev.mjs              lokale server voor public/ + api/formulier
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
@@ -129,6 +147,9 @@ npm test
   zonder tijden), filters
 - **formulier** — `api/formulier.js` met een geheugenopslag: tokens, aanmaken,
   invullen, opschonen van antwoorden, verwijderen, opslagfouten
+- **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
+  groottes, de opbouw van de aanroep (foto, PDF, tekst), opschonen van het
+  antwoord, fouten van het model, limiet per link
 - **smoke** — de gebouwde `public/index.html` in jsdom met een bevroren klok
   (1 sep 2026): elke weergave, elk venster, de filters, het Gebeld-vinkje, de
   opslag, en de hele formulierketen: link maken → klant vult in op een eigen

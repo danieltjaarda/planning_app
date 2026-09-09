@@ -1498,6 +1498,16 @@ button { cursor: pointer; }
 .ms-btn.ghost:hover { filter: none; background: var(--ms-bg); }
 .ms-status { font-size: 13px; color: var(--ms-ink-3); }
 .ms-status.err { color: #D9331E; font-weight: 500; }
+.ms-status.ok { color: #1F8A4C; font-weight: 500; }
+
+/* draaiboek uploaden en door AI laten omzetten */
+.ms-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+.ms-btn.small { height: 40px; padding: 0 16px; font-size: 14px; gap: 8px; }
+.ms-btn.small svg { flex: none; }
+.ms-spin { animation: ms-spin 1s linear infinite; }
+.ms-flash { animation: ms-flash 1.4s ease-out; }
+@keyframes ms-spin { to { transform: rotate(360deg); } }
+@keyframes ms-flash { 0% { box-shadow: 0 0 0 4px rgba(252, 106, 47, .35); border-color: var(--ms-accent); } 100% { box-shadow: 0 0 0 0 rgba(252, 106, 47, 0); } }
 
 .ms-side { padding: 24px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 92px; }
 .ms-side h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
@@ -3354,14 +3364,14 @@ button { cursor: pointer; }
   // — lokaal, of als artifact — werkt de rest van de app gewoon door.
   var API_URL = "api/formulier";
 
-  function api(method, query, body) {
+  function api(method, query, body, path) {
     if (typeof fetch !== "function") return Promise.reject({ code: "geen_fetch" });
     var opts = { method: method, headers: { "Accept": "application/json" } };
     if (body) {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    return fetch(API_URL + (query || ""), opts).then(function (r) {
+    return fetch((path || API_URL) + (query || ""), opts).then(function (r) {
       return r.text().then(function (txt) {
         var data = null;
         try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
@@ -3601,7 +3611,16 @@ button { cursor: pointer; }
       return '<div class="ms-field"><span class="ms-lab">' + esc(f.label) + opt + '</span><div class="ms-chips">' + chips + '</div>' + hint + '</div>';
     }
     if (f.type === "textarea") {
-      return '<div class="ms-field">' + lab + '<textarea id="' + id + '" placeholder="' + esc(f.ph || '') + '">' + esc(val || '') + '</textarea>' + hint + '</div>';
+      var extraUi = '';
+      if (f.id === "planning") {
+        extraUi = '<div class="ms-upload">' +
+          '<input type="file" id="fpFile" accept="image/*,application/pdf,text/plain,text/markdown,text/csv,.txt,.md,.csv" hidden>' +
+          '<button type="button" class="ms-btn ghost small" id="fpUploadBtn">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>' +
+          'Upload je draaiboek</button>' +
+          '<span class="ms-status" id="fpUploadStatus">Heb je al een draaiboek? Stuur een foto, PDF of tekstbestand; ik zet het om in een tijdlijn.</span></div>';
+      }
+      return '<div class="ms-field">' + lab + '<textarea id="' + id + '" placeholder="' + esc(f.ph || '') + '">' + esc(val || '') + '</textarea>' + hint + extraUi + '</div>';
     }
     var extra = f.type === "time" ? ' step="300"' : f.type === "number" ? ' min="0" inputmode="numeric"' : '';
     return '<div class="ms-field">' + lab + '<input type="' + f.type + '" id="' + id + '" value="' + esc(val || '') +
@@ -3680,6 +3699,75 @@ button { cursor: pointer; }
     return null;
   }
 
+  /* --- draaiboek uploaden: foto/PDF/tekst → tijdlijn via de server --- */
+
+  var DRAAIBOEK_MAX = 3 * 1024 * 1024;
+
+  function readAsDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var fr = new FileReader();
+      fr.onload = function () { resolve(String(fr.result || "")); };
+      fr.onerror = function () { reject(new Error("lezen")); };
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  /** Grote foto's van een telefoon eerst verkleinen; dat scheelt tijd én kosten. */
+  function shrinkImage(file) {
+    if (!/^image\//.test(file.type) || file.size < 900 * 1024 || typeof createImageBitmap !== "function") {
+      return Promise.resolve(file);
+    }
+    return createImageBitmap(file).then(function (bmp) {
+      var max = 1800, w = bmp.width, h = bmp.height;
+      var k = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement("canvas");
+      c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      return new Promise(function (resolve) {
+        c.toBlob(function (b) { resolve(b || file); }, "image/jpeg", 0.85);
+      });
+    })["catch"](function () { return file; });
+  }
+
+  function uploadDraaiboek(token, file) {
+    var status = $("fpUploadStatus"), btn = $("fpUploadBtn"), ta = $("q_planning");
+    var spinner = '<svg class="ms-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+    function say(msg, cls) { status.textContent = msg; status.className = "ms-status" + (cls ? " " + cls : ""); }
+    var label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = spinner + "Bezig…";
+    say("Bestand lezen…");
+
+    var mime = (file.type || "").toLowerCase();
+    if (!mime && /\.(txt|md|csv)$/i.test(file.name)) mime = "text/plain";
+    if (!mime && /\.pdf$/i.test(file.name)) mime = "application/pdf";
+
+    shrinkImage(file).then(function (blob) {
+      if (blob.size > DRAAIBOEK_MAX) throw { melding: "Het bestand is te groot (max 3 MB). Maak een kleinere foto of een lichtere PDF." };
+      return readAsDataUrl(blob).then(function (dataUrl) {
+        say("Ik lees je draaiboek… dit duurt meestal 5 tot 15 seconden.");
+        return api("POST", "", {
+          t: token, naam: file.name, mime: blob.type || mime, data: dataUrl.replace(/^data:[^,]*,/, "")
+        }, "api/draaiboek");
+      });
+    }).then(function (r) {
+      if (!r.ok) throw { melding: (r.data && r.data.melding) || apiReason(r) };
+      if (!r.data.tekst) throw { melding: r.data.melding || "Ik kon geen planning in dit bestand vinden." };
+      var cur = ta.value.trim();
+      ta.value = cur ? cur + "\n\n" + r.data.tekst : r.data.tekst;
+      ta.classList.remove("ms-flash");
+      void ta.offsetWidth;
+      ta.classList.add("ms-flash");
+      say("Gelezen uit " + file.name + ". Controleer even of de tijden en locaties kloppen; je kunt alles aanpassen.", "ok");
+      ta.focus();
+    })["catch"](function (e) {
+      say((e && e.melding) || "Uploaden lukte niet. Typ de planning dan even zelf over.", "err");
+    }).then(function () {
+      btn.disabled = false;
+      btn.innerHTML = label;
+    });
+  }
+
   function bootForm(token) {
     document.querySelector(".app").hidden = true;
     $("formPage").hidden = false;
@@ -3747,6 +3835,12 @@ button { cursor: pointer; }
       form.innerHTML = buildFormHtml(prefill);
       form.hidden = false;
       showStep(0, null);
+      $("fpUploadBtn").addEventListener("click", function () { $("fpFile").click(); });
+      $("fpFile").addEventListener("change", function () {
+        var f = $("fpFile").files && $("fpFile").files[0];
+        if (f) uploadDraaiboek(token, f);
+        $("fpFile").value = "";
+      });
       $("fpNext").addEventListener("click", goNext);
       $("fpPrev").addEventListener("click", function () { showStep(step - 1, "back"); });
       $("q_start").addEventListener("change", function () {
