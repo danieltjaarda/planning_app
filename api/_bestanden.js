@@ -1,9 +1,9 @@
 // Bestandsopslag voor geüploade draaiboeken.
 //
-// Op Vercel: Blob-opslag (BLOB_READ_WRITE_TOKEN wordt gezet zodra je een Blob
-// store aan het project koppelt). De bestanden krijgen een onraadbare naam en
-// worden nooit rechtstreeks gelinkt: de app haalt ze op via api/draaiboek met
-// het formulier-token, zodat alleen wie de link heeft erbij kan.
+// Op Vercel: een privé Blob-store (BLOB_READ_WRITE_TOKEN wordt gezet zodra je
+// hem aan het project koppelt). Privé betekent: alleen de server kan de
+// bestanden lezen. De app haalt ze op via api/draaiboek met het
+// formulier-token, zodat alleen wie de link heeft erbij kan.
 //
 // Zonder token (lokaal, tests): een geheugenvariant.
 //
@@ -17,18 +17,19 @@ function safeName(naam) {
 
 function blobStore() {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
-  const { put, del } = require("@vercel/blob");
+  const { put, get, del } = require("@vercel/blob");
   return {
     async save(buf, mime, naam) {
+      // Privé: alleen te lezen met het token van de server, nooit via een losse URL.
       const r = await put("draaiboek/" + safeName(naam), buf, {
-        access: "public", addRandomSuffix: true, contentType: mime
+        access: "private", addRandomSuffix: true, contentType: mime
       });
       return r.url;
     },
     async open(url) {
-      const r = await fetch(url);
-      if (!r.ok) return null;
-      return Buffer.from(await r.arrayBuffer());
+      const r = await get(url, { access: "private", useCache: false });
+      if (!r || r.statusCode !== 200 || !r.stream) return null;
+      return Buffer.from(await new Response(r.stream).arrayBuffer());
     },
     async remove(urls) {
       if (urls && urls.length) await del(urls);

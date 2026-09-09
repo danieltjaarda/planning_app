@@ -99,7 +99,7 @@ Environment Variables) en deploy opnieuw. Lokaal: zet hem in `.env` in de
 projectmap; dat bestand staat in `.gitignore`. Zonder sleutel blijft de
 uploadknop staan en meldt hij dat omzetten nog niet aanstaat.
 
-Het bestand zelf wordt ook bewaard, in Vercel Blob (`api/_bestanden.js`), zodat
+Het bestand zelf wordt ook bewaard, in een privé Vercel Blob-store (`api/_bestanden.js`), zodat
 je het originele draaiboek in het klantvenster kunt openen onder *Draaiboek van
 de klant*. Daarvoor koppel je in Vercel een **Blob**-store aan het project
 (Storage → Create Database → Blob); die zet `BLOB_READ_WRITE_TOKEN`. De bestanden
