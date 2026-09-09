@@ -1,7 +1,7 @@
 <title>Weekzicht</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Martian+Mono:wght@300..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=Martian+Mono:wght@300..700&family=Geist:wght@400..700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <style>
 /* ============================================================
    Weekzicht — Nederlandse week- en dagplanning
@@ -1335,49 +1335,220 @@ button { cursor: pointer; }
 .answers dt { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink-3); padding-top: 2px; overflow-wrap: anywhere; }
 .answers dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-/* --- de formulierpagina die de klant ziet (?f=token) --- */
-.formpage { min-height: 100dvh; background: var(--paper); padding: 28px 14px 70px; }
-.formwrap {
-  max-width: 640px;
-  margin: 0 auto;
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  border-radius: 4px;
-  box-shadow: var(--shadow);
+/* --- de formulierpagina die de klant ziet (?f=token) — huisstijl mediaspot.nl:
+   Geist, lichtgrijs vlak, witte kaarten met ronde hoeken, oranje accent met
+   cursieve Playfair-woorden, pilvormige knoppen en de donkere navigatiepil. --- */
+.formpage {
+  --ms-bg: #F6F7F5;
+  --ms-ink: #1D1D1F;
+  --ms-ink-2: rgba(29, 29, 31, .68);
+  --ms-ink-3: #8A8A8E;
+  --ms-line: #E5E5E7;
+  --ms-accent: #FC6A2F;
+  --ms-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ms-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  color-scheme: light;
+  min-height: 100dvh;
+  background: var(--ms-bg);
+  color: var(--ms-ink);
+  font-family: var(--ms-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 16px 16px 48px;
 }
-.formhead { padding: 26px 26px 20px; border-bottom: 1px solid var(--line); }
-.formhead h1 { margin: 7px 0 9px; font-size: 27px; font-stretch: 112%; font-weight: 700; letter-spacing: -.015em; line-height: 1.1; }
-.formintro { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
-.formsec { padding: 18px 26px 20px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; }
-.formsec h2 {
-  margin: 0;
-  font-family: var(--mono);
-  font-size: 10.5px;
+.formpage *, .formpage *::before, .formpage *::after { box-sizing: border-box; }
+.ms-wrap { max-width: 1040px; margin: 0 auto; }
+
+.ms-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 64px;
+  padding: 0 14px 0 20px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4C4C4E 0%, #2A2A2C 100%);
+  box-shadow: 0 12px 32px rgba(29, 29, 31, .28), inset 0 1px 0 rgba(255, 255, 255, .16);
+}
+.ms-logo { display: flex; align-items: center; text-decoration: none; }
+.ms-logo img { height: 34px; width: auto; display: block; }
+.ms-word { color: #fff; font-weight: 600; font-size: 21px; letter-spacing: -.02em; }
+.ms-word b { color: var(--ms-accent); font-weight: 600; }
+.ms-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
 }
-.formsec .field input, .formsec .field textarea { font-size: 15px; padding: 10px 11px; }
-.formsec .field input[type="date"], .formsec .field input[type="time"] { font-size: 14px; }
-.formsec .field textarea { min-height: 84px; font-size: 14px; }
-.formsec .hint { font-size: 12px; color: var(--ink-3); }
-.req { color: var(--now); }
-.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
-.checks .check { font-size: 14px; }
-.ferr { color: var(--now); font-size: 13px; margin: 0; }
-.formfoot { padding: 18px 26px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.formfoot .btn-primary { height: 40px; padding: 0 22px; font-size: 14px; }
-.formfoot .fstatus { font-size: 13px; color: var(--ink-2); }
-.formdone { padding: 26px; display: flex; flex-direction: column; gap: 14px; }
-.formdone h2 { margin: 0; font-size: 20px; font-stretch: 112%; }
-.formdone p { margin: 0; color: var(--ink-2); line-height: 1.55; font-size: 14px; }
-.formdone textarea { width: 100%; min-height: 160px; font-family: var(--mono); font-size: 11.5px; padding: 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface-2); }
-.formdone .answers { font-size: 13.5px; }
-@media (max-width: 520px) {
-  .formpage { padding: 10px 8px 50px; }
-  .formhead, .formsec, .formfoot, .formdone { padding-left: 16px; padding-right: 16px; }
-  .checks { grid-template-columns: 1fr; }
+.ms-pill:hover { background: rgba(255, 255, 255, .1); }
+.ms-pill svg { flex: none; }
+.ms-pill .wa { color: #25D366; }
+
+.ms-hero { padding: 52px 6px 28px; max-width: 720px; }
+.ms-hero h1 {
+  margin: 0 0 12px;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 600;
+  letter-spacing: -.025em;
+  line-height: 1.08;
+}
+.ms-hero h1 em, .ms-sec h2 em, .ms-done h2 em {
+  font-family: var(--ms-serif);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ms-accent);
+  letter-spacing: 0;
+}
+.ms-hero p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ms-ink-2); }
+.ms-hero p strong { color: var(--ms-ink); font-weight: 600; }
+
+.ms-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.ms-card {
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, .7);
+  box-shadow: 0 8px 32px rgba(29, 29, 31, .08), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+.ms-form { padding: 6px 28px 28px; }
+.ms-sec { padding-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+.ms-sec + .ms-sec { margin-top: 26px; padding-top: 28px; border-top: 1px solid var(--ms-line); }
+.ms-sec h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+
+.ms-field { display: flex; flex-direction: column; gap: 6px; }
+.ms-field > label, .ms-field .ms-lab { font-size: 14px; font-weight: 600; color: var(--ms-ink); }
+.ms-field .opt { font-weight: 400; color: var(--ms-ink-3); font-size: 12.5px; }
+.ms-field input, .ms-field textarea {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--ms-line);
+  background: #fff;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ms-ink);
+  transition: border-color .15s, box-shadow .15s;
+}
+.ms-field input::placeholder, .ms-field textarea::placeholder { color: #A1A1A6; }
+.ms-field input:focus, .ms-field textarea:focus {
+  outline: none;
+  border-color: var(--ms-accent);
+  box-shadow: 0 0 0 3px rgba(252, 106, 47, .22);
+}
+.ms-field textarea { min-height: 112px; resize: vertical; line-height: 1.5; }
+.ms-field .hint { font-size: 12.5px; color: var(--ms-ink-3); }
+.ms-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.ms-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ms-line);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.ms-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.ms-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #D6D6D8; transition: background .15s; }
+.ms-chip:hover { border-color: #C9C9CC; }
+.ms-chip:has(input:checked) { background: var(--ms-ink); color: #fff; border-color: var(--ms-ink); }
+.ms-chip:has(input:checked)::before { background: var(--ms-accent); }
+.ms-chip:has(input:focus-visible) { box-shadow: 0 0 0 3px rgba(252, 106, 47, .22); }
+
+.ms-foot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--ms-line); }
+.ms-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 30px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--ms-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s, transform .15s;
+}
+.ms-btn:hover { filter: brightness(1.08); }
+.ms-btn:active { transform: scale(.98); }
+.ms-btn[disabled] { opacity: .7; cursor: wait; }
+.ms-btn.ghost { background: #fff; color: var(--ms-ink); border: 1px solid #D6D6D8; }
+.ms-btn.ghost:hover { filter: none; background: var(--ms-bg); }
+.ms-status { font-size: 13px; color: var(--ms-ink-3); }
+.ms-status.err { color: #D9331E; font-weight: 500; }
+
+.ms-side { padding: 24px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 92px; }
+.ms-side h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.ms-tile { display: block; padding: 14px 16px; border-radius: 16px; background: var(--ms-bg); text-decoration: none; color: inherit; transition: background .15s; }
+.ms-tile:hover { background: #EEEFEC; }
+.ms-tile b { display: block; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+.ms-tile span { font-size: 13px; color: var(--ms-ink-2); }
+.ms-addr { margin: 10px 0 0; padding-top: 14px; border-top: 1px solid var(--ms-line); font-size: 13px; color: var(--ms-ink-2); line-height: 1.5; }
+
+.ms-done { padding: 36px 32px; display: flex; flex-direction: column; gap: 16px; }
+.ms-done h2 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -.025em; line-height: 1.1; }
+.ms-done p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ms-ink-2); }
+.ms-done .answers {
+  grid-template-columns: minmax(140px, 32%) 1fr;
+  gap: 8px 16px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--ms-bg);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.ms-done .answers dt { font-family: var(--ms-sans); font-size: 12.5px; letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--ms-ink-3); padding-top: 3px; }
+.ms-done textarea {
+  width: 100%;
+  min-height: 180px;
+  border-radius: 16px;
+  border: 1px solid var(--ms-line);
+  padding: 14px 16px;
+  font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  background: var(--ms-bg);
+  color: var(--ms-ink);
+}
+.ms-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.ms-copy { margin: 32px 0 0; text-align: center; font-size: 12.5px; color: var(--ms-ink-3); }
+
+@media (max-width: 860px) {
+  .ms-grid { grid-template-columns: 1fr; }
+  .ms-side { position: static; }
+}
+@media (max-width: 560px) {
+  .formpage { padding: 10px 10px 36px; }
+  .ms-nav { height: 56px; padding: 0 10px 0 16px; }
+  .ms-nav .ms-pill span { display: none; }
+  .ms-nav .ms-pill { padding: 0 12px; }
+  .ms-logo img { height: 28px; }
+  .ms-hero { padding: 30px 4px 20px; }
+  .ms-form { padding: 2px 18px 22px; }
+  .ms-row2 { grid-template-columns: 1fr; }
+  .ms-done { padding: 26px 18px; }
+  .ms-done .answers { grid-template-columns: 1fr; gap: 2px 0; }
+  .ms-done .answers dd { margin-bottom: 8px; }
 }
 
 @media (max-width: 620px) {
@@ -1456,14 +1627,32 @@ button { cursor: pointer; }
 </div>
 
 <div class="formpage" id="formPage" hidden>
-  <div class="formwrap">
-    <header class="formhead">
-      <span class="label">Bruiloftsfilm</span>
-      <h1 id="fpTitle">Jullie trouwdag</h1>
-      <p class="formintro" id="fpIntro">Even laden…</p>
+  <div class="ms-wrap">
+    <header class="ms-nav">
+      <a class="ms-logo" href="https://www.mediaspot.nl" aria-label="Mediaspot">
+        <img id="fpLogo" alt="Mediaspot" width="230" height="86" data-src="https://www.mediaspot.nl/mediaspot-logo.svg" hidden>
+        <span class="ms-word" id="fpWord">mediasp<b>o</b>t</span>
+      </a>
+      <a class="ms-pill" href="tel:+31620176727"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>06 20176727</span></a>
     </header>
-    <form id="fpForm" novalidate hidden></form>
-    <div class="formdone" id="fpDone" hidden></div>
+    <section class="ms-hero">
+      <h1 id="fpTitle">Vertel me over <em>jullie trouwdag</em></h1>
+      <p id="fpIntro">Even laden…</p>
+    </section>
+    <div class="ms-grid">
+      <div class="ms-card">
+        <form id="fpForm" class="ms-form" novalidate hidden></form>
+        <div class="ms-done" id="fpDone" hidden></div>
+      </div>
+      <aside class="ms-card ms-side" aria-label="Contact">
+        <h3>Liever even overleggen?</h3>
+        <a class="ms-tile" href="tel:+31620176727"><b>Bel 06 20176727</b><span>Op werkdagen en zaterdag van 9:00 tot 20:00</span></a>
+        <a class="ms-tile" href="https://wa.me/31620176727"><b>Stuur een WhatsApp</b><span>Vaak de snelste manier voor een korte vraag</span></a>
+        <a class="ms-tile" href="mailto:info@mediaspot.nl"><b>info@mediaspot.nl</b><span>Liever uitgebreid mailen? Dat kan ook</span></a>
+        <p class="ms-addr">Mediaspot<br>Brandemeer 6, Joure</p>
+      </aside>
+    </div>
+    <p class="ms-copy">Je gegevens gebruik ik alleen om jullie bruiloftsfilm te maken.</p>
   </div>
 </div>
 
@@ -3141,12 +3330,12 @@ button { cursor: pointer; }
   // De vragen — één lijst voor de pagina van de klant én voor het tonen
   // van de antwoorden in het klantvenster.
   var FORM_SECTIONS = [
-    { title: "Wie zijn jullie", fields: [
+    { title: "Wie zijn *jullie*", fields: [
       { id: "namen", label: "Jullie namen", type: "text", req: true, ph: "Bijv. Sanne & Thomas" },
       { id: "email", label: "E-mailadres", type: "email", req: true, ph: "naam@voorbeeld.nl" },
       { id: "telefoon", label: "Telefoonnummer", type: "tel", req: true, ph: "06 12345678" }
     ]},
-    { title: "De dag", fields: [
+    { title: "De *dag* zelf", fields: [
       { id: "datum", label: "Trouwdatum", type: "date", req: true },
       { id: "start", label: "Begintijd filmen", type: "time", req: true, hint: "Vanaf hoe laat wil je dat ik erbij ben?" },
       { id: "eind", label: "Eindtijd filmen", type: "time", req: true, hint: "Tot hoe laat? Na middernacht mag ook." },
@@ -3155,12 +3344,12 @@ button { cursor: pointer; }
       { id: "planning", label: "Globale planning van de dag", type: "textarea",
         ph: "10:00 aankleden bij de bruid\n13:30 ceremonie\n15:00 fotoshoot\n17:00 borrel\n19:00 diner\n21:00 feest" }
     ]},
-    { title: "Locaties", fields: [
+    { title: "Waar het *gebeurt*", fields: [
       { id: "locVoorbereiding", label: "Waar zijn de voorbereidingen?", type: "text", ph: "Adres of naam van de locatie" },
       { id: "locCeremonie", label: "Locatie ceremonie", type: "text", ph: "Adres of naam van de locatie" },
       { id: "locFeest", label: "Locatie diner en feest", type: "text", ph: "Adres of naam van de locatie" }
     ]},
-    { title: "Wat wil je terugzien", fields: [
+    { title: "Wat je wilt *terugzien*", fields: [
       { id: "momenten", label: "Welke momenten moeten zeker in de film?", type: "checks", options: [
         "Voorbereidingen", "First look", "Ceremonie", "Fotoshoot", "Borrel en felicitaties",
         "Diner", "Speeches", "Openingsdans", "Feest", "Vertrek"
@@ -3322,24 +3511,31 @@ button { cursor: pointer; }
 
   /* --- de pagina van de klant -------------------------------- */
 
+  /** "Wie zijn *jullie*" → "Wie zijn <em>jullie</em>": het cursieve accent van mediaspot.nl. */
+  function accentHtml(t) {
+    return esc(t).replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  }
+
   function fieldHtml(f, val) {
     var id = "q_" + f.id;
-    var lab = '<label class="label" for="' + id + '">' + esc(f.label) + (f.req ? ' <span class="req">*</span>' : '') + '</label>';
+    // Net als het contactformulier op de site: verplicht is de regel, optioneel staat erbij.
+    var opt = f.req ? '' : ' <span class="opt">(optioneel)</span>';
+    var lab = '<label for="' + id + '">' + esc(f.label) + opt + '</label>';
     var hint = f.hint ? '<span class="hint">' + esc(f.hint) + '</span>' : '';
     if (f.type === "checks") {
       var picked = Array.isArray(val) ? val : [];
-      var boxes = '';
+      var chips = '';
       for (var i = 0; i < f.options.length; i++) {
-        boxes += '<label class="check"><input type="checkbox" name="' + id + '" value="' + esc(f.options[i]) + '"' +
-          (picked.indexOf(f.options[i]) >= 0 ? ' checked' : '') + '> ' + esc(f.options[i]) + '</label>';
+        chips += '<label class="ms-chip"><input type="checkbox" name="' + id + '" value="' + esc(f.options[i]) + '"' +
+          (picked.indexOf(f.options[i]) >= 0 ? ' checked' : '') + '>' + esc(f.options[i]) + '</label>';
       }
-      return '<div class="field"><span class="label">' + esc(f.label) + '</span><div class="checks">' + boxes + '</div>' + hint + '</div>';
+      return '<div class="ms-field"><span class="ms-lab">' + esc(f.label) + opt + '</span><div class="ms-chips">' + chips + '</div>' + hint + '</div>';
     }
     if (f.type === "textarea") {
-      return '<div class="field">' + lab + '<textarea id="' + id + '" placeholder="' + esc(f.ph || '') + '">' + esc(val || '') + '</textarea>' + hint + '</div>';
+      return '<div class="ms-field">' + lab + '<textarea id="' + id + '" placeholder="' + esc(f.ph || '') + '">' + esc(val || '') + '</textarea>' + hint + '</div>';
     }
     var extra = f.type === "time" ? ' step="300"' : f.type === "number" ? ' min="0" inputmode="numeric"' : '';
-    return '<div class="field">' + lab + '<input type="' + f.type + '" id="' + id + '" value="' + esc(val || '') +
+    return '<div class="ms-field">' + lab + '<input type="' + f.type + '" id="' + id + '" value="' + esc(val || '') +
       '" placeholder="' + esc(f.ph || '') + '"' + extra + (f.req ? ' required' : '') + '>' + hint + '</div>';
   }
 
@@ -3347,16 +3543,16 @@ button { cursor: pointer; }
     var html = '';
     for (var s = 0; s < FORM_SECTIONS.length; s++) {
       var sec = FORM_SECTIONS[s];
-      html += '<section class="formsec"><h2>' + esc(sec.title) + '</h2>';
+      html += '<section class="ms-sec"><h2>' + accentHtml(sec.title) + '</h2>';
       var i = 0;
       while (i < sec.fields.length) {
         var f = sec.fields[i], g = sec.fields[i + 1];
         // begin- en eindtijd naast elkaar
         if (f.id === "start" && g && g.id === "eind") {
-          html += '<div class="row2">' + fieldHtml(f, prefill[f.id]) + fieldHtml(g, prefill[g.id]) + '</div>';
+          html += '<div class="ms-row2">' + fieldHtml(f, prefill[f.id]) + fieldHtml(g, prefill[g.id]) + '</div>';
           i += 2;
         } else if (f.id === "tijdCeremonie" && g && g.id === "gasten") {
-          html += '<div class="row2">' + fieldHtml(f, prefill[f.id]) + fieldHtml(g, prefill[g.id]) + '</div>';
+          html += '<div class="ms-row2">' + fieldHtml(f, prefill[f.id]) + fieldHtml(g, prefill[g.id]) + '</div>';
           i += 2;
         } else {
           html += fieldHtml(f, prefill[f.id]);
@@ -3365,8 +3561,8 @@ button { cursor: pointer; }
       }
       html += '</section>';
     }
-    html += '<div class="formfoot"><button type="submit" class="btn-primary" id="fpSend">Versturen</button>' +
-      '<span class="fstatus" id="fpStatus"></span></div>';
+    html += '<div class="ms-foot"><button type="submit" class="ms-btn" id="fpSend">Verstuur formulier</button>' +
+      '<span class="ms-status" id="fpStatus">Ik gebruik je gegevens alleen voor jullie film.</span></div>';
     return html;
   }
 
@@ -3400,9 +3596,14 @@ button { cursor: pointer; }
   function bootForm(token) {
     document.querySelector(".app").hidden = true;
     $("formPage").hidden = false;
-    document.title = "Bruiloftsfilm — formulier";
+    document.title = "Jullie trouwdag | Mediaspot";
     var form = $("fpForm");
     var rec = null;
+
+    // Het echte logo van de site; lukt laden niet, dan blijft het woordmerk staan.
+    var logo = $("fpLogo");
+    logo.addEventListener("load", function () { logo.hidden = false; $("fpWord").hidden = true; });
+    logo.src = logo.getAttribute("data-src");
 
     function show(data) {
       rec = data || {};
@@ -3411,12 +3612,14 @@ button { cursor: pointer; }
       if (!prefill.namen && rec.naam) prefill.namen = rec.naam;
       if (!prefill.datum && rec.datum) prefill.datum = rec.datum;
       var wie = rec.naam || prefill.namen;
-      $("fpTitle").textContent = wie ? "Jullie trouwdag, " + wie : "Jullie trouwdag";
-      $("fpIntro").innerHTML = (wie ? "Hoi " + esc(wie) + "! " : "Hoi! ") +
-        "Vul dit formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. " +
-        "Velden met een <span class=\"req\">*</span> zijn nodig; de rest mag je overslaan." +
-        (rec.ingevuld ? "<br><br><strong>Je hebt dit al ingevuld op " + esc(fmtStamp(rec.ingevuld)) +
-          ".</strong> Je kunt het aanpassen en opnieuw versturen." : "");
+      $("fpTitle").innerHTML = wie
+        ? "Hoi " + esc(wie) + ", vertel me over <em>jullie trouwdag</em>"
+        : "Vertel me over <em>jullie trouwdag</em>";
+      $("fpIntro").innerHTML =
+        "Hoe meer ik vooraf weet, hoe beter ik jullie dag kan vastleggen. Vul in wat je al weet; " +
+        "wat nog niet vaststaat mag je overslaan. Je krijgt meestal binnen een paar uur reactie." +
+        (rec.ingevuld ? " <strong>Je hebt dit al ingevuld op " + esc(fmtStamp(rec.ingevuld)) +
+          ".</strong> Je kunt alles aanpassen en opnieuw versturen." : "");
       form.innerHTML = buildFormHtml(prefill);
       form.hidden = false;
       $("q_start").addEventListener("change", function () {
@@ -3440,21 +3643,21 @@ button { cursor: pointer; }
       var status = $("fpStatus");
       if (err) {
         status.textContent = err.msg;
-        status.className = "ferr";
+        status.className = "ms-status err";
         var el = $("q_" + err.id);
         if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
         return;
       }
-      status.className = "fstatus";
+      status.className = "ms-status";
       status.textContent = "Versturen…";
       $("fpSend").disabled = true;
       api("POST", "", { t: token, actie: "invullen", antwoorden: a }).then(function (r) {
         if (!r.ok) throw r;
         form.hidden = true;
-        $("fpDone").innerHTML = '<h2>Bedankt' + (a.namen ? ', ' + esc(a.namen) : '') + '!</h2>' +
+        $("fpDone").innerHTML = '<h2>Bedankt' + (a.namen ? ', <em>' + esc(a.namen) + '</em>' : '') + '!</h2>' +
           '<p>Jullie antwoorden zijn verstuurd. Ik neem ze door en kom erop terug. ' +
           'Iets vergeten? Open deze link later nog eens; je kunt alles aanpassen.</p>' + answersHtml(a) +
-          '<div><button type="button" class="btn-line" id="fpEdit">Toch nog iets aanpassen</button></div>';
+          '<div class="ms-actions"><button type="button" class="ms-btn ghost" id="fpEdit">Toch nog iets aanpassen</button></div>';
         $("fpDone").hidden = false;
         if ($("formPage").scrollIntoView) $("formPage").scrollIntoView();
         $("fpEdit").addEventListener("click", function () {
@@ -3465,15 +3668,15 @@ button { cursor: pointer; }
         });
       })["catch"](function (r) {
         $("fpSend").disabled = false;
-        status.className = "ferr";
+        status.className = "ms-status err";
         status.textContent = "Versturen lukte niet.";
         form.hidden = true;
         $("fpDone").innerHTML = '<h2>Versturen lukte niet</h2>' +
           '<p>' + esc(r && r.status ? "De server gaf een fout (" + r.status + ")." : "Er is geen verbinding met de server.") +
           ' Kopieer de tekst hieronder en stuur die naar mij via WhatsApp of mail, dan heb ik alles alsnog.</p>' +
           '<textarea id="fpPlain" readonly>' + esc(answersPlain(a)) + '</textarea>' +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-primary" id="fpCopy">Kopieer tekst</button>' +
-          '<button type="button" class="btn-line" id="fpRetry">Nog eens proberen</button></div>';
+          '<div class="ms-actions"><button type="button" class="ms-btn" id="fpCopy">Kopieer tekst</button>' +
+          '<button type="button" class="ms-btn ghost" id="fpRetry">Nog eens proberen</button></div>';
         $("fpDone").hidden = false;
         if ($("formPage").scrollIntoView) $("formPage").scrollIntoView();
         $("fpCopy").addEventListener("click", function () { copyText(answersPlain(a), "Tekst gekopieerd."); });
