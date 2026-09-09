@@ -3470,6 +3470,9 @@ button { cursor: pointer; }
         "Voorbereidingen", "First look", "Ceremonie", "Fotoshoot", "Borrel en felicitaties",
         "Diner", "Speeches", "Openingsdans", "Feest", "Vertrek"
       ]},
+      { id: "audioCeremonie", label: "Wil je geluidsfragmenten van de ceremonie door de film heen?", type: "choice",
+        options: ["Ja, graag", "Nee, liever alleen muziek", "Weet ik nog niet"],
+        hint: "Denk aan de geloften of het ja-woord, te horen over de beelden van de dag." },
       { id: "fotograaf", label: "Wie is jullie fotograaf?", type: "text", ph: "Naam of website, zodat ik kan afstemmen" },
       { id: "stijl", label: "Welke sfeer of muziek past bij jullie film?", type: "textarea", ph: "Rustig en romantisch, energiek, documentair…" },
       { id: "wensen", label: "Bijzondere momenten of wensen die ik niet mag missen", type: "textarea", ph: "Een verrassing, een speech, een dierbaar familielid…" },
@@ -3664,6 +3667,14 @@ button { cursor: pointer; }
       }
       return '<div class="ms-field"><span class="ms-lab">' + esc(f.label) + opt + '</span><div class="ms-chips">' + chips + '</div>' + hint + '</div>';
     }
+    if (f.type === "choice") {
+      var radios = '';
+      for (var c = 0; c < f.options.length; c++) {
+        radios += '<label class="ms-chip"><input type="radio" name="' + id + '" value="' + esc(f.options[c]) + '"' +
+          (val === f.options[c] ? ' checked' : '') + '>' + esc(f.options[c]) + '</label>';
+      }
+      return '<div class="ms-field"><span class="ms-lab">' + esc(f.label) + opt + '</span><div class="ms-chips">' + radios + '</div>' + hint + '</div>';
+    }
     if (f.type === "textarea") {
       var extraUi = '';
       if (f.id === "planning") {
@@ -3733,6 +3744,9 @@ button { cursor: pointer; }
         var picked = [], boxes = document.querySelectorAll('input[name="q_' + f.id + '"]:checked');
         for (var b = 0; b < boxes.length; b++) picked.push(boxes[b].value);
         out[f.id] = picked;
+      } else if (f.type === "choice") {
+        var sel = document.querySelector('input[name="q_' + f.id + '"]:checked');
+        out[f.id] = sel ? sel.value : "";
       } else {
         var el = $("q_" + f.id);
         out[f.id] = el ? el.value.trim() : "";
