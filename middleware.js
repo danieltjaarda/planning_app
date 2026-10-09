@@ -1,5 +1,5 @@
-// Vercel-middleware: de planning zit achter een wachtwoord, de formulierlinks
-// (?f=token) niet. Draait vóór het serveren van de statische pagina.
+// Vercel-middleware: de planning zit achter een wachtwoord, de formulier- en
+// muzieklinks (?f=token, ?m=token) niet. Draait vóór het serveren van de statische pagina.
 //
 // Zelfde cookie-controle als api/_sessie.js, maar met Web Crypto omdat
 // middleware in de edge-runtime draait. Geen WEEKZICHT_WACHTWOORD → open.
@@ -7,6 +7,7 @@
 export const config = { matcher: ["/", "/index.html"] };
 
 const COOKIE = "wz_sessie";
+const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const CRAWLER = /WhatsApp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Applebot|iMessage|Pinterest|Googlebot|bingbot|SkypeUriPreview|Snapchat/i;
 const SITE = "https://planning-app-three.vercel.app";
 
@@ -14,8 +15,8 @@ function escHtml(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** Naam van het bruidspaar bij een token, uit dezelfde Redis als api/formulier. */
-export async function lookupName(token) {
+/** Naam van het bruidspaar bij een token, uit dezelfde Redis als api/formulier en api/muziek. */
+export async function lookupName(token, prefix) {
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const key = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !key) return "";
@@ -23,7 +24,7 @@ export async function lookupName(token) {
     const r = await fetch(url, {
       method: "POST",
       headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
-      body: JSON.stringify(["GET", "formulier:" + token])
+      body: JSON.stringify(["GET", (prefix || "formulier:") + token])
     });
     const j = await r.json();
     const rec = j && j.result ? JSON.parse(j.result) : null;
@@ -32,9 +33,15 @@ export async function lookupName(token) {
 }
 
 /** De kleine pagina die WhatsApp, iMessage e.d. te zien krijgen: alleen de kaart. */
-export function previewHtml(naam, pageUrl) {
-  const title = naam ? naam + ", vertel me over jullie trouwdag" : "Vertel me over jullie trouwdag";
-  const desc = "Vul het formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. Duurt een paar minuten.";
+export function previewHtml(naam, pageUrl, soort) {
+  const muziek = soort === "muziek";
+  const title = muziek
+    ? (naam ? naam + ", kies de muziek voor jullie film" : "Kies de muziek voor jullie trouwfilm")
+    : (naam ? naam + ", vertel me over jullie trouwdag" : "Vertel me over jullie trouwdag");
+  const desc = muziek
+    ? "Luister de suggesties, kies wat bij jullie past of voeg eigen nummers toe met een YouTube-link."
+    : "Vul het formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. Duurt een paar minuten.";
+  const img = SITE + (muziek ? "/og-muziek.png" : "/og-formulier.png");
   const t = escHtml(title), d = escHtml(desc), u = escHtml(pageUrl);
   return "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\">" +
     "<title>" + t + " | Mediaspot</title>" +
@@ -45,14 +52,14 @@ export function previewHtml(naam, pageUrl) {
     "<meta property=\"og:title\" content=\"" + t + "\">" +
     "<meta property=\"og:description\" content=\"" + d + "\">" +
     "<meta property=\"og:url\" content=\"" + u + "\">" +
-    "<meta property=\"og:image\" content=\"" + SITE + "/og-formulier.png\">" +
+    "<meta property=\"og:image\" content=\"" + img + "\">" +
     "<meta property=\"og:image:width\" content=\"1200\"><meta property=\"og:image:height\" content=\"630\">" +
     "<meta property=\"og:locale\" content=\"nl_NL\">" +
     "<meta name=\"twitter:card\" content=\"summary_large_image\">" +
     "<meta name=\"twitter:title\" content=\"" + t + "\">" +
     "<meta name=\"twitter:description\" content=\"" + d + "\">" +
-    "<meta name=\"twitter:image\" content=\"" + SITE + "/og-formulier.png\">" +
-    "</head><body><p>" + t + ". <a href=\"" + u + "\">Open het formulier</a>.</p></body></html>";
+    "<meta name=\"twitter:image\" content=\"" + img + "\">" +
+    "</head><body><p>" + t + ". <a href=\"" + u + "\">" + (muziek ? "Open de muziekpagina" : "Open het formulier") + "</a>.</p></body></html>";
 }
 
 export function isCrawler(userAgent) {
@@ -84,14 +91,16 @@ export async function sessieGeldig(cookieHeader, secret) {
 
 export default async function middleware(request) {
   const url = new URL(request.url);
-  // de klant met een formulierlink mag altijd door
-  const token = url.searchParams.get("f") || "";
-  if (/^[a-z0-9]{12,40}$/.test(token)) {
+  // de klant met een formulier- of muzieklink mag altijd door
+  const f = url.searchParams.get("f") || "", m = url.searchParams.get("m") || "";
+  const soort = TOKEN_RE.test(f) ? "formulier" : TOKEN_RE.test(m) ? "muziek" : null;
+  if (soort) {
+    const token = soort === "muziek" ? m : f, param = soort === "muziek" ? "m" : "f";
     // WhatsApp e.d. halen de link op voor een voorvertoning: geef ze een
     // kleine pagina met titel, tekst en afbeelding, op naam van het bruidspaar.
     if (isCrawler(request.headers.get("user-agent"))) {
-      const naam = await lookupName(token);
-      return new Response(previewHtml(naam, url.origin + "/?f=" + token), {
+      const naam = await lookupName(token, soort + ":");
+      return new Response(previewHtml(naam, url.origin + "/?" + param + "=" + token, soort), {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300", "X-Robots-Tag": "noindex, nofollow" }
       });

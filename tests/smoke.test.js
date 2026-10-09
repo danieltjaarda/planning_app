@@ -356,6 +356,133 @@ setTimeout(async () => {
     ok('ververs zonder nieuws', /Geen nieuwe antwoorden/.test($('toast').textContent), $('toast').textContent);
     click(q('#ldOverlay [data-close]'));
 
+    // ---- muzieklink maken ----
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    ok('muziekblok zonder link', /Maak muzieklink/.test($('lMuziekBox').textContent), $('lMuziekBox').textContent.slice(0, 60));
+    click($('lMakeMuziekLink'));
+    await wait(30);
+    ok('muzieklink gemaakt', !!$('lMuziekLink') && /^https:\/\/example\.test\/\?m=[a-z0-9]{22}$/.test($('lMuziekLink').value), $('lMuziekLink') && $('lMuziekLink').value);
+    const mtoken = $('lMuziekLink').value.split('?m=')[1];
+    ok('muzieklink ≠ formulierlink', mtoken !== token);
+    ok('nog geen keuze, met tijdstip', /Nog geen keuze · link gemaakt op 1 sep 2026 om 12:00$/.test($('lMuziekBox').querySelector('.fstate').textContent), $('lMuziekBox').querySelector('.fstate').textContent);
+    ok('server kent de muzieklink', (() => { const r = fetchMock.store.get('muziek:' + mtoken); return r && JSON.parse(r).naam === 'Bram Jansen'; })());
+    ok('formulierblok blijft staan', /Ingevuld op/.test($('lFormBox').textContent));
+    click(q('#ldOverlay [data-close]'));
+    ok('chip "muzieklink gestuurd"', /muzieklink gestuurd/.test(rowByName('Bram Jansen').textContent));
+    bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
+    ok('muziektoken bewaard naast formulier', bram.muziekToken === mtoken && bram.formToken === token && bram.form.wensen === 'De speech van opa niet missen.');
+
+    // ---- de klant opent de muzieklink op een eigen apparaat ----
+    const errors3 = [];
+    const dom3 = new JSDOM(doc, {
+      runScripts: 'dangerously', pretendToBeVisual: true,
+      url: 'https://example.test/?m=' + mtoken,
+      beforeParse(win) { freezeClock(win); win.fetch = fetchMock; },
+      virtualConsole: new (require('jsdom').VirtualConsole)().on('jsdomError', e => errors3.push('jsdomError: ' + e.message))
+    });
+    const w3 = dom3.window, d3 = w3.document;
+    w3.addEventListener('error', e => errors3.push('window error: ' + e.message));
+    await wait(30);
+    const $3 = id => d3.getElementById(id);
+    const click3 = el => el.dispatchEvent(new w3.MouseEvent('click', { bubbles: true }));
+    ok('muziek: geen scriptfouten', errors3.length === 0, errors3.join(' | '));
+    ok('muziek: pagina zichtbaar, planning en formulier dicht', !$3('muziekPage').hidden && !$3('mpMain').hidden && d3.querySelector('.app').hidden && $3('formPage').hidden);
+    ok('muziek: geen klantgegevens op de pagina', !/Anna de Vries|00000001/.test(d3.body.textContent));
+    ok('muziek: aangesproken met naam', /Bram Jansen/.test($3('mpTitle').textContent), $3('mpTitle').textContent);
+    ok('muziek: tien suggesties', d3.querySelectorAll('#mpList .mz-row').length === 10, d3.querySelectorAll('#mpList .mz-row').length);
+    ok('muziek: Justin Bieber en Ed Sheeran erbij', /Justin Bieber/.test($3('mpList').textContent) && /Ed Sheeran/.test($3('mpList').textContent));
+    ok('muziek: hoesjes van YouTube', d3.querySelector('[data-yt="2Vv-BfVoq4g"] img').src === 'https://i.ytimg.com/vi/2Vv-BfVoq4g/mqdefault.jpg');
+    ok('muziek: niets gekozen, speler dicht', d3.querySelectorAll('#mpList .mz-row.on').length === 0 && $3('mpPlayer').hidden);
+
+    // afspelen via de YouTube-speler
+    click3(d3.querySelector('[data-play="2Vv-BfVoq4g"]'));
+    ok('muziek: speler open met het nummer', !$3('mpPlayer').hidden && $3('mpFrame').src === 'https://www.youtube-nocookie.com/embed/2Vv-BfVoq4g?autoplay=1&rel=0&playsinline=1', $3('mpFrame').src);
+    ok('muziek: titel bij de speler', /Perfect — Ed Sheeran/.test($3('mpNow').textContent), $3('mpNow').textContent);
+    ok('muziek: rij gemarkeerd als spelend', d3.querySelector('[data-yt="2Vv-BfVoq4g"]').classList.contains('playing'));
+    click3(d3.querySelector('[data-play="450p7goxZqg"]'));
+    ok('muziek: ander nummer neemt over', /embed\/450p7goxZqg/.test($3('mpFrame').src) && !d3.querySelector('[data-yt="2Vv-BfVoq4g"]').classList.contains('playing'));
+    click3($3('mpStop'));
+    ok('muziek: speler dicht', $3('mpPlayer').hidden && $3('mpFrame').src === 'about:blank');
+
+    // kiezen, met een moment erbij
+    click3(d3.querySelector('[data-pick="2Vv-BfVoq4g"]'));
+    click3(d3.querySelector('[data-pick="450p7goxZqg"]'));
+    ok('muziek: twee gekozen', d3.querySelectorAll('#mpList .mz-row.on').length === 2 && /2 nummers gekozen/.test($3('mpCount').textContent), $3('mpCount').textContent);
+    const sel = d3.querySelector('select[data-moment="2Vv-BfVoq4g"]');
+    ok('muziek: momentkeuze alleen bij gekozen nummers', !!sel && sel.value === 'Trouwfilm' && !d3.querySelector('select[data-moment="rtOvBOTyX00"]'));
+    sel.value = 'Openingsdans';
+    sel.dispatchEvent(new w3.Event('change', { bubbles: true }));
+    click3(d3.querySelector('[data-pick="450p7goxZqg"]'));
+    ok('muziek: keuze ongedaan', d3.querySelectorAll('#mpList .mz-row.on').length === 1);
+
+    // eigen nummer toevoegen met een YouTube-link
+    ok('muziek: geen verwijderknop bij suggesties', !d3.querySelector('[data-del]'));
+    $3('mpUrl').value = 'niet een link';
+    click3($3('mpAdd'));
+    ok('muziek: geen youtube-link gemeld', /geen YouTube-link/.test($3('mpAddStatus').textContent) && /err/.test($3('mpAddStatus').className), $3('mpAddStatus').textContent);
+    ok('muziek: niets opgevraagd bij onzin', fetchMock.oembed.length === 0);
+    $3('mpUrl').value = 'https://youtu.be/weg00000000';
+    click3($3('mpAdd'));
+    await wait(30);
+    ok('muziek: onbekende video gemeld', /niet vinden/.test($3('mpAddStatus').textContent), $3('mpAddStatus').textContent);
+    ok('muziek: niets toegevoegd', d3.querySelectorAll('#mpList .mz-row').length === 10);
+    $3('mpUrl').value = 'https://www.youtube.com/watch?v=abcdefghijk&t=10s';
+    $3('mpUrl').dispatchEvent(new w3.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    await wait(30);
+    const eigen = d3.querySelector('[data-yt="abcdefghijk"]');
+    ok('muziek: eigen nummer toegevoegd en gekozen', d3.querySelectorAll('#mpList .mz-row').length === 11 && eigen && eigen.classList.contains('on'));
+    ok('muziek: titel en artiest opgezocht', eigen && /The One/.test(eigen.textContent) && /Kodaline/.test(eigen.textContent) && /zelf toegevoegd/.test(eigen.textContent), eigen && eigen.textContent.slice(0, 80));
+    ok('muziek: server kreeg de link met token', fetchMock.oembed.length === 2 && /abcdefghijk/.test(fetchMock.oembed[1]));
+    ok('muziek: eigen nummer te verwijderen', !!d3.querySelector('[data-del="abcdefghijk"]'));
+    ok('muziek: invoer leeg na toevoegen', $3('mpUrl').value === '' && /Toegevoegd: The One/.test($3('mpAddStatus').textContent), $3('mpAddStatus').textContent);
+    $3('mpUrl').value = 'https://www.youtube.com/watch?v=abcdefghijk';
+    click3($3('mpAdd'));
+    await wait(30);
+    ok('muziek: dubbel toevoegen genegeerd', d3.querySelectorAll('#mpList .mz-row').length === 11 && /al in de lijst/.test($3('mpAddStatus').textContent) && fetchMock.oembed.length === 2);
+    $3('mpUrl').value = 'https://youtu.be/rtOvBOTyX00';
+    click3($3('mpAdd'));
+    ok('muziek: suggestie via link wordt aangevinkt', d3.querySelector('[data-yt="rtOvBOTyX00"]').classList.contains('on') && d3.querySelectorAll('#mpList .mz-row').length === 11);
+    click3(d3.querySelector('[data-pick="rtOvBOTyX00"]'));
+
+    // versturen
+    $3('mpNote').value = 'Het refrein graag bij de kus.';
+    click3($3('mpSend'));
+    await wait(30);
+    ok('muziek: bedankt-scherm', !$3('mpDone').hidden && $3('mpMain').hidden && /Bedankt, Bram Jansen/.test($3('mpDone').textContent), $3('mpDone').textContent.slice(0, 60));
+    ok('muziek: samenvatting met moment en eigen nummer', /Perfect/.test($3('mpDone').textContent) && /Openingsdans/.test($3('mpDone').textContent) && /The One/.test($3('mpDone').textContent) && /refrein/.test($3('mpDone').textContent));
+    ok('muziek: logo op bedankt-scherm', !!d3.querySelector('#mpDone img.ms-done-logo'));
+    const mrec = JSON.parse(fetchMock.store.get('muziek:' + mtoken));
+    ok('server: keuze opgeslagen', mrec.nummers.length === 2 && mrec.nummers[0].yt === '2Vv-BfVoq4g' && mrec.nummers[0].moment === 'Openingsdans' && mrec.nummers[0].eigen === false, JSON.stringify(mrec.nummers));
+    ok('server: eigen nummer opgeslagen', mrec.nummers[1].yt === 'abcdefghijk' && mrec.nummers[1].titel === 'The One' && mrec.nummers[1].artiest === 'Kodaline' && mrec.nummers[1].eigen === true);
+    ok('server: opmerking en teller', mrec.opmerking === 'Het refrein graag bij de kus.' && mrec.opzoek === 2 && typeof mrec.ingevuld === 'string');
+    // terug naar bewerken: alles staat er nog
+    click3($3('mpEdit'));
+    ok('muziek: terug naar de lijst', !$3('mpMain').hidden && $3('mpDone').hidden && d3.querySelectorAll('#mpList .mz-row.on').length === 2);
+    ok('muziek: geen scriptfouten na versturen', errors3.length === 0, errors3.join(' | '));
+    w3.close();
+
+    // ---- de keuze komt terug in de planning ----
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    await wait(30);
+    ok('muziekkeuze in venster', /^Gekozen op \d{1,2} [a-z]{3} \d{4} om \d{2}:\d{2} · 2 nummers$/.test($('lMuziekBox').querySelector('.fstate').textContent), $('lMuziekBox').querySelector('.fstate').textContent);
+    ok('nummers leesbaar met moment', /Perfect/.test($('lMuziekBox').textContent) && /Openingsdans/.test($('lMuziekBox').textContent) && /The One/.test($('lMuziekBox').textContent) && /eigen keuze/.test($('lMuziekBox').textContent));
+    const songLink = q('#lMuziekBox .songs a');
+    ok('nummer opent op YouTube', !!songLink && songLink.getAttribute('href') === 'https://www.youtube.com/watch?v=2Vv-BfVoq4g' && songLink.target === '_blank', songLink && songLink.getAttribute('href'));
+    ok('opmerking van de klant zichtbaar', /refrein graag bij de kus/.test($('lMuziekBox').textContent));
+    ok('melding muziek ontvangen', /Muziekkeuze ontvangen van Bram Jansen/.test($('toast').textContent), $('toast').textContent);
+    click($('lSave'));
+    ok('chip "muziek gekozen"', /muziek gekozen/.test(rowByName('Bram Jansen').textContent) && /formulier ingevuld/.test(rowByName('Bram Jansen').textContent));
+    bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
+    ok('muziek lokaal bewaard', bram.muziek && bram.muziek.length === 2 && bram.muziekAt === mrec.ingevuld && bram.muziekOpmerking === 'Het refrein graag bij de kus.');
+    ok('formulier niet kwijt door muziek', bram.form && bram.form.wensen === 'De speech van opa niet missen.' && bram.formFiles.length === 1);
+
+    // nogmaals verversen: niets nieuws
+    click(rowByName('Bram Jansen').querySelector('.k-main'));
+    click($('lCheckMuziek'));
+    await wait(30);
+    ok('ververs muziek zonder nieuws', /Geen nieuwe keuze/.test($('toast').textContent), $('toast').textContent);
+    click(q('#ldOverlay [data-close]'));
+
     // klus met tijden in de agenda: week van 3 oktober
     click($('nextBtn')); click($('nextBtn')); click($('nextBtn')); click($('nextBtn')); click($('nextBtn'));
     const klus = qa('#canvas [data-lead]').find(e => /Bram Jansen/.test(e.textContent));

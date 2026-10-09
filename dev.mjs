@@ -1,5 +1,5 @@
-// Lokale server: serveert public/ én api/formulier, zodat je de formulierlink
-// ook op je eigen computer kunt proberen. Zonder Redis-instellingen bewaart
+// Lokale server: serveert public/ én de api-functies (formulier, draaiboek,
+// muziek), zodat je de klantlinks ook op je eigen computer kunt proberen. Zonder Redis-instellingen bewaart
 // hij de formulieren in het geheugen (weg na herstart); mét KV_REST_API_URL
 // en KV_REST_API_TOKEN praat hij tegen dezelfde Redis als de Vercel-deploy.
 //
@@ -23,10 +23,12 @@ try {
 } catch (e) { /* geen .env — prima */ }
 const PUBLIC = join(ROOT, "public");
 const PORT = Number(process.env.PORT || 8787);
+const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 
 const require = createRequire(import.meta.url);
 const formulier = require("./api/formulier.js");
 const draaiboek = require("./api/draaiboek.js");
+const muziek = require("./api/muziek.js");
 const bestanden = require("./api/_bestanden.js");
 const inloggen = require("./api/inloggen.js");
 const { previewHtml, isCrawler } = await import("./middleware.js");
@@ -58,16 +60,18 @@ createServer(async (req, res) => {
     return;
   }
 
-  // wat middleware.js op Vercel doet: planning alleen ingelogd, formulierlink vrij
+  // wat middleware.js op Vercel doet: planning alleen ingelogd, klantlinks vrij
   if (url.pathname === "/" || url.pathname === "/index.html") {
-    const f = url.searchParams.get("f") || "";
-    if (/^[a-z0-9]{12,40}$/.test(f) && isCrawler(req.headers["user-agent"])) {
-      const rec = memory ? await memory.get("formulier:" + f) : null;
+    const f = url.searchParams.get("f") || "", m = url.searchParams.get("m") || "";
+    const soort = TOKEN_RE.test(f) ? "formulier" : TOKEN_RE.test(m) ? "muziek" : null;
+    if (soort && isCrawler(req.headers["user-agent"])) {
+      const tok = soort === "muziek" ? m : f;
+      const rec = memory ? await memory.get(soort + ":" + tok) : null;
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.end(previewHtml(rec && rec.naam ? rec.naam : "", "http://127.0.0.1:" + PORT + "/?f=" + f));
+      res.end(previewHtml(rec && rec.naam ? rec.naam : "", "http://127.0.0.1:" + PORT + "/?" + (soort === "muziek" ? "m" : "f") + "=" + tok, soort));
       return;
     }
-    if (!/^[a-z0-9]{12,40}$/.test(f) && !sessie.ingelogd(req)) {
+    if (!soort && !sessie.ingelogd(req)) {
       res.statusCode = 302;
       res.setHeader("Location", "/inloggen.html");
       res.end();
@@ -83,6 +87,18 @@ createServer(async (req, res) => {
       catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: "server", melding: String(e) })); }
     } else {
       await formulier(req, res);
+    }
+    return;
+  }
+
+  if (url.pathname === "/api/muziek") {
+    req.query = Object.fromEntries(url.searchParams);
+    req.body = req.method === "POST" ? await readBody(req) : undefined;
+    if (memory) {
+      try { await muziek.handle(req, res, memory, null); }
+      catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: "server", melding: String(e) })); }
+    } else {
+      await muziek(req, res);
     }
     return;
   }

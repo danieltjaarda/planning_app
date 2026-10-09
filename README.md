@@ -54,6 +54,18 @@ worden meteen in de klant gezet. De app kijkt elke drie minuten of er nieuwe
 antwoorden zijn; *Ververs* doet dat meteen. Een klant kan de link later opnieuw
 openen en aanpassen.
 
+**Muziekkeuze** — in hetzelfde klantvenster maak je met *Maak muzieklink* een
+tweede link (`…/?m=token`). Daar ziet de klant tien suggesties voor een
+trouwfilm (van Ed Sheeran en John Legend tot Justin Bieber en Suzan & Freek),
+speelt ze af in een ingebouwde YouTube-speler, kiest wat past en voegt eigen
+nummers toe door een YouTube-link te plakken. Per gekozen nummer kan de klant
+aangeven waarvoor het is (trouwfilm, openingsdans, ceremonie, feest), plus een
+opmerking. De keuze komt terug in het klantvenster, met hoesje en link naar
+YouTube; de klantenlijst krijgt een chip *muzieklink gestuurd* of *muziek
+gekozen*. De muziek zelf wordt nooit gedownload of opgeslagen: alleen video-ID's,
+titels en de keuze. De tien suggesties staan in `MUZIEK_TEMPLATES` in
+`src/weekzicht.html`; het video-ID is het stuk na `v=` in de YouTube-link.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
 **Import** van `.ics` uit Google Agenda, Outlook of Apple Agenda: terugkerende
@@ -71,18 +83,19 @@ browser. **De twee delen hun gegevens niet** — ander adres, andere opslag.
 
 ## Toegang: een wachtwoord op de planning
 
-De planning staat achter een wachtwoord; de formulierlinks (`?f=token`) niet.
+De planning staat achter een wachtwoord; de formulier- en muzieklinks
+(`?f=token`, `?m=token`) niet.
 Zet in Vercel de omgevingsvariabele `WEEKZICHT_WACHTWOORD` (Settings →
 Environment Variables, Production en Preview) en deploy opnieuw. Daarna:
 
 - `middleware.js` stuurt iedereen zonder geldige cookie van `/` naar
-  `inloggen.html`; een geldige formulierlink mag altijd door.
+  `inloggen.html`; een geldige formulier- of muzieklink mag altijd door.
 - `api/inloggen.js` controleert het wachtwoord en zet een ondertekende,
   HttpOnly-cookie die 30 dagen geldig is. Verander je het wachtwoord, dan
   vervallen alle sessies.
 - Links maken, klanten verwijderen en geüploade draaiboeken bekijken kan
-  alleen ingelogd. Het formulier ophalen, invullen en uploaden kan de klant
-  met alleen zijn link.
+  alleen ingelogd. Het formulier ophalen, invullen en uploaden, en muziek
+  kiezen en opzoeken, kan de klant met alleen zijn link.
 - *Uitloggen* staat in het ⋯-menu.
 
 Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen.
@@ -91,8 +104,9 @@ Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen.
 of Slack, dan haalt die app de link op voor een kaartje. `middleware.js` herkent
 die crawlers en geeft ze een klein pagina'tje met titel op naam van het
 bruidspaar, een omschrijving en `og-formulier.png` (1200×630, huisstijl).
-Gewone bezoekers krijgen gewoon het formulier. WhatsApp bewaart zo'n kaartje
-een tijdje; een nieuwe link laat altijd de actuele versie zien. Lokaal zet je
+Gewone bezoekers krijgen gewoon het formulier. Een muzieklink krijgt op
+dezelfde manier een eigen kaartje met `og-muziek.png`. WhatsApp bewaart zo'n
+kaartje een tijdje; een nieuwe link laat altijd de actuele versie zien. Lokaal zet je
 hem in `.env`; `dev.mjs` doet dan hetzelfde als de middleware.
 
 ## Formulieren: de serverkant
@@ -140,6 +154,18 @@ Wie de link heeft, kan het formulier zien en invullen — dat is de bedoeling �
 maar ziet nooit de planning of andere klanten. Tokens zijn 22 willekeurige
 tekens. Een klant verwijderen wist ook het formulier op de server.
 
+### Muziekkeuze: de serverkant
+
+`api/muziek.js` werkt net zo, met een eigen token en eigen records
+(`muziek:token`) in dezelfde Redis. Acties: `aanmaken` en `verwijderen` (alleen
+ingelogd), `kiezen` (de klant stuurt zijn lijst en opmerking) en `opzoeken`: de
+klant plakt een YouTube-link, de server haalt het video-ID eruit (ook `youtu.be`,
+shorts, `music.youtube.com`) en vraagt titel en kanaal op via YouTube's oEmbed.
+Daar is geen API-sleutel voor nodig en er wordt niets gedownload; afspelen
+gebeurt in de browser van de klant via `youtube-nocookie.com`. Opzoeken is
+begrensd tot 300 keer per link. Hoogstens 40 nummers per klant; elk nummer is
+`{ yt, titel, artiest, moment, eigen }`.
+
 ## Structuur
 
 ```
@@ -150,12 +176,15 @@ api/inloggen.js      inloggen/uitloggen, zet de sessiecookie
 api/_sessie.js       cookie ondertekenen en controleren
 src/inloggen.html    de inlogpagina → public/inloggen.html
 api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
+api/muziek.js        Vercel-functie: muzieklink aanmaken, YouTube-link opzoeken, keuze bewaren en ophalen
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
+api/_opslag.js       Redis-opslag (Upstash REST) of geheugen lokaal, gedeeld door de functies
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
-dev.mjs              lokale server voor public/ + api/formulier
+src/og-*.png         kaartjes voor WhatsApp e.d. bij formulier- en muzieklinks
+dev.mjs              lokale server voor public/ + de api-functies
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
-tests/               ~225 controles, zie hieronder
+tests/               ~440 controles, zie hieronder
 ```
 
 `src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
@@ -186,6 +215,10 @@ npm test
   zonder tijden), filters
 - **formulier** — `api/formulier.js` met een geheugenopslag: tokens, aanmaken,
   invullen, opschonen van antwoorden, verwijderen, opslagfouten
+- **muziek** — `api/muziek.js` met een nep-YouTube: video-ID's uit allerlei
+  linkvormen, titel en artiest uit een YouTube-titel, kiezen (opschonen,
+  dubbelen, maximum), opzoeken (onbekende video, YouTube onbereikbaar, limiet
+  per link), verwijderen
 - **toegang** — wachtwoord, cookie (Node én Web Crypto geven dezelfde
   handtekening), middleware, en welke API-acties ingelogd vereisen
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
@@ -193,8 +226,10 @@ npm test
   antwoord, fouten van het model, limiet per link
 - **smoke** — de gebouwde `public/index.html` in jsdom met een bevroren klok
   (1 sep 2026): elke weergave, elk venster, de filters, het Gebeld-vinkje, de
-  opslag, en de hele formulierketen: link maken → klant vult in op een eigen
-  pagina → antwoorden terug in de planning
+  opslag, de hele formulierketen: link maken → klant vult in op een eigen
+  pagina → antwoorden terug in de planning, en de muziekketen: muzieklink
+  maken → klant luistert, kiest en voegt een eigen nummer toe → keuze terug in
+  het klantvenster
 
 De tests draaien op verzonnen klanten uit `tests/fixture.js`.
 
@@ -211,7 +246,10 @@ de pagina zelf — de `db`-capability als artifact, anders `localStorage`.
   een bestand of plakken.
 - Export naar `.csv` en `.json` werkt alleen als artifact — lokaal ontbreekt de
   `downloads`-capability.
-- Formulierlinks werken alleen op de Vercel-deploy (of via `npm start`), niet
-  als artifact: daar is geen `api/formulier`.
+- Formulier- en muzieklinks werken alleen op de Vercel-deploy (of via
+  `npm start`), niet als artifact: daar zijn geen api-functies.
+- De muziekpagina speelt af via YouTube. Een video die daar privé, verwijderd of
+  niet insluitbaar is, speelt ook hier niet; de klant ziet dan de melding van
+  YouTube in de speler.
 - Een geïmporteerde afspraak over meerdere dagen wordt per dag opgeslagen;
   bewerken raakt dan één dagdeel.

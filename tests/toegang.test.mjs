@@ -6,6 +6,7 @@ const sessie = require("../api/_sessie.js");
 const inloggen = require("../api/inloggen.js");
 const formulier = require("../api/formulier.js");
 const draaiboek = require("../api/draaiboek.js");
+const muziek = require("../api/muziek.js");
 const bestanden = require("../api/_bestanden.js");
 const middleware = (await import("../middleware.js")).default;
 const { sessieGeldig, previewHtml, isCrawler } = await import("../middleware.js");
@@ -59,6 +60,10 @@ eq("middleware: geen cookie", await sessieGeldig("", "geheim-123"), false);
   eq("middleware: ongeldig token telt niet", r3 && r3.status, 302);
   const r4 = await middleware(new Request("https://x.test/index.html", { headers: { cookie: "wz_sessie=" + cookie } }));
   eq("middleware: met cookie door", r4, undefined);
+  const r5 = await middleware(new Request("https://x.test/?m=abcdefghijklmnopqrstuv"));
+  eq("middleware: muzieklink altijd door", r5, undefined);
+  const r6 = await middleware(new Request("https://x.test/?m=kort"));
+  eq("middleware: ongeldig muziektoken telt niet", r6 && r6.status, 302);
 }
 
 // inloggen: goed en fout
@@ -98,6 +103,17 @@ eq("verwijderen zonder cookie → 401", (await fcall({ method: "POST", headers: 
 }
 eq("verwijderen met cookie", (await fcall({ method: "POST", headers: { cookie: "wz_sessie=" + cookie }, body: { t: T, actie: "verwijderen" } })).status, 200);
 
+// muziek: links maken en verwijderen alleen ingelogd; kiezen en opzoeken mag de klant
+const ytFake = async () => ({ ok: true, status: 200, json: async () => ({ title: "A - B", author_name: "C" }) });
+async function mcall(req) { const r = fakeRes(); await muziek.handle(req, r, db, ytFake); return { status: r.statusCode, data: r.body ? JSON.parse(r.body) : null }; }
+eq("muziek: aanmaken zonder cookie → 401", (await mcall({ method: "POST", headers: {}, body: { t: T, actie: "aanmaken", naam: "X" } })).status, 401);
+eq("muziek: aanmaken met cookie", (await mcall({ method: "POST", headers: { cookie: "wz_sessie=" + cookie }, body: { t: T, actie: "aanmaken", naam: "X" } })).status, 200);
+eq("muziek: klant mag ophalen zonder cookie", (await mcall({ method: "GET", headers: {}, query: { t: T } })).status, 200);
+eq("muziek: klant mag opzoeken zonder cookie", (await mcall({ method: "POST", headers: {}, body: { t: T, actie: "opzoeken", url: "https://youtu.be/2Vv-BfVoq4g" } })).status, 200);
+eq("muziek: klant mag kiezen zonder cookie", (await mcall({ method: "POST", headers: {}, body: { t: T, actie: "kiezen", nummers: [{ yt: "2Vv-BfVoq4g" }] } })).status, 200);
+eq("muziek: verwijderen zonder cookie → 401", (await mcall({ method: "POST", headers: {}, body: { t: T, actie: "verwijderen" } })).status, 401);
+eq("muziek: verwijderen met cookie", (await mcall({ method: "POST", headers: { cookie: "wz_sessie=" + cookie }, body: { t: T, actie: "verwijderen" } })).status, 200);
+
 // voorvertoning voor WhatsApp e.d.
 eq("crawler herkend", [isCrawler("WhatsApp/2.23.20.0 A"), isCrawler("facebookexternalhit/1.1"), isCrawler("Mozilla/5.0 (iPhone) Safari")], [true, true, false]);
 {
@@ -110,8 +126,12 @@ eq("crawler herkend", [isCrawler("WhatsApp/2.23.20.0 A"), isCrawler("facebookext
   eq("gewone bezoeker met link gaat gewoon door", r2, undefined);
   const r3 = await middleware(new Request("https://x.test/", { headers: { "user-agent": "WhatsApp/2.23" } }));
   eq("crawler zonder link → inloggen, geen voorvertoning", r3 && r3.status, 302);
+  const r4 = await middleware(new Request("https://x.test/?m=abcdefghijklmnopqrstuv", { headers: { "user-agent": "WhatsApp/2.23.20.0 A" } }));
+  const html4 = await r4.text();
+  eq("voorvertoning muzieklink", [r4.status, /og:title" content="Kies de muziek voor jullie trouwfilm"/.test(html4), /og:image" content="https:\/\/planning-app-three\.vercel\.app\/og-muziek\.png"/.test(html4), /og:url" content="https:\/\/x\.test\/\?m=abcdefghijklmnopqrstuv"/.test(html4), /Open de muziekpagina/.test(html4)], [200, true, true, true, true]);
 }
 eq("voorvertoning op naam", /og:title" content="Sanne &amp; Thomas, vertel me over jullie trouwdag"/.test(previewHtml("Sanne & Thomas", "https://x.test/?f=a")), true);
+eq("voorvertoning muziek op naam", /og:title" content="Sanne &amp; Thomas, kies de muziek voor jullie film"/.test(previewHtml("Sanne & Thomas", "https://x.test/?m=a", "muziek")), true);
 eq("voorvertoning: html-veilig", /<script>/.test(previewHtml("<script>alert(1)</script>", "https://x.test/?f=a")), false);
 
 console.log("\n" + pass + " geslaagd, " + fail + " gefaald");

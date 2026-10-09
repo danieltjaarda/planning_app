@@ -4,54 +4,19 @@
 // die link, vult het bruiloftsformulier in, en de antwoorden landen hier.
 // De app haalt ze daarna op met hetzelfde token.
 //
-// Opslag: Upstash Redis via de REST-koppeling (de "Redis"-store uit de
-// Vercel-marketplace zet KV_REST_API_URL en KV_REST_API_TOKEN klaar).
-// Geen npm-afhankelijkheden: een kale fetch volstaat.
+// Opslag: Upstash Redis via de REST-koppeling, zie _opslag.js.
 //
 //   GET  /api/formulier?t=TOKEN               → { naam, datum, ingevuld, antwoorden }
 //   POST /api/formulier { t, actie: "aanmaken", naam, datum }
 //   POST /api/formulier { t, actie: "invullen", antwoorden }
 //   POST /api/formulier { t, actie: "verwijderen" }
 
+const opslag = require("./_opslag.js");
 const bestanden = require("./_bestanden.js");
 const sessie = require("./_sessie.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
-const TTL_SEC = 60 * 60 * 24 * 730; // twee jaar: bruiloften worden ver vooruit geboekt
 const MAX_TEXT = 4000;
 const MAX_LIST = 40;
-
-function store() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-
-  async function cmd(...args) {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify(args)
-    });
-    const j = await r.json();
-    if (j.error) throw new Error(j.error);
-    return j.result;
-  }
-
-  return {
-    async get(key) { const v = await cmd("GET", key); return v ? JSON.parse(v) : null; },
-    async set(key, value) { await cmd("SET", key, JSON.stringify(value), "EX", TTL_SEC); },
-    async del(key) { await cmd("DEL", key); }
-  };
-}
-
-/** In-memory variant voor tests en lokaal proberen. */
-function memoryStore(map) {
-  const m = map || new Map();
-  return {
-    async get(k) { return m.has(k) ? JSON.parse(m.get(k)) : null; },
-    async set(k, v) { m.set(k, JSON.stringify(v)); },
-    async del(k) { m.delete(k); }
-  };
-}
 
 function clean(v, max) {
   return String(v == null ? "" : v).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "").slice(0, max || MAX_TEXT).trim();
@@ -164,11 +129,11 @@ async function handle(req, res, db, files) {
 
 module.exports = async function (req, res) {
   try {
-    await handle(req, res, store(), bestanden.blobStore());
+    await handle(req, res, opslag.store(), bestanden.blobStore());
   } catch (e) {
     send(res, 502, { error: "opslag", melding: String(e && e.message || e) });
   }
 };
 module.exports.handle = handle;
-module.exports.memoryStore = memoryStore;
+module.exports.memoryStore = opslag.memoryStore;
 module.exports.cleanAnswers = cleanAnswers;

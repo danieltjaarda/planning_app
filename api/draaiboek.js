@@ -16,7 +16,7 @@ const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const MAX_BYTES = 3 * 1024 * 1024;   // ruim genoeg voor een foto of een paar pagina's PDF
 const MAX_CALLS = 25;                // per formulierlink
 const MODEL = "google/gemini-2.5-flash"; // snel, goedkoop, leest foto's en PDF's zelf
-const TTL_SEC = 60 * 60 * 24 * 730;
+const opslag = require("./_opslag.js");
 const bestanden = require("./_bestanden.js");
 const sessie = require("./_sessie.js");
 
@@ -34,26 +34,6 @@ const PROMPT =
   "- Namen van personen, adressen en locaties letterlijk overnemen.\n" +
   "- Geen inleiding, geen afsluiting, geen opmaak: alleen de regels.\n" +
   "- Staat er geen planning in het document, antwoord dan precies: GEEN_PLANNING";
-
-function store() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  async function cmd(...args) {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify(args)
-    });
-    const j = await r.json();
-    if (j.error) throw new Error(j.error);
-    return j.result;
-  }
-  return {
-    async get(k) { const v = await cmd("GET", k); return v ? JSON.parse(v) : null; },
-    async set(k, v) { await cmd("SET", k, JSON.stringify(v), "EX", TTL_SEC); }
-  };
-}
 
 function send(res, status, obj) {
   res.statusCode = status;
@@ -201,7 +181,7 @@ async function handle(req, res, db, apiKey, fetchFn, files) {
 
 module.exports = async function (req, res) {
   try {
-    await handle(req, res, store(), process.env.OPENROUTER_API_KEY, null, bestanden.blobStore());
+    await handle(req, res, opslag.store(), process.env.OPENROUTER_API_KEY, null, bestanden.blobStore());
   } catch (e) {
     send(res, 502, { error: "server", melding: String(e && e.message || e) });
   }

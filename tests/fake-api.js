@@ -3,6 +3,7 @@
 // api/formulier → klantpagina → api/formulier → app.
 const handler = require('../api/formulier.js');
 const draaiboek = require('../api/draaiboek.js');
+const muziek = require('../api/muziek.js');
 const bestanden = require('../api/_bestanden.js');
 
 module.exports = function fakeApi(map) {
@@ -27,12 +28,23 @@ module.exports = function fakeApi(map) {
       }), files);
       return { ok: status >= 200 && status < 300, status, text: async () => out };
     }
+    if (u.pathname === '/api/muziek') {
+      // nep-YouTube (oEmbed): kent elke video behalve "weg00000000", en onthoudt wat er is opgevraagd
+      await muziek.handle(req, res, db, async (url) => {
+        fetch.oembed.push(url);
+        const id = decodeURIComponent(url).match(/v=([A-Za-z0-9_-]{11})/)[1];
+        if (id === 'weg00000000') return { ok: false, status: 404, json: async () => ({}) };
+        return { ok: true, status: 200, json: async () => ({ title: 'Kodaline - The One (Official Video)', author_name: 'KodalineVEVO' }) };
+      });
+      return { ok: status >= 200 && status < 300, status, text: async () => out };
+    }
     if (u.pathname !== '/api/formulier') return { ok: false, status: 404, text: async () => 'niet gevonden' };
     await handler.handle(req, res, db, files);
     return { ok: status >= 200 && status < 300, status, text: async () => out };
   }
   fetch.store = store;
   fetch.openrouter = [];
+  fetch.oembed = [];
   fetch.files = files;
   return fetch;
 };
