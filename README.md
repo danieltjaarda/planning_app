@@ -55,15 +55,19 @@ antwoorden zijn; *Ververs* doet dat meteen. Een klant kan de link later opnieuw
 openen en aanpassen.
 
 **Muziekkeuze** — in hetzelfde klantvenster maak je met *Maak muzieklink* een
-tweede link (`…/?m=token`). Daar ziet de klant tien suggesties voor een
-trouwfilm (van Ed Sheeran en John Legend tot Justin Bieber en Suzan & Freek),
-speelt ze af in een ingebouwde YouTube-speler, kiest wat past en voegt eigen
-nummers toe door een YouTube-link te plakken. Per gekozen nummer kan de klant
-aangeven waarvoor het is (trouwfilm, openingsdans, ceremonie, feest), plus een
-opmerking. De keuze komt terug in het klantvenster, met hoesje en link naar
-YouTube; de klantenlijst krijgt een chip *muzieklink gestuurd* of *muziek
-gekozen*. De muziek zelf wordt nooit gedownload of opgeslagen: alleen video-ID's,
-titels en de keuze. De tien suggesties staan in `MUZIEK_TEMPLATES` in
+tweede link (`…/?m=token`). Die pagina volgt het draaiboek van de dag: acht
+momenten, van aankleden en ceremonie via fotoshoot, borrel, diner en speeches
+tot openingsdans, feest en de film als geheel. Per moment staan twee tot vier
+suggesties (24 in totaal, van Taylor Swift en Ed Sheeran tot Justin Bieber,
+Etta James en Suzan & Freek) die de klant afspeelt in een ingebouwde
+YouTube-speler en met één klik toevoegt. Daarnaast heeft elk moment een eigen
+invoerveld waar de klant zoveel eigen nummers plakt als hij wil (meerdere
+YouTube-links tegelijk mag), en gekozen nummers zijn te verplaatsen naar een
+ander moment. Plus een opmerking. De keuze komt per moment terug in het
+klantvenster, met hoesje en link naar YouTube; de klantenlijst krijgt een chip
+*muzieklink gestuurd* of *muziek gekozen*. De muziek zelf wordt nooit
+gedownload of opgeslagen: alleen video-ID's, titels en de keuze. Momenten en
+suggesties staan in `MUZIEK_MOMENTEN` en `MUZIEK_TEMPLATES` in
 `src/weekzicht.html`; het video-ID is het stuk na `v=` in de YouTube-link.
 
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
@@ -163,8 +167,9 @@ klant plakt een YouTube-link, de server haalt het video-ID eruit (ook `youtu.be`
 shorts, `music.youtube.com`) en vraagt titel en kanaal op via YouTube's oEmbed.
 Daar is geen API-sleutel voor nodig en er wordt niets gedownload; afspelen
 gebeurt in de browser van de klant via `youtube-nocookie.com`. Opzoeken is
-begrensd tot 300 keer per link. Hoogstens 40 nummers per klant; elk nummer is
-`{ yt, titel, artiest, moment, eigen }`.
+begrensd tot 500 keer per link. Hoogstens 150 nummers per klant; elk nummer is
+`{ yt, titel, artiest, moment, eigen }`, met als moment een van de acht
+moment-ID's (`aankleden` … `film`).
 
 ## Structuur
 
@@ -228,8 +233,8 @@ npm test
   (1 sep 2026): elke weergave, elk venster, de filters, het Gebeld-vinkje, de
   opslag, de hele formulierketen: link maken → klant vult in op een eigen
   pagina → antwoorden terug in de planning, en de muziekketen: muzieklink
-  maken → klant luistert, kiest en voegt een eigen nummer toe → keuze terug in
-  het klantvenster
+  maken → klant luistert, kiest suggesties, verplaatst, en plakt eigen links
+  per moment → keuze per moment terug in het klantvenster
 
 De tests draaien op verzonnen klanten uit `tests/fixture.js`.
 

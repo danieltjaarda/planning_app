@@ -34,7 +34,7 @@ module.exports = function fakeApi(map) {
         fetch.oembed.push(url);
         const id = decodeURIComponent(url).match(/v=([A-Za-z0-9_-]{11})/)[1];
         if (id === 'weg00000000') return { ok: false, status: 404, json: async () => ({}) };
-        return { ok: true, status: 200, json: async () => ({ title: 'Kodaline - The One (Official Video)', author_name: 'KodalineVEVO' }) };
+        return { ok: true, status: 200, json: async () => ({ title: 'BANNERS - Someone To You (Official Video)', author_name: 'BANNERSVEVO' }) };
       });
       return { ok: status >= 200 && status < 300, status, text: async () => out };
     }

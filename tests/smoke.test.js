@@ -384,96 +384,119 @@ setTimeout(async () => {
     w3.addEventListener('error', e => errors3.push('window error: ' + e.message));
     await wait(30);
     const $3 = id => d3.getElementById(id);
+    const q3 = sel => d3.querySelector(sel);
+    const qa3 = sel => Array.from(d3.querySelectorAll(sel));
     const click3 = el => el.dispatchEvent(new w3.MouseEvent('click', { bubbles: true }));
     ok('muziek: geen scriptfouten', errors3.length === 0, errors3.join(' | '));
-    ok('muziek: pagina zichtbaar, planning en formulier dicht', !$3('muziekPage').hidden && !$3('mpMain').hidden && d3.querySelector('.app').hidden && $3('formPage').hidden);
+    ok('muziek: pagina zichtbaar, planning en formulier dicht', !$3('muziekPage').hidden && !$3('mpMain').hidden && q3('.app').hidden && $3('formPage').hidden);
     ok('muziek: geen klantgegevens op de pagina', !/Anna de Vries|00000001/.test(d3.body.textContent));
     ok('muziek: aangesproken met naam', /Bram Jansen/.test($3('mpTitle').textContent), $3('mpTitle').textContent);
-    ok('muziek: tien suggesties', d3.querySelectorAll('#mpList .mz-row').length === 10, d3.querySelectorAll('#mpList .mz-row').length);
-    ok('muziek: Justin Bieber en Ed Sheeran erbij', /Justin Bieber/.test($3('mpList').textContent) && /Ed Sheeran/.test($3('mpList').textContent));
-    ok('muziek: hoesjes van YouTube', d3.querySelector('[data-yt="2Vv-BfVoq4g"] img').src === 'https://i.ytimg.com/vi/2Vv-BfVoq4g/mqdefault.jpg');
-    ok('muziek: niets gekozen, speler dicht', d3.querySelectorAll('#mpList .mz-row.on').length === 0 && $3('mpPlayer').hidden);
+    const secTxt = $3('mpSections').textContent;
+    ok('muziek: acht momenten van de dag', qa3('#mpSections .mz-sec').length === 8, qa3('#mpSections .mz-sec').length);
+    ok('muziek: momenten van het draaiboek', /Aankleden/.test(secTxt) && /ceremonie/.test(secTxt) && /fotoshoot/.test(secTxt) && /Borrel/.test(secTxt) && /Diner/.test(secTxt) && /openingsdans/.test(secTxt) && /feest/.test(secTxt) && /hele film/.test(secTxt));
+    ok('muziek: 24 suggesties, niets gekozen', qa3('#mpSections .mz-row.sugg').length === 24 && qa3('#mpSections .mz-row:not(.sugg)').length === 0 && /Nog niets gekozen/.test($3('mpCount').textContent), qa3('#mpSections .mz-row.sugg').length);
+    ok('muziek: Perfect bij de fotoshoot, All of Me bij de openingsdans', !!q3('[data-sugg="fotoshoot"] [data-sugg-yt="2Vv-BfVoq4g"]') && !!q3('[data-sugg="openingsdans"] [data-sugg-yt="450p7goxZqg"]'));
+    ok('muziek: Justin Bieber en Suzan & Freek erbij', /Justin Bieber/.test(secTxt) && /Suzan & Freek/.test(secTxt));
+    ok('muziek: hoesjes van YouTube', q3('[data-sugg-yt="2Vv-BfVoq4g"] img').src === 'https://i.ytimg.com/vi/2Vv-BfVoq4g/mqdefault.jpg');
+    ok('muziek: elk moment een eigen invoerveld', qa3('#mpSections input[data-url]').length === 8 && !!q3('input[data-url="aankleden"]') && !!q3('[data-add="feest"]'));
+    ok('muziek: speler dicht', $3('mpPlayer').hidden);
 
-    // afspelen via de YouTube-speler
-    click3(d3.querySelector('[data-play="2Vv-BfVoq4g"]'));
+    // afspelen via de YouTube-speler, ook vanuit een suggestie
+    click3(q3('[data-play="2Vv-BfVoq4g"]'));
     ok('muziek: speler open met het nummer', !$3('mpPlayer').hidden && $3('mpFrame').src === 'https://www.youtube-nocookie.com/embed/2Vv-BfVoq4g?autoplay=1&rel=0&playsinline=1', $3('mpFrame').src);
     ok('muziek: titel bij de speler', /Perfect — Ed Sheeran/.test($3('mpNow').textContent), $3('mpNow').textContent);
-    ok('muziek: rij gemarkeerd als spelend', d3.querySelector('[data-yt="2Vv-BfVoq4g"]').classList.contains('playing'));
-    click3(d3.querySelector('[data-play="450p7goxZqg"]'));
-    ok('muziek: ander nummer neemt over', /embed\/450p7goxZqg/.test($3('mpFrame').src) && !d3.querySelector('[data-yt="2Vv-BfVoq4g"]').classList.contains('playing'));
+    ok('muziek: rij gemarkeerd als spelend', q3('[data-sugg-yt="2Vv-BfVoq4g"]').classList.contains('playing'));
+    click3(q3('[data-play="450p7goxZqg"]'));
+    ok('muziek: ander nummer neemt over', /embed\/450p7goxZqg/.test($3('mpFrame').src) && !q3('[data-sugg-yt="2Vv-BfVoq4g"]').classList.contains('playing') && q3('[data-sugg-yt="450p7goxZqg"]').classList.contains('playing'));
     click3($3('mpStop'));
-    ok('muziek: speler dicht', $3('mpPlayer').hidden && $3('mpFrame').src === 'about:blank');
+    ok('muziek: speler dicht na sluiten', $3('mpPlayer').hidden && $3('mpFrame').src === 'about:blank' && !q3('.mz-row.playing'));
 
-    // kiezen, met een moment erbij
-    click3(d3.querySelector('[data-pick="2Vv-BfVoq4g"]'));
-    click3(d3.querySelector('[data-pick="450p7goxZqg"]'));
-    ok('muziek: twee gekozen', d3.querySelectorAll('#mpList .mz-row.on').length === 2 && /2 nummers gekozen/.test($3('mpCount').textContent), $3('mpCount').textContent);
-    const sel = d3.querySelector('select[data-moment="2Vv-BfVoq4g"]');
-    ok('muziek: momentkeuze alleen bij gekozen nummers', !!sel && sel.value === 'Trouwfilm' && !d3.querySelector('select[data-moment="rtOvBOTyX00"]'));
-    sel.value = 'Openingsdans';
+    // suggesties toevoegen: komen bij hun moment, verdwijnen uit de suggesties
+    click3(q3('[data-pick="2Vv-BfVoq4g"]'));
+    ok('muziek: Perfect gekozen bij de fotoshoot', !!q3('[data-list="fotoshoot"] [data-yt="2Vv-BfVoq4g"]') && !q3('[data-sugg-yt="2Vv-BfVoq4g"]') && /1 nummer gekozen voor 1 moment/.test($3('mpCount').textContent), $3('mpCount').textContent);
+    click3(q3('[data-pick="450p7goxZqg"]'));
+    ok('muziek: twee gekozen, twee momenten', qa3('#mpSections .mz-row:not(.sugg)').length === 2 && qa3('#mpSections .mz-row.sugg').length === 22 && /2 nummers gekozen voor 2 momenten/.test($3('mpCount').textContent), $3('mpCount').textContent);
+
+    // verplaatsen naar een ander moment
+    const sel = q3('select[data-moment-of="2Vv-BfVoq4g"]');
+    ok('muziek: momentkeuze bij gekozen nummer', !!sel && sel.value === 'fotoshoot' && sel.querySelectorAll('option').length === 8);
+    sel.value = 'openingsdans';
     sel.dispatchEvent(new w3.Event('change', { bubbles: true }));
-    click3(d3.querySelector('[data-pick="450p7goxZqg"]'));
-    ok('muziek: keuze ongedaan', d3.querySelectorAll('#mpList .mz-row.on').length === 1);
+    ok('muziek: verplaatst naar de openingsdans', !!q3('[data-list="openingsdans"] [data-yt="2Vv-BfVoq4g"]') && !q3('[data-list="fotoshoot"] [data-yt="2Vv-BfVoq4g"]') && /voor 1 moment/.test($3('mpCount').textContent));
+    ok('muziek: lege staat terug bij fotoshoot', /Nog niets gekozen voor dit moment/.test(q3('.mz-sec[data-moment="fotoshoot"]').textContent));
 
-    // eigen nummer toevoegen met een YouTube-link
-    ok('muziek: geen verwijderknop bij suggesties', !d3.querySelector('[data-del]'));
-    $3('mpUrl').value = 'niet een link';
-    click3($3('mpAdd'));
-    ok('muziek: geen youtube-link gemeld', /geen YouTube-link/.test($3('mpAddStatus').textContent) && /err/.test($3('mpAddStatus').className), $3('mpAddStatus').textContent);
+    // weghalen: terug naar de suggesties
+    click3(q3('[data-del="450p7goxZqg"]'));
+    ok('muziek: weggehaald, weer een suggestie', !q3('[data-yt="450p7goxZqg"]') && !!q3('[data-sugg="openingsdans"] [data-sugg-yt="450p7goxZqg"]') && /1 nummer gekozen/.test($3('mpCount').textContent));
+
+    // eigen nummers per moment, meerdere links tegelijk
+    ok('muziek: geen verwijderknop bij suggesties', !q3('.mz-row.sugg [data-del]'));
+    const urlA = q3('input[data-url="aankleden"]');
+    const stA = () => q3('[data-status="aankleden"]');
+    urlA.value = 'niet een link';
+    click3(q3('[data-add="aankleden"]'));
+    ok('muziek: geen youtube-link gemeld', /geen YouTube-link/.test(stA().textContent) && /err/.test(stA().className), stA().textContent);
     ok('muziek: niets opgevraagd bij onzin', fetchMock.oembed.length === 0);
-    $3('mpUrl').value = 'https://youtu.be/weg00000000';
-    click3($3('mpAdd'));
+    q3('input[data-url="aankleden"]').value = 'https://youtu.be/weg00000000';
+    click3(q3('[data-add="aankleden"]'));
     await wait(30);
-    ok('muziek: onbekende video gemeld', /niet vinden/.test($3('mpAddStatus').textContent), $3('mpAddStatus').textContent);
-    ok('muziek: niets toegevoegd', d3.querySelectorAll('#mpList .mz-row').length === 10);
-    $3('mpUrl').value = 'https://www.youtube.com/watch?v=abcdefghijk&t=10s';
-    $3('mpUrl').dispatchEvent(new w3.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    ok('muziek: onbekende video gemeld', /niet vinden/.test(stA().textContent) && /err/.test(stA().className), stA().textContent);
+    ok('muziek: niets toegevoegd', qa3('#mpSections .mz-row:not(.sugg)').length === 1);
+    q3('input[data-url="feest"]').value = 'nog niet verstuurd';
+    q3('input[data-url="aankleden"]').value = 'https://www.youtube.com/watch?v=abcdefghijk&t=10s https://youtu.be/lmnopqrstuv?si=x';
+    q3('input[data-url="aankleden"]').dispatchEvent(new w3.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    ok('muziek: knop tijdens opzoeken uit', q3('[data-add="aankleden"]').disabled && /opzoeken/.test(stA().textContent), stA().textContent);
+    await wait(60);
+    const eigen = q3('[data-list="aankleden"] [data-yt="abcdefghijk"]');
+    ok('muziek: twee eigen nummers bij aankleden', qa3('[data-list="aankleden"] .mz-row').length === 2 && !!eigen && !!q3('[data-list="aankleden"] [data-yt="lmnopqrstuv"]'));
+    ok('muziek: titel en artiest opgezocht', !!eigen && /Someone To You/.test(eigen.textContent) && /BANNERS/.test(eigen.textContent) && /zelf toegevoegd/.test(eigen.textContent), eigen && eigen.textContent.slice(0, 80));
+    ok('muziek: server kreeg beide links', fetchMock.oembed.length === 3 && /abcdefghijk/.test(fetchMock.oembed[1]) && /lmnopqrstuv/.test(fetchMock.oembed[2]));
+    ok('muziek: knop weer aan, melding, invoer leeg', !q3('[data-add="aankleden"]').disabled && q3('input[data-url="aankleden"]').value === '' && /2 nummers toegevoegd/.test(stA().textContent) && /ok/.test(stA().className), stA().textContent);
+    ok('muziek: tekst in ander invoerveld blijft staan', q3('input[data-url="feest"]').value === 'nog niet verstuurd');
+    ok('muziek: eigen nummer te verwijderen', !!q3('[data-del="abcdefghijk"]'));
+    q3('input[data-url="aankleden"]').value = 'https://www.youtube.com/watch?v=abcdefghijk';
+    click3(q3('[data-add="aankleden"]'));
     await wait(30);
-    const eigen = d3.querySelector('[data-yt="abcdefghijk"]');
-    ok('muziek: eigen nummer toegevoegd en gekozen', d3.querySelectorAll('#mpList .mz-row').length === 11 && eigen && eigen.classList.contains('on'));
-    ok('muziek: titel en artiest opgezocht', eigen && /The One/.test(eigen.textContent) && /Kodaline/.test(eigen.textContent) && /zelf toegevoegd/.test(eigen.textContent), eigen && eigen.textContent.slice(0, 80));
-    ok('muziek: server kreeg de link met token', fetchMock.oembed.length === 2 && /abcdefghijk/.test(fetchMock.oembed[1]));
-    ok('muziek: eigen nummer te verwijderen', !!d3.querySelector('[data-del="abcdefghijk"]'));
-    ok('muziek: invoer leeg na toevoegen', $3('mpUrl').value === '' && /Toegevoegd: The One/.test($3('mpAddStatus').textContent), $3('mpAddStatus').textContent);
-    $3('mpUrl').value = 'https://www.youtube.com/watch?v=abcdefghijk';
-    click3($3('mpAdd'));
+    ok('muziek: dubbel toevoegen genegeerd', qa3('[data-list="aankleden"] .mz-row').length === 2 && /al in de lijst/.test(stA().textContent) && fetchMock.oembed.length === 3, stA().textContent);
+    q3('input[data-url="feest"]').value = 'https://youtu.be/450p7goxZqg';
+    click3(q3('[data-add="feest"]'));
     await wait(30);
-    ok('muziek: dubbel toevoegen genegeerd', d3.querySelectorAll('#mpList .mz-row').length === 11 && /al in de lijst/.test($3('mpAddStatus').textContent) && fetchMock.oembed.length === 2);
-    $3('mpUrl').value = 'https://youtu.be/rtOvBOTyX00';
-    click3($3('mpAdd'));
-    ok('muziek: suggestie via link wordt aangevinkt', d3.querySelector('[data-yt="rtOvBOTyX00"]').classList.contains('on') && d3.querySelectorAll('#mpList .mz-row').length === 11);
-    click3(d3.querySelector('[data-pick="rtOvBOTyX00"]'));
+    ok('muziek: suggestie via link komt bij dát moment, zonder opzoeken', !!q3('[data-list="feest"] [data-yt="450p7goxZqg"]') && !q3('[data-sugg-yt="450p7goxZqg"]') && fetchMock.oembed.length === 3 && /Toegevoegd: All of Me/.test(q3('[data-status="feest"]').textContent), q3('[data-status="feest"]').textContent);
+    ok('muziek: vier gekozen, drie momenten', qa3('#mpSections .mz-row:not(.sugg)').length === 4 && /4 nummers gekozen voor 3 momenten/.test($3('mpCount').textContent), $3('mpCount').textContent);
 
     // versturen
     $3('mpNote').value = 'Het refrein graag bij de kus.';
     click3($3('mpSend'));
     await wait(30);
     ok('muziek: bedankt-scherm', !$3('mpDone').hidden && $3('mpMain').hidden && /Bedankt, Bram Jansen/.test($3('mpDone').textContent), $3('mpDone').textContent.slice(0, 60));
-    ok('muziek: samenvatting met moment en eigen nummer', /Perfect/.test($3('mpDone').textContent) && /Openingsdans/.test($3('mpDone').textContent) && /The One/.test($3('mpDone').textContent) && /refrein/.test($3('mpDone').textContent));
-    ok('muziek: logo op bedankt-scherm', !!d3.querySelector('#mpDone img.ms-done-logo'));
+    const doneTxt = $3('mpDone').textContent;
+    ok('muziek: samenvatting per moment', /Aankleden/.test(doneTxt) && /Openingsdans/.test(doneTxt) && /Feest/.test(doneTxt) && /Perfect/.test(doneTxt) && /Someone To You/.test(doneTxt) && /refrein/.test(doneTxt));
+    ok('muziek: logo op bedankt-scherm', !!q3('#mpDone img.ms-done-logo'));
     const mrec = JSON.parse(fetchMock.store.get('muziek:' + mtoken));
-    ok('server: keuze opgeslagen', mrec.nummers.length === 2 && mrec.nummers[0].yt === '2Vv-BfVoq4g' && mrec.nummers[0].moment === 'Openingsdans' && mrec.nummers[0].eigen === false, JSON.stringify(mrec.nummers));
-    ok('server: eigen nummer opgeslagen', mrec.nummers[1].yt === 'abcdefghijk' && mrec.nummers[1].titel === 'The One' && mrec.nummers[1].artiest === 'Kodaline' && mrec.nummers[1].eigen === true);
-    ok('server: opmerking en teller', mrec.opmerking === 'Het refrein graag bij de kus.' && mrec.opzoek === 2 && typeof mrec.ingevuld === 'string');
-    // terug naar bewerken: alles staat er nog
+    const byYt = id => mrec.nummers.find(n => n.yt === id);
+    ok('server: keuze opgeslagen', mrec.nummers.length === 4 && byYt('2Vv-BfVoq4g').moment === 'openingsdans' && byYt('2Vv-BfVoq4g').eigen === false && byYt('450p7goxZqg').moment === 'feest', JSON.stringify(mrec.nummers));
+    ok('server: eigen nummers opgeslagen', mrec.nummers.filter(n => n.eigen).length === 2 && byYt('abcdefghijk').moment === 'aankleden' && byYt('abcdefghijk').titel === 'Someone To You' && byYt('abcdefghijk').artiest === 'BANNERS');
+    ok('server: opmerking en teller', mrec.opmerking === 'Het refrein graag bij de kus.' && mrec.opzoek === 3 && typeof mrec.ingevuld === 'string');
     click3($3('mpEdit'));
-    ok('muziek: terug naar de lijst', !$3('mpMain').hidden && $3('mpDone').hidden && d3.querySelectorAll('#mpList .mz-row.on').length === 2);
+    ok('muziek: terug naar de lijst', !$3('mpMain').hidden && $3('mpDone').hidden && qa3('#mpSections .mz-row:not(.sugg)').length === 4);
     ok('muziek: geen scriptfouten na versturen', errors3.length === 0, errors3.join(' | '));
     w3.close();
 
     // ---- de keuze komt terug in de planning ----
     click(rowByName('Bram Jansen').querySelector('.k-main'));
     await wait(30);
-    ok('muziekkeuze in venster', /^Gekozen op \d{1,2} [a-z]{3} \d{4} om \d{2}:\d{2} · 2 nummers$/.test($('lMuziekBox').querySelector('.fstate').textContent), $('lMuziekBox').querySelector('.fstate').textContent);
-    ok('nummers leesbaar met moment', /Perfect/.test($('lMuziekBox').textContent) && /Openingsdans/.test($('lMuziekBox').textContent) && /The One/.test($('lMuziekBox').textContent) && /eigen keuze/.test($('lMuziekBox').textContent));
+    ok('muziekkeuze in venster', /^Gekozen op \d{1,2} [a-z]{3} \d{4} om \d{2}:\d{2} · 4 nummers, 3 momenten$/.test($('lMuziekBox').querySelector('.fstate').textContent), $('lMuziekBox').querySelector('.fstate').textContent);
+    const boxTxt = $('lMuziekBox').textContent;
+    ok('nummers per moment leesbaar', /Aankleden/.test(boxTxt) && /Openingsdans/.test(boxTxt) && /Feest/.test(boxTxt) && /Perfect/.test(boxTxt) && /Someone To You/.test(boxTxt) && /eigen keuze/.test(boxTxt) && /suggestie/.test(boxTxt));
+    ok('momenten in volgorde van de dag', qa('#lMuziekBox .s-group').map(e => e.textContent).join(',') === 'Aankleden,Openingsdans,Feest', qa('#lMuziekBox .s-group').map(e => e.textContent).join(','));
     const songLink = q('#lMuziekBox .songs a');
-    ok('nummer opent op YouTube', !!songLink && songLink.getAttribute('href') === 'https://www.youtube.com/watch?v=2Vv-BfVoq4g' && songLink.target === '_blank', songLink && songLink.getAttribute('href'));
-    ok('opmerking van de klant zichtbaar', /refrein graag bij de kus/.test($('lMuziekBox').textContent));
+    ok('nummer opent op YouTube', !!songLink && songLink.getAttribute('href') === 'https://www.youtube.com/watch?v=abcdefghijk' && songLink.target === '_blank', songLink && songLink.getAttribute('href'));
+    ok('opmerking van de klant zichtbaar', /refrein graag bij de kus/.test(boxTxt));
     ok('melding muziek ontvangen', /Muziekkeuze ontvangen van Bram Jansen/.test($('toast').textContent), $('toast').textContent);
     click($('lSave'));
     ok('chip "muziek gekozen"', /muziek gekozen/.test(rowByName('Bram Jansen').textContent) && /formulier ingevuld/.test(rowByName('Bram Jansen').textContent));
     bram = JSON.parse(w.localStorage.getItem('weekzicht.v1')).leads.find(l => l.name === 'Bram Jansen');
-    ok('muziek lokaal bewaard', bram.muziek && bram.muziek.length === 2 && bram.muziekAt === mrec.ingevuld && bram.muziekOpmerking === 'Het refrein graag bij de kus.');
+    ok('muziek lokaal bewaard', bram.muziek && bram.muziek.length === 4 && bram.muziekAt === mrec.ingevuld && bram.muziekOpmerking === 'Het refrein graag bij de kus.');
     ok('formulier niet kwijt door muziek', bram.form && bram.form.wensen === 'De speech van opa niet missen.' && bram.formFiles.length === 1);
 
     // nogmaals verversen: niets nieuws

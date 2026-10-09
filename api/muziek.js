@@ -10,7 +10,7 @@
 //
 //   GET  /api/muziek?t=TOKEN                                 → { naam, datum, ingevuld, nummers, opmerking }
 //   POST /api/muziek { t, actie: "aanmaken", naam, datum }   (alleen ingelogd)
-//   POST /api/muziek { t, actie: "kiezen", nummers, opmerking }
+//   POST /api/muziek { t, actie: "kiezen", nummers, opmerking }   nummers: [{ yt, titel, artiest, moment, eigen }]
 //   POST /api/muziek { t, actie: "opzoeken", url }           → { yt, titel, artiest, kanaal }
 //   POST /api/muziek { t, actie: "verwijderen" }             (alleen ingelogd)
 
@@ -18,8 +18,8 @@ const opslag = require("./_opslag.js");
 const sessie = require("./_sessie.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
-const MAX_SONGS = 40;
-const MAX_LOOKUPS = 300; // per link: ruim voor een bruidspaar, te weinig om als gratis doorgeefluik te dienen
+const MAX_SONGS = 150; // per klant, over alle momenten van de dag
+const MAX_LOOKUPS = 500; // per link: ruim voor een bruidspaar, te weinig om als gratis doorgeefluik te dienen
 const MAX_NOTE = 2000;
 
 function clean(v, max) {

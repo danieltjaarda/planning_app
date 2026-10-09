@@ -1351,6 +1351,8 @@ button { cursor: pointer; }
 .songs .s-main b { font-weight: 600; overflow-wrap: anywhere; }
 .songs .s-main span { color: var(--ink-3); font-size: 11.5px; }
 .songs .s-tag { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--ink-3); white-space: nowrap; }
+.songs .s-group { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
+.songs .s-group:first-child { margin-top: 0; }
 .formbox .s-note { white-space: pre-wrap; }
 
 /* --- de formulierpagina die de klant ziet (?f=token) — huisstijl mediaspot.nl:
@@ -1672,6 +1674,20 @@ button { cursor: pointer; }
 .mz-done-list img { width: 72px; height: 40px; object-fit: cover; border-radius: 8px; flex: none; background: #ddd; }
 .mz-done-list b { display: block; color: var(--ms-ink); font-weight: 600; }
 .mz-note { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--ms-bg); font-size: 14px; color: var(--ms-ink-2); white-space: pre-wrap; }
+.mz-count { margin: 22px 0 -6px; }
+.mz-sec + .mz-sec { margin-top: 10px; padding-top: 28px; border-top: 1px solid var(--ms-line); }
+.mz-sec .ms-field { gap: 8px; }
+.mz-empty { margin: 0; padding: 13px 16px; border: 1px dashed #D6D6D8; border-radius: 14px; font-size: 13.5px; color: var(--ms-ink-3); }
+.mz-sugg { display: flex; flex-direction: column; gap: 8px; }
+.mz-sugg-lab { font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ms-ink-3); }
+.mz-row.sugg { grid-template-columns: 88px minmax(0, 1fr) auto; gap: 12px; padding: 8px; border-style: dashed; background: transparent; }
+.mz-row.sugg .mz-thumb { width: 88px; border-radius: 10px; }
+.mz-row.sugg .mz-play { width: 30px; height: 30px; margin: -15px 0 0 -15px; }
+.mz-row.sugg .mz-play svg { width: 13px; height: 13px; }
+.mz-row.sugg .mz-info b { font-size: 14px; }
+.mz-row.sugg .mz-info > span { font-size: 12.5px; }
+.mz-pick svg { flex: none; }
+.mz-done-h { margin: 8px 0 -8px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ms-ink-3); }
 
 @media (max-width: 860px) {
   .ms-grid { grid-template-columns: 1fr; }
@@ -1690,9 +1706,12 @@ button { cursor: pointer; }
   .ms-done .answers { grid-template-columns: 1fr; gap: 2px 0; }
   .ms-done .answers dd { margin-bottom: 8px; }
   .mz-main { padding: 2px 14px 20px; }
-  .mz-row { grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
+  .mz-row { grid-template-columns: 96px minmax(0, 1fr) auto; gap: 10px; }
   .mz-thumb { width: 96px; }
-  .mz-act { grid-column: 1 / -1; justify-content: flex-end; }
+  .mz-row.sugg { grid-template-columns: 72px minmax(0, 1fr) auto; gap: 10px; }
+  .mz-row.sugg .mz-thumb { width: 72px; }
+  .mz-row.sugg .mz-pick { padding: 0 11px; }
+  .mz-row.sugg .mz-pick span { display: none; }
   .mz-player { top: 70px; }
   .mz-add { flex-direction: column; }
   .mz-add .ms-btn { width: 100%; }
@@ -1825,23 +1844,12 @@ button { cursor: pointer; }
             <div class="mz-frame"><iframe id="mpFrame" title="YouTube-speler" src="about:blank" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
             <div class="mz-now"><span id="mpNow"></span><button type="button" class="ms-btn ghost small" id="mpStop">Sluit speler</button></div>
           </div>
-          <section class="ms-sec">
-            <h2>Onze <em>suggesties</em></h2>
-            <p class="mz-sub" id="mpCount"></p>
-            <ul class="mz-list" id="mpList"></ul>
-          </section>
-          <section class="ms-sec">
-            <h2>Eigen nummer <em>toevoegen</em></h2>
-            <div class="ms-field">
-              <label for="mpUrl">YouTube-link</label>
-              <div class="mz-add"><input type="url" id="mpUrl" placeholder="https://www.youtube.com/watch?v=…" inputmode="url" autocomplete="off" spellcheck="false"><button type="button" class="ms-btn dark small" id="mpAdd">Toevoegen</button></div>
-              <span class="ms-status" id="mpAddStatus">Zoek het nummer op YouTube, kies Delen → Link kopiëren en plak de link hier. Zo vaak als je wilt.</span>
-            </div>
-          </section>
-          <section class="ms-sec">
+          <p class="mz-sub mz-count" id="mpCount"></p>
+          <div id="mpSections"></div>
+          <section class="ms-sec mz-sec">
             <div class="ms-field">
               <label for="mpNote">Nog iets kwijt? <span class="opt">(optioneel)</span></label>
-              <textarea id="mpNote" placeholder="Bijv. het refrein graag bij de kus, of: liever rustige muziek bij de ceremonie"></textarea>
+              <textarea id="mpNote" placeholder="Bijv. het refrein graag bij de kus, of: liever geen Engelstalige muziek bij de ceremonie"></textarea>
             </div>
           </section>
           <div class="ms-foot">
@@ -4165,30 +4173,79 @@ button { cursor: pointer; }
   }
 
   /* ==========================================================
-     6d. Muziekkeuze — link per klant, de klant kiest op YouTube
+     6d. Muziekkeuze — link per klant, de klant kiest per moment van de dag
      ========================================================== */
 
   // Zelfde opzet als het formulier: een eigen link (?m=token) per klant en
   // api/muziek als serverkant. De muziek zelf staat niet op onze server:
   // afspelen gaat via de YouTube-speler op de pagina van de klant, en eigen
-  // nummers voegt de klant toe met een YouTube-link.
+  // nummers voegt de klant toe met een YouTube-link. De pagina volgt het
+  // draaiboek van de dag: per moment suggesties én eigen nummers.
   var MUZIEK_URL = "api/muziek";
 
-  // Tien suggesties die vaak goed passen bij een trouwfilm. Wil je andere,
-  // pas deze lijst aan: het video-ID is het stuk na "v=" in de YouTube-link.
-  var MUZIEK_TEMPLATES = [
-    { yt: "Y2E71oe0aSM", titel: "10,000 Hours", artiest: "Dan + Shay & Justin Bieber" },
-    { yt: "KIK3azN4w34", titel: "Anyone", artiest: "Justin Bieber" },
-    { yt: "2Vv-BfVoq4g", titel: "Perfect", artiest: "Ed Sheeran" },
-    { yt: "lp-EO5I60KA", titel: "Thinking Out Loud", artiest: "Ed Sheeran" },
-    { yt: "450p7goxZqg", titel: "All of Me", artiest: "John Legend" },
-    { yt: "rtOvBOTyX00", titel: "A Thousand Years", artiest: "Christina Perri" },
-    { yt: "vGJTaP6anOU", titel: "Can't Help Falling in Love", artiest: "Elvis Presley" },
-    { yt: "0yW7w8F2TVA", titel: "Say You Won't Let Go", artiest: "James Arthur" },
-    { yt: "dElRVQFqj-k", titel: "Marry You", artiest: "Bruno Mars" },
-    { yt: "nBmhCIW7KCA", titel: "Als Het Avond Is", artiest: "Suzan & Freek" }
+  var MUZIEK_MOMENTEN = [
+    { id: "aankleden", titel: "Aankleden en *voorbereidingen*", kort: "Aankleden",
+      hint: "Rustig en warm: de ochtend, de zenuwen, de eerste blik in de spiegel." },
+    { id: "ceremonie", titel: "De *ceremonie*", kort: "Ceremonie",
+      hint: "Binnenkomst, het ja-woord, de ringen en samen naar buiten lopen." },
+    { id: "fotoshoot", titel: "De *fotoshoot*", kort: "Fotoshoot",
+      hint: "Wat bij jullie samen past: dromerig, speels of juist energiek." },
+    { id: "borrel", titel: "Borrel en *felicitaties*", kort: "Borrel",
+      hint: "Licht en vrolijk, onder het toosten en de knuffels." },
+    { id: "diner", titel: "Diner en *speeches*", kort: "Diner en speeches",
+      hint: "Rustig, zodat de speeches en het gelach erbovenuit komen." },
+    { id: "openingsdans", titel: "De *openingsdans*", kort: "Openingsdans",
+      hint: "Het nummer waarop jullie dansen; dat zet ik meestal letterlijk onder dat moment." },
+    { id: "feest", titel: "Het *feest*", kort: "Feest",
+      hint: "De nummers waarop de dansvloer vol gaat." },
+    { id: "film", titel: "De *hele film*", kort: "Hele film",
+      hint: "Nummers die het gevoel van jullie dag het best vangen; die gebruik ik voor de rode draad." }
   ];
-  var MUZIEK_MOMENTEN = ["Trouwfilm", "Openingsdans", "Ceremonie", "Feest", "Anders"];
+
+  // Suggesties per moment. Wil je andere, pas deze lijst aan: het video-ID is
+  // het stuk na "v=" in de YouTube-link.
+  var MUZIEK_TEMPLATES = [
+    { yt: "-BjZmE2gtdo", titel: "Lover", artiest: "Taylor Swift", moment: "aankleden" },
+    { yt: "hKgl5-lkT8U", titel: "Best Part", artiest: "Daniel Caesar & H.E.R.", moment: "aankleden" },
+    { yt: "PEM0Vs8jf1w", titel: "golden hour", artiest: "JVKE", moment: "aankleden" },
+    { yt: "rtOvBOTyX00", titel: "A Thousand Years", artiest: "Christina Perri", moment: "ceremonie" },
+    { yt: "vGJTaP6anOU", titel: "Can't Help Falling in Love", artiest: "Elvis Presley", moment: "ceremonie" },
+    { yt: "ShZ978fBl6Y", titel: "You Are The Reason", artiest: "Calum Scott", moment: "ceremonie" },
+    { yt: "an4ySOlsUMY", titel: "How Long Will I Love You", artiest: "Ellie Goulding", moment: "ceremonie" },
+    { yt: "2Vv-BfVoq4g", titel: "Perfect", artiest: "Ed Sheeran", moment: "fotoshoot" },
+    { yt: "Y2E71oe0aSM", titel: "10,000 Hours", artiest: "Dan + Shay & Justin Bieber", moment: "fotoshoot" },
+    { yt: "uJ_1HMAGb4k", titel: "Riptide", artiest: "Vance Joy", moment: "fotoshoot" },
+    { yt: "EkHTsc9PU2A", titel: "I'm Yours", artiest: "Jason Mraz", moment: "borrel" },
+    { yt: "SPUJIbXN0WY", titel: "Everything", artiest: "Michael Bublé", moment: "borrel" },
+    { yt: "lbjZPFBD6JU", titel: "Come Away With Me", artiest: "Norah Jones", moment: "diner" },
+    { yt: "pKtLNYNWbBw", titel: "Stand By Me", artiest: "Ben E. King", moment: "diner" },
+    { yt: "450p7goxZqg", titel: "All of Me", artiest: "John Legend", moment: "openingsdans" },
+    { yt: "lp-EO5I60KA", titel: "Thinking Out Loud", artiest: "Ed Sheeran", moment: "openingsdans" },
+    { yt: "0yW7w8F2TVA", titel: "Say You Won't Let Go", artiest: "James Arthur", moment: "openingsdans" },
+    { yt: "cZag0E32is0", titel: "At Last", artiest: "Etta James", moment: "openingsdans" },
+    { yt: "dElRVQFqj-k", titel: "Marry You", artiest: "Bruno Mars", moment: "feest" },
+    { yt: "eH3giaIzONA", titel: "I Wanna Dance With Somebody", artiest: "Whitney Houston", moment: "feest" },
+    { yt: "nBmhCIW7KCA", titel: "Als Het Avond Is", artiest: "Suzan & Freek", moment: "feest" },
+    { yt: "KIK3azN4w34", titel: "Anyone", artiest: "Justin Bieber", moment: "film" },
+    { yt: "VPRjCeoBqrI", titel: "A Sky Full Of Stars", artiest: "Coldplay", moment: "film" },
+    { yt: "xLPGtQoRUbk", titel: "The One", artiest: "Kodaline", moment: "film" }
+  ];
+
+  function momentDef(id) {
+    for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) if (MUZIEK_MOMENTEN[i].id === id) return MUZIEK_MOMENTEN[i];
+    return null;
+  }
+  /** Een geldig moment-ID; oude labels en onbekende waarden vallen terug op "film". */
+  function normMoment(m) {
+    if (momentDef(m)) return m;
+    var oud = { Trouwfilm: "film", Openingsdans: "openingsdans", Ceremonie: "ceremonie", Feest: "feest" };
+    return oud[m] || "film";
+  }
+  function momentLabel(id) { var d = momentDef(normMoment(id)); return d ? d.kort : ""; }
+  function templateOf(yt) {
+    for (var i = 0; i < MUZIEK_TEMPLATES.length; i++) if (MUZIEK_TEMPLATES[i].yt === yt) return MUZIEK_TEMPLATES[i];
+    return null;
+  }
 
   function muziekLink(l) { return location.origin + location.pathname + "?m=" + l.muziekToken; }
   function ytUrl(yt) { return "https://www.youtube.com/watch?v=" + yt; }
@@ -4201,18 +4258,41 @@ button { cursor: pointer; }
     var m = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#\s]*&)?v=|shorts\/|embed\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])/i.exec(s);
     return m ? m[1] : null;
   }
+  /** Alle video-ID's uit een tekst met één of meer links, zonder dubbelen. */
+  function ytIdsFrom(text) {
+    var parts = String(text || "").split(/[\s,;]+/), out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var id = ytIdFrom(parts[i]);
+      if (id && out.indexOf(id) < 0) out.push(id);
+    }
+    return out;
+  }
+  /** Nummers gegroepeerd op moment, in de volgorde van de dag. */
+  function groupByMoment(list) {
+    var groups = [];
+    for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) {
+      var m = MUZIEK_MOMENTEN[i], items = [];
+      for (var j = 0; j < list.length; j++) if (normMoment(list[j].moment) === m.id) items.push(list[j]);
+      if (items.length) groups.push({ moment: m, items: items });
+    }
+    return groups;
+  }
 
   /* --- in het klantvenster --------------------------------- */
 
   function songsHtml(list) {
-    var html = '<ul class="songs">';
-    for (var i = 0; i < list.length; i++) {
-      var s = list[i];
-      html += '<li><a href="' + esc(ytUrl(s.yt)) + '" target="_blank" rel="noopener" title="Open op YouTube">' +
-        '<img src="' + esc(ytThumb(s.yt)) + '" alt="" width="44" height="25" loading="lazy">' +
-        '<span class="s-main"><b>' + esc(s.titel || "Nummer van YouTube") + '</b>' +
-        (s.artiest ? '<span>' + esc(s.artiest) + '</span>' : '') + '</span>' +
-        '<span class="s-tag">' + esc(s.moment || "") + (s.eigen ? (s.moment ? ' · ' : '') + 'eigen keuze' : '') + '</span></a></li>';
+    var groups = groupByMoment(list), html = '<ul class="songs">';
+    for (var g = 0; g < groups.length; g++) {
+      html += '<li class="s-group">' + esc(groups[g].moment.kort) + '</li>';
+      var items = groups[g].items;
+      for (var i = 0; i < items.length; i++) {
+        var s = items[i];
+        html += '<li><a href="' + esc(ytUrl(s.yt)) + '" target="_blank" rel="noopener" title="Open op YouTube">' +
+          '<img src="' + esc(ytThumb(s.yt)) + '" alt="" width="44" height="25" loading="lazy">' +
+          '<span class="s-main"><b>' + esc(s.titel || "Nummer van YouTube") + '</b>' +
+          (s.artiest ? '<span>' + esc(s.artiest) + '</span>' : '') + '</span>' +
+          '<span class="s-tag">' + (s.eigen ? 'eigen keuze' : 'suggestie') + '</span></a></li>';
+      }
     }
     return html + '</ul>';
   }
@@ -4221,8 +4301,8 @@ button { cursor: pointer; }
     var box = $("lMuziekBox");
     if (!l || !l.muziekToken) {
       box.innerHTML = '<span class="label">Muziek voor de film</span>' +
-        '<p>Maak een link en stuur die naar de klant. Daar luisteren ze tien suggesties, kiezen wat bij ze past ' +
-        'en voegen eigen nummers toe met een YouTube-link. De keuze komt hier vanzelf terug.</p>' +
+        '<p>Maak een link en stuur die naar de klant. Daar kiezen ze per moment van de dag — van aankleden tot feest — ' +
+        'uit onze suggesties, en voegen ze zoveel eigen nummers toe als ze willen met een YouTube-link. De keuze komt hier vanzelf terug.</p>' +
         '<div><button type="button" class="btn-line" id="lMakeMuziekLink">Maak muzieklink</button></div>';
       return;
     }
@@ -4231,9 +4311,9 @@ button { cursor: pointer; }
       '<button type="button" class="btn-line" id="lCopyMuziekLink">Kopieer</button>' +
       '<button type="button" class="btn-line" id="lCheckMuziek" title="Kijk of de klant al muziek heeft gekozen">Ververs</button></div>';
     if (l.muziek) {
-      var n = l.muziek.length;
+      var n = l.muziek.length, g = groupByMoment(l.muziek).length;
       html += '<span class="fstate on">Gekozen op ' + esc(fmtStamp(l.muziekAt)) + ' · ' +
-        (n ? n + (n === 1 ? ' nummer' : ' nummers') : 'geen nummers, wel een opmerking') + '</span>';
+        (n ? n + (n === 1 ? ' nummer' : ' nummers') + ', ' + g + (g === 1 ? ' moment' : ' momenten') : 'geen nummers, wel een opmerking') + '</span>';
       if (n) html += songsHtml(l.muziek);
       if (l.muziekOpmerking) html += '<p class="s-note">' + esc(l.muziekOpmerking) + '</p>';
     } else {
@@ -4307,33 +4387,42 @@ button { cursor: pointer; }
   /* --- de pagina van de klant -------------------------------- */
 
   var MZ_PLAY = '<span class="mz-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>';
-  var MZ_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var MZ_PLUS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 
-  function mzDoneList(list) {
-    var html = '<ul class="mz-done-list">';
-    for (var i = 0; i < list.length; i++) {
-      var s = list[i];
-      html += '<li><img src="' + esc(ytThumb(s.yt)) + '" alt="" width="72" height="40" loading="lazy"><span><b>' + esc(s.titel) + '</b>' +
-        esc(s.artiest || "") + (s.moment ? (s.artiest ? ' · ' : '') + esc(s.moment) : '') + '</span></li>';
+  function mzDoneHtml(list) {
+    var groups = groupByMoment(list), html = '';
+    for (var g = 0; g < groups.length; g++) {
+      html += '<h3 class="mz-done-h">' + esc(groups[g].moment.kort) + '</h3><ul class="mz-done-list">';
+      var items = groups[g].items;
+      for (var i = 0; i < items.length; i++) {
+        var s = items[i];
+        html += '<li><img src="' + esc(ytThumb(s.yt)) + '" alt="" width="72" height="40" loading="lazy"><span><b>' + esc(s.titel) + '</b>' + esc(s.artiest || "") + '</span></li>';
+      }
+      html += '</ul>';
     }
-    return html + '</ul>';
+    return html;
   }
 
   function muziekPlain(list, note) {
-    var lines = [];
-    for (var i = 0; i < list.length; i++) {
-      var s = list[i];
-      lines.push((s.titel || "") + (s.artiest ? " — " + s.artiest : "") + (s.moment ? " (" + s.moment + ")" : "") + ": " + ytUrl(s.yt));
+    var groups = groupByMoment(list), lines = [];
+    for (var g = 0; g < groups.length; g++) {
+      lines.push(groups[g].moment.kort + ":");
+      var items = groups[g].items;
+      for (var i = 0; i < items.length; i++) {
+        var s = items[i];
+        lines.push("- " + (s.titel || "") + (s.artiest ? " — " + s.artiest : "") + ": " + ytUrl(s.yt));
+      }
+      lines.push("");
     }
-    if (note) lines.push("", "Opmerking: " + note);
-    return lines.join("\n");
+    if (note) lines.push("Opmerking: " + note);
+    return lines.join("\n").trim();
   }
 
   function bootMuziek(token) {
     document.querySelector(".app").hidden = true;
     $("muziekPage").hidden = false;
     document.title = "Jullie muziek | Mediaspot";
-    var songs = [], naam = "", playing = null;
+    var songs = [], naam = "", playing = null, status = {}, busy = {};
 
     // Het echte logo van de site; lukt laden niet, dan blijft het woordmerk staan.
     var logo = $("mpLogo");
@@ -4341,45 +4430,89 @@ button { cursor: pointer; }
     logo.src = logo.getAttribute("data-src");
 
     function findSong(yt) { for (var i = 0; i < songs.length; i++) if (songs[i].yt === yt) return songs[i]; return null; }
-    function chosen() { return songs.filter(function (s) { return s.gekozen; }); }
-    function say(el, msg, cls) { el.textContent = msg; el.className = "ms-status" + (cls ? " " + cls : ""); }
+    function inList(yt) { return !!findSong(yt); }
+    function titleOf(yt) { var s = findSong(yt) || templateOf(yt); return s ? s.titel + (s.artiest ? " — " + s.artiest : "") : ""; }
+
+    /** Melding onder het invoerveld van een moment; blijft staan bij opnieuw tekenen. */
+    function say(moment, msg, cls) {
+      status[moment] = { msg: msg, cls: cls || "" };
+      var el = document.querySelector('[data-status="' + moment + '"]');
+      if (el) { el.textContent = msg; el.className = "ms-status" + (cls ? " " + cls : ""); }
+    }
+
+    function thumbHtml(s) {
+      return '<button type="button" class="mz-thumb" data-play="' + esc(s.yt) + '" aria-label="Speel ' + esc(s.titel) + ' af">' +
+        '<img src="' + esc(ytThumb(s.yt)) + '" alt="" width="160" height="90" loading="lazy">' + MZ_PLAY + '</button>';
+    }
 
     function rowHtml(s) {
       var opts = '';
       for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) {
-        opts += '<option' + (s.moment === MUZIEK_MOMENTEN[i] ? ' selected' : '') + '>' + esc(MUZIEK_MOMENTEN[i]) + '</option>';
+        opts += '<option value="' + MUZIEK_MOMENTEN[i].id + '"' + (s.moment === MUZIEK_MOMENTEN[i].id ? ' selected' : '') + '>' + esc(MUZIEK_MOMENTEN[i].kort) + '</option>';
       }
-      return '<li class="mz-row' + (s.gekozen ? ' on' : '') + (playing === s.yt ? ' playing' : '') + '" data-yt="' + esc(s.yt) + '">' +
-        '<button type="button" class="mz-thumb" data-play="' + esc(s.yt) + '" aria-label="Speel ' + esc(s.titel) + ' af">' +
-          '<img src="' + esc(ytThumb(s.yt)) + '" alt="" width="160" height="90" loading="lazy">' + MZ_PLAY + '</button>' +
+      return '<li class="mz-row' + (playing === s.yt ? ' playing' : '') + '" data-yt="' + esc(s.yt) + '">' + thumbHtml(s) +
         '<div class="mz-info"><b>' + esc(s.titel) + '</b><span>' + esc(s.artiest || "") +
           (s.eigen ? (s.artiest ? ' · ' : '') + '<i>zelf toegevoegd</i>' : '') + '</span>' +
-          (s.gekozen ? '<label class="mz-moment">Waarvoor? <select data-moment="' + esc(s.yt) + '">' + opts + '</select></label>' : '') +
-        '</div>' +
-        '<div class="mz-act"><button type="button" class="mz-pick" data-pick="' + esc(s.yt) + '" aria-pressed="' + (s.gekozen ? 'true' : 'false') + '">' +
-          (s.gekozen ? MZ_CHECK + 'Gekozen' : 'Kies') + '</button>' +
-          (s.eigen ? '<button type="button" class="mz-del" data-del="' + esc(s.yt) + '" aria-label="Haal ' + esc(s.titel) + ' weg">✕</button>' : '') +
-        '</div></li>';
+          '<label class="mz-moment">Moment <select data-moment-of="' + esc(s.yt) + '" aria-label="Moment van ' + esc(s.titel) + '">' + opts + '</select></label></div>' +
+        '<div class="mz-act"><button type="button" class="mz-del" data-del="' + esc(s.yt) + '" aria-label="Haal ' + esc(s.titel) + ' weg">✕</button></div></li>';
     }
 
-    function renderList() {
+    function suggHtml(t) {
+      return '<li class="mz-row sugg' + (playing === t.yt ? ' playing' : '') + '" data-sugg-yt="' + esc(t.yt) + '">' + thumbHtml(t) +
+        '<div class="mz-info"><b>' + esc(t.titel) + '</b><span>' + esc(t.artiest) + '</span></div>' +
+        '<div class="mz-act"><button type="button" class="mz-pick" data-pick="' + esc(t.yt) + '">' + MZ_PLUS + '<span>Voeg toe</span></button></div></li>';
+    }
+
+    function sectionHtml(m) {
+      var mine = songs.filter(function (s) { return s.moment === m.id; });
+      var sugg = MUZIEK_TEMPLATES.filter(function (t) { return t.moment === m.id && !inList(t.yt); });
+      var st = status[m.id] || { msg: "", cls: "" };
+      var html = '<section class="ms-sec mz-sec" data-moment="' + m.id + '"><h2>' + accentHtml(m.titel) + '</h2><p class="mz-sub">' + esc(m.hint) + '</p>';
+      html += mine.length
+        ? '<ul class="mz-list" data-list="' + m.id + '">' + mine.map(rowHtml).join("") + '</ul>'
+        : '<p class="mz-empty" data-list="' + m.id + '">Nog niets gekozen voor dit moment.</p>';
+      html += '<div class="ms-field"><div class="mz-add">' +
+        '<input type="url" data-url="' + m.id + '" placeholder="Plak een YouTube-link (of meerdere)" inputmode="url" autocomplete="off" spellcheck="false" aria-label="YouTube-link voor ' + esc(m.kort) + '">' +
+        '<button type="button" class="ms-btn dark small" data-add="' + m.id + '"' + (busy[m.id] ? ' disabled' : '') + '>' + (busy[m.id] ? 'Bezig…' : 'Toevoegen') + '</button></div>' +
+        '<span class="ms-status' + (st.cls ? ' ' + st.cls : '') + '" data-status="' + m.id + '">' + esc(st.msg) + '</span></div>';
+      if (sugg.length) {
+        html += '<div class="mz-sugg"><span class="mz-sugg-lab">Onze suggesties</span><ul class="mz-list" data-sugg="' + m.id + '">' + sugg.map(suggHtml).join("") + '</ul></div>';
+      }
+      return html + '</section>';
+    }
+
+    function renderAll() {
+      // wat in de invoervelden staat, moet een hertekening overleven
+      var keep = {}, inputs = document.querySelectorAll('#mpSections input[data-url]');
+      for (var i = 0; i < inputs.length; i++) keep[inputs[i].getAttribute("data-url")] = inputs[i].value;
       var html = '';
-      for (var i = 0; i < songs.length; i++) html += rowHtml(songs[i]);
-      $("mpList").innerHTML = html;
-      var n = chosen().length;
+      for (var j = 0; j < MUZIEK_MOMENTEN.length; j++) html += sectionHtml(MUZIEK_MOMENTEN[j]);
+      $("mpSections").innerHTML = html;
+      var again = document.querySelectorAll('#mpSections input[data-url]');
+      for (var k = 0; k < again.length; k++) {
+        var id = again[k].getAttribute("data-url");
+        if (keep[id]) again[k].value = keep[id];
+      }
+      var n = songs.length, g = groupByMoment(songs).length;
       $("mpCount").textContent = n
-        ? n + (n === 1 ? ' nummer gekozen' : ' nummers gekozen') + ' — klik op een hoesje om te luisteren.'
-        : 'Klik op een hoesje om te luisteren; kies wat bij jullie past.';
+        ? n + (n === 1 ? ' nummer gekozen' : ' nummers gekozen') + ' voor ' + g + (g === 1 ? ' moment' : ' momenten') + '. Klik op een hoesje om te luisteren.'
+        : 'Nog niets gekozen. Luister de suggesties per moment en voeg toe wat bij jullie past, of plak eigen YouTube-links.';
+    }
+
+    function markPlaying() {
+      var rows = document.querySelectorAll('#mpSections .mz-row');
+      for (var i = 0; i < rows.length; i++) {
+        var id = rows[i].getAttribute("data-yt") || rows[i].getAttribute("data-sugg-yt");
+        rows[i].classList.toggle("playing", !!playing && id === playing);
+      }
     }
 
     function play(yt) {
-      var s = findSong(yt);
-      if (!s) return;
       playing = yt;
       $("mpFrame").src = "https://www.youtube-nocookie.com/embed/" + yt + "?autoplay=1&rel=0&playsinline=1";
-      $("mpNow").textContent = s.titel + (s.artiest ? " — " + s.artiest : "");
+      $("mpNow").textContent = titleOf(yt);
       $("mpPlayer").hidden = false;
-      renderList();
+      markPlaying();
       var p = $("mpPlayer");
       if (p.scrollIntoView && p.getBoundingClientRect().top < 0) p.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -4388,51 +4521,87 @@ button { cursor: pointer; }
       playing = null;
       $("mpFrame").src = "about:blank";
       $("mpPlayer").hidden = true;
-      renderList();
+      markPlaying();
     }
 
-    function addOwn() {
-      var input = $("mpUrl"), status = $("mpAddStatus"), btn = $("mpAdd");
-      var url = input.value.trim();
-      if (!url) { say(status, "Plak eerst een YouTube-link.", "err"); input.focus(); return; }
-      var yt = ytIdFrom(url);
-      if (!yt) {
-        say(status, "Dat lijkt geen YouTube-link. Plak een link zoals https://www.youtube.com/watch?v=… of https://youtu.be/…", "err");
-        input.focus();
+    function pickTemplate(yt) {
+      var t = templateOf(yt);
+      if (!t || inList(yt)) return;
+      songs.push({ yt: t.yt, titel: t.titel, artiest: t.artiest, moment: t.moment, eigen: false });
+      renderAll();
+      markPlaying();
+    }
+
+    /** Eén of meer YouTube-links toevoegen aan een moment; onbekende titels zoekt de server op. */
+    function addOwn(moment) {
+      var input = document.querySelector('input[data-url="' + moment + '"]');
+      var text = input ? input.value.trim() : "";
+      if (!text) { say(moment, "Plak eerst een YouTube-link.", "err"); if (input) input.focus(); return; }
+      var ids = ytIdsFrom(text);
+      if (!ids.length) {
+        say(moment, "Dat lijkt geen YouTube-link. Plak een link zoals https://www.youtube.com/watch?v=… of https://youtu.be/…", "err");
+        if (input) input.focus();
         return;
       }
-      var had = findSong(yt);
-      if (had) {
-        had.gekozen = true;
-        if (!had.moment) had.moment = MUZIEK_MOMENTEN[0];
-        renderList();
-        input.value = "";
-        say(status, "Dit nummer staat al in de lijst; ik heb hem voor jullie aangevinkt.", "ok");
-        return;
+      var added = [], dubbel = [], mislukt = [], todo = [];
+      for (var i = 0; i < ids.length; i++) {
+        var had = findSong(ids[i]);
+        if (had) { dubbel.push(had); continue; }
+        var t = templateOf(ids[i]);
+        if (t) {
+          var s0 = { yt: t.yt, titel: t.titel, artiest: t.artiest, moment: moment, eigen: false };
+          songs.push(s0); added.push(s0);
+          continue;
+        }
+        todo.push(ids[i]);
       }
-      btn.disabled = true;
-      say(status, "Even opzoeken…");
-      api("POST", "", { t: token, actie: "opzoeken", url: url }, MUZIEK_URL).then(function (r) {
-        if (r.status === 400 || r.status === 404 || r.status === 429) throw { melding: (r.data && r.data.melding) || apiReason(r) };
-        // Lukt opzoeken niet (YouTube even onbereikbaar), dan komt het nummer er toch in: het ID is genoeg.
-        var titel = r.ok && r.data.titel ? r.data.titel : "Nummer van YouTube (" + yt + ")";
-        var artiest = r.ok && r.data.artiest ? r.data.artiest : "";
-        songs.push({ yt: yt, titel: titel, artiest: artiest, eigen: true, gekozen: true, moment: MUZIEK_MOMENTEN[0] });
-        renderList();
-        input.value = "";
-        say(status, "Toegevoegd: " + titel + (artiest ? " — " + artiest : "") + ". Klik op het hoesje om te luisteren.", "ok");
-      })["catch"](function (e) {
-        say(status, (e && e.melding) || "Opzoeken lukte niet. Probeer het zo nog eens.", "err");
-      }).then(function () { btn.disabled = false; });
+      busy[moment] = !!todo.length;
+      if (input) input.value = "";
+      say(moment, todo.length ? "Even opzoeken…" : "");
+      renderAll();
+      markPlaying();
+      var chain = Promise.resolve();
+      todo.forEach(function (yt) {
+        chain = chain.then(function () {
+          return api("POST", "", { t: token, actie: "opzoeken", url: ytUrl(yt) }, MUZIEK_URL).then(function (r) {
+            if (r.status === 400 || r.status === 404 || r.status === 429) {
+              mislukt.push({ yt: yt, melding: (r.data && r.data.melding) || apiReason(r) });
+              return;
+            }
+            // Lukt opzoeken niet (YouTube even onbereikbaar), dan komt het nummer er toch in: het ID is genoeg.
+            var s = { yt: yt, titel: r.ok && r.data.titel ? r.data.titel : "Nummer van YouTube (" + yt + ")",
+              artiest: r.ok && r.data.artiest ? r.data.artiest : "", moment: moment, eigen: true };
+            songs.push(s); added.push(s);
+          }, function () { mislukt.push({ yt: yt, melding: "Geen verbinding met de server. Probeer het zo nog eens." }); });
+        });
+      });
+      chain.then(function () {
+        busy[moment] = false;
+        var parts = [];
+        if (added.length === 1) parts.push("Toegevoegd: " + added[0].titel + (added[0].artiest ? " — " + added[0].artiest : "") + ".");
+        else if (added.length > 1) parts.push(added.length + " nummers toegevoegd.");
+        if (dubbel.length) {
+          parts.push(dubbel.length === 1
+            ? "“" + dubbel[0].titel + "” staat al in de lijst (bij " + momentLabel(dubbel[0].moment).toLowerCase() + ")."
+            : dubbel.length + " nummers stonden al in de lijst.");
+        }
+        if (mislukt.length) {
+          parts.push(mislukt.length === 1 ? mislukt[0].melding : mislukt.length + " links kon ik niet vinden; controleer of de video's openbaar zijn.");
+        }
+        say(moment, parts.join(" "), mislukt.length && !added.length ? "err" : added.length ? "ok" : "");
+        renderAll();
+        markPlaying();
+      });
     }
 
     function sendChoice() {
-      var picked = chosen(), note = $("mpNote").value.trim(), status = $("mpStatus");
-      if (!picked.length && !note) { say(status, "Kies minstens één nummer, of laat een opmerking achter.", "err"); return; }
-      say(status, "Versturen…");
+      var note = $("mpNote").value.trim(), st = $("mpStatus");
+      function foot(msg, cls) { st.textContent = msg; st.className = "ms-status" + (cls ? " " + cls : ""); }
+      if (!songs.length && !note) { foot("Kies minstens één nummer, of laat een opmerking achter.", "err"); return; }
+      foot("Versturen…");
       $("mpSend").disabled = true;
-      var nummers = picked.map(function (s) {
-        return { yt: s.yt, titel: s.titel, artiest: s.artiest || "", moment: s.moment || "", eigen: !!s.eigen };
+      var nummers = songs.map(function (s) {
+        return { yt: s.yt, titel: s.titel, artiest: s.artiest || "", moment: s.moment, eigen: !!s.eigen };
       });
       api("POST", "", { t: token, actie: "kiezen", nummers: nummers, opmerking: note }, MUZIEK_URL).then(function (r) {
         if (!r.ok) throw r;
@@ -4442,7 +4611,7 @@ button { cursor: pointer; }
           '<h2>Bedankt' + (naam ? ', <em>' + esc(naam) + '</em>' : '') + '!</h2>' +
           '<p>' + (nummers.length ? 'Jullie muziekkeuze is verstuurd. Ik luister alles terug en neem het mee in de montage. ' : 'Jullie opmerking is verstuurd. ') +
           'Van gedachten veranderd? Open deze link later nog eens; je kunt alles aanpassen.</p>' +
-          (nummers.length ? mzDoneList(nummers) : '') +
+          mzDoneHtml(nummers) +
           (note ? '<p class="mz-note">' + esc(note) + '</p>' : '') +
           '<div class="ms-actions"><button type="button" class="ms-btn ghost" id="mpEdit">Toch nog iets aanpassen</button></div>' +
           '<img class="ms-done-logo" src="https://www.mediaspot.nl/mediaspot-logo-dark.svg" alt="Mediaspot" width="230" height="86">';
@@ -4452,11 +4621,11 @@ button { cursor: pointer; }
           $("mpDone").hidden = true;
           $("mpMain").hidden = false;
           $("mpSend").disabled = false;
-          say(status, "");
+          foot("");
         });
       })["catch"](function (r) {
         $("mpSend").disabled = false;
-        say(status, "Versturen lukte niet.", "err");
+        foot("Versturen lukte niet.", "err");
         $("mpMain").hidden = true;
         $("mpDone").innerHTML = '<h2>Versturen lukte niet</h2>' +
           '<p>' + esc(r && r.status ? "De server gaf een fout (" + r.status + ")." : "Er is geen verbinding met de server.") +
@@ -4470,7 +4639,7 @@ button { cursor: pointer; }
         $("mpRetry").addEventListener("click", function () {
           $("mpDone").hidden = true;
           $("mpMain").hidden = false;
-          say(status, "");
+          foot("");
         });
       });
     }
@@ -4479,59 +4648,55 @@ button { cursor: pointer; }
       rec = rec || {};
       naam = rec.naam || "";
       var picked = Array.isArray(rec.nummers) ? rec.nummers : [];
-      var byId = {};
-      for (var i = 0; i < picked.length; i++) if (picked[i] && picked[i].yt) byId[picked[i].yt] = picked[i];
       songs = [];
-      for (var j = 0; j < MUZIEK_TEMPLATES.length; j++) {
-        var tpl = MUZIEK_TEMPLATES[j], p = byId[tpl.yt];
-        songs.push({ yt: tpl.yt, titel: tpl.titel, artiest: tpl.artiest, eigen: false, gekozen: !!p, moment: (p && p.moment) || MUZIEK_MOMENTEN[0] });
-        if (p) delete byId[tpl.yt];
-      }
-      for (var k = 0; k < picked.length; k++) {
-        var o = picked[k];
-        if (!o || !byId[o.yt]) continue;
-        songs.push({ yt: o.yt, titel: o.titel || "Nummer van YouTube", artiest: o.artiest || "", eigen: true, gekozen: true, moment: o.moment || MUZIEK_MOMENTEN[0] });
+      for (var i = 0; i < picked.length; i++) {
+        var o = picked[i];
+        if (!o || !o.yt || findSong(o.yt)) continue;
+        var t = templateOf(o.yt);
+        songs.push({ yt: o.yt, titel: o.titel || (t ? t.titel : "Nummer van YouTube"), artiest: o.artiest || (t ? t.artiest : ""),
+          moment: normMoment(o.moment), eigen: !t });
       }
       $("mpTitle").innerHTML = naam
-        ? "Hoi " + esc(naam) + ", welke muziek past bij <em>jullie film</em>?"
-        : "Welke muziek past bij <em>jullie film</em>?";
+        ? "Hoi " + esc(naam) + ", welke muziek past bij <em>jullie dag</em>?"
+        : "Welke muziek past bij <em>jullie dag</em>?";
       $("mpIntro").innerHTML =
-        "Luister de suggesties hieronder en kies wat bij jullie past, of voeg eigen nummers toe met een YouTube-link. " +
-        "Geef er gerust bij aan waarvoor een nummer bedoeld is: de film, de openingsdans of de ceremonie." +
+        "Hieronder staat jullie dag in volgorde, van aankleden tot feest. Luister per moment onze suggesties en voeg toe wat past, " +
+        "of plak eigen YouTube-links; zoveel als jullie willen. Niets hoeft, alles mag." +
         (rec.ingevuld ? " <strong>Jullie hebben al gekozen op " + esc(fmtStamp(rec.ingevuld)) +
           ".</strong> Je kunt alles aanpassen en opnieuw versturen." : "");
       $("mpNote").value = rec.opmerking || "";
-      renderList();
+      renderAll();
       $("mpMain").hidden = false;
     }
 
-    $("mpList").addEventListener("click", function (e) {
+    $("mpSections").addEventListener("click", function (e) {
       var b = e.target.closest("button");
       if (!b) return;
       if (b.hasAttribute("data-play")) {
         var yt = b.getAttribute("data-play");
         if (playing === yt) stop(); else play(yt);
       } else if (b.hasAttribute("data-pick")) {
-        var s = findSong(b.getAttribute("data-pick"));
-        if (!s) return;
-        s.gekozen = !s.gekozen;
-        if (s.gekozen && !s.moment) s.moment = MUZIEK_MOMENTEN[0];
-        renderList();
+        pickTemplate(b.getAttribute("data-pick"));
       } else if (b.hasAttribute("data-del")) {
         var id = b.getAttribute("data-del");
         songs = songs.filter(function (x) { return x.yt !== id; });
-        if (playing === id) stop(); else renderList();
+        renderAll();
+        markPlaying();
+      } else if (b.hasAttribute("data-add")) {
+        addOwn(b.getAttribute("data-add"));
       }
     });
-    $("mpList").addEventListener("change", function (e) {
-      var sel = e.target.closest("select[data-moment]");
+    $("mpSections").addEventListener("change", function (e) {
+      var sel = e.target.closest("select[data-moment-of]");
       if (!sel) return;
-      var s = findSong(sel.getAttribute("data-moment"));
-      if (s) s.moment = sel.value;
+      var s = findSong(sel.getAttribute("data-moment-of"));
+      if (s) { s.moment = normMoment(sel.value); renderAll(); markPlaying(); }
+    });
+    $("mpSections").addEventListener("keydown", function (e) {
+      var inp = e.target.closest("input[data-url]");
+      if (inp && e.key === "Enter") { e.preventDefault(); addOwn(inp.getAttribute("data-url")); }
     });
     $("mpStop").addEventListener("click", stop);
-    $("mpAdd").addEventListener("click", addOwn);
-    $("mpUrl").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addOwn(); } });
     $("mpSend").addEventListener("click", sendChoice);
 
     api("GET", "?t=" + token, null, MUZIEK_URL).then(function (r) {
