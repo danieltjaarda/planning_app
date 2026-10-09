@@ -55,20 +55,23 @@ antwoorden zijn; *Ververs* doet dat meteen. Een klant kan de link later opnieuw
 openen en aanpassen.
 
 **Muziekkeuze** — in hetzelfde klantvenster maak je met *Maak muzieklink* een
-tweede link (`…/?m=token`). Die pagina volgt het draaiboek van de dag: acht
-momenten, van aankleden en ceremonie via fotoshoot, borrel, diner en speeches
-tot openingsdans, feest en de film als geheel. Per moment staan twee tot vier
-suggesties (24 in totaal, van Taylor Swift en Ed Sheeran tot Justin Bieber,
-Etta James en Suzan & Freek) die de klant afspeelt in een ingebouwde
-YouTube-speler en met één klik toevoegt. Daarnaast heeft elk moment een eigen
-invoerveld waar de klant zoveel eigen nummers plakt als hij wil (meerdere
-YouTube-links tegelijk mag), en gekozen nummers zijn te verplaatsen naar een
-ander moment. Plus een opmerking. De keuze komt per moment terug in het
-klantvenster, met hoesje en link naar YouTube; de klantenlijst krijgt een chip
-*muzieklink gestuurd* of *muziek gekozen*. De muziek zelf wordt nooit
-gedownload of opgeslagen: alleen video-ID's, titels en de keuze. Momenten en
-suggesties staan in `MUZIEK_MOMENTEN` en `MUZIEK_TEMPLATES` in
-`src/weekzicht.html`; het video-ID is het stuk na `v=` in de YouTube-link.
+tweede link (`…/?m=token`). In een trouwfilm passen zes nummers, één per scène,
+dus die pagina volgt het draaiboek van de dag in zes scènes: voorbereidingen
+(haar en make-up, aankleden, familiefoto's), ceremonie, fotoshoot en borrel
+(cake en champagne), diner en speeches, openingsdans en feest. Per scène staan
+vier suggesties (24 in totaal, van Taylor Swift en Ed Sheeran tot Justin
+Bieber, Etta James en Suzan & Freek) die de klant afspeelt in een ingebouwde
+YouTube-speler en met één klik kiest, plus een invoerveld voor een eigen
+YouTube-link. Is een scène gevuld, dan verdwijnen de suggesties en de invoer
+van die scène; met ✕ gaat ze weer open. Een nummer is te verplaatsen naar een
+nog lege scène, en een scène mag leeg blijven ("laat ik aan de videograaf
+over"). Plus een opmerking. De keuze komt per scène terug in het klantvenster,
+met hoesje, link naar YouTube en de scènes die nog geen nummer hebben; de
+klantenlijst krijgt een chip *muzieklink gestuurd* of *muziek gekozen*. De
+muziek zelf wordt nooit gedownload of opgeslagen: alleen video-ID's, titels en
+de keuze. Scènes en suggesties staan in `MUZIEK_MOMENTEN` en
+`MUZIEK_TEMPLATES` in `src/weekzicht.html`; het maximum in `MUZIEK_MAX` (app)
+en `MAX_SONGS` (server).
 
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
@@ -167,9 +170,10 @@ klant plakt een YouTube-link, de server haalt het video-ID eruit (ook `youtu.be`
 shorts, `music.youtube.com`) en vraagt titel en kanaal op via YouTube's oEmbed.
 Daar is geen API-sleutel voor nodig en er wordt niets gedownload; afspelen
 gebeurt in de browser van de klant via `youtube-nocookie.com`. Opzoeken is
-begrensd tot 500 keer per link. Hoogstens 150 nummers per klant; elk nummer is
-`{ yt, titel, artiest, moment, eigen }`, met als moment een van de acht
-moment-ID's (`aankleden` … `film`).
+begrensd tot 500 keer per link. Hoogstens zes nummers per klant en één per
+scène; elk nummer is `{ yt, titel, artiest, moment, eigen }`, met als moment een
+van de zes scène-ID's (`voorbereidingen`, `ceremonie`, `fotoshoot`, `diner`,
+`openingsdans`, `feest`).
 
 ## Structuur
 
@@ -222,8 +226,8 @@ npm test
   invullen, opschonen van antwoorden, verwijderen, opslagfouten
 - **muziek** — `api/muziek.js` met een nep-YouTube: video-ID's uit allerlei
   linkvormen, titel en artiest uit een YouTube-titel, kiezen (opschonen,
-  dubbelen, maximum), opzoeken (onbekende video, YouTube onbereikbaar, limiet
-  per link), verwijderen
+  dubbelen, zes nummers, één per scène), opzoeken (onbekende video, YouTube
+  onbereikbaar, limiet per link), verwijderen
 - **toegang** — wachtwoord, cookie (Node én Web Crypto geven dezelfde
   handtekening), middleware, en welke API-acties ingelogd vereisen
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
@@ -233,8 +237,8 @@ npm test
   (1 sep 2026): elke weergave, elk venster, de filters, het Gebeld-vinkje, de
   opslag, de hele formulierketen: link maken → klant vult in op een eigen
   pagina → antwoorden terug in de planning, en de muziekketen: muzieklink
-  maken → klant luistert, kiest suggesties, verplaatst, en plakt eigen links
-  per moment → keuze per moment terug in het klantvenster
+  maken → klant luistert, kiest per scène één nummer (suggestie of eigen
+  link), verplaatst en haalt weg → keuze per scène terug in het klantvenster
 
 De tests draaien op verzonnen klanten uit `tests/fixture.js`.
 

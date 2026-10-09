@@ -1354,6 +1354,7 @@ button { cursor: pointer; }
 .songs .s-group { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
 .songs .s-group:first-child { margin-top: 0; }
 .formbox .s-note { white-space: pre-wrap; }
+.formbox .s-open { margin: 0; font-size: 12px; color: var(--ink-3); }
 
 /* --- de formulierpagina die de klant ziet (?f=token) — huisstijl mediaspot.nl:
    Geist, lichtgrijs vlak, witte kaarten met ronde hoeken, oranje accent met
@@ -1675,6 +1676,7 @@ button { cursor: pointer; }
 .mz-done-list b { display: block; color: var(--ms-ink); font-weight: 600; }
 .mz-note { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--ms-bg); font-size: 14px; color: var(--ms-ink-2); white-space: pre-wrap; }
 .mz-count { margin: 22px 0 -6px; }
+.mz-filled { margin: -6px 0 0; font-size: 12.5px; color: var(--ms-ink-3); }
 .mz-sec + .mz-sec { margin-top: 10px; padding-top: 28px; border-top: 1px solid var(--ms-line); }
 .mz-sec .ms-field { gap: 8px; }
 .mz-empty { margin: 0; padding: 13px 16px; border: 1px dashed #D6D6D8; border-radius: 14px; font-size: 13.5px; color: var(--ms-ink-3); }
@@ -4173,52 +4175,53 @@ button { cursor: pointer; }
   }
 
   /* ==========================================================
-     6d. Muziekkeuze — link per klant, de klant kiest per moment van de dag
+     6d. Muziekkeuze — link per klant, één nummer per scène van de film
      ========================================================== */
 
   // Zelfde opzet als het formulier: een eigen link (?m=token) per klant en
   // api/muziek als serverkant. De muziek zelf staat niet op onze server:
   // afspelen gaat via de YouTube-speler op de pagina van de klant, en eigen
-  // nummers voegt de klant toe met een YouTube-link. De pagina volgt het
-  // draaiboek van de dag: per moment suggesties én eigen nummers.
+  // nummers voegt de klant toe met een YouTube-link.
+  //
+  // In een trouwfilm passen zes nummers: één per scène. De pagina volgt
+  // daarom het draaiboek van de dag in zes scènes, elk met één plek.
   var MUZIEK_URL = "api/muziek";
+  var MUZIEK_MAX = 6; // zelfde grens als MAX_SONGS op de server
 
   var MUZIEK_MOMENTEN = [
-    { id: "aankleden", titel: "Aankleden en *voorbereidingen*", kort: "Aankleden",
-      hint: "Rustig en warm: de ochtend, de zenuwen, de eerste blik in de spiegel." },
+    { id: "voorbereidingen", titel: "De *voorbereidingen*", kort: "Voorbereidingen",
+      hint: "Haar en make-up, het pak en de jurk, de eerste foto's met familie. Rustig en warm." },
     { id: "ceremonie", titel: "De *ceremonie*", kort: "Ceremonie",
-      hint: "Binnenkomst, het ja-woord, de ringen en samen naar buiten lopen." },
-    { id: "fotoshoot", titel: "De *fotoshoot*", kort: "Fotoshoot",
-      hint: "Wat bij jullie samen past: dromerig, speels of juist energiek." },
-    { id: "borrel", titel: "Borrel en *felicitaties*", kort: "Borrel",
-      hint: "Licht en vrolijk, onder het toosten en de knuffels." },
+      hint: "Ontvangst van de gasten, binnenkomst, het ja-woord en de ringen. Vaak het emotionele hart van de film." },
+    { id: "fotoshoot", titel: "Fotoshoot en *borrel*", kort: "Fotoshoot en borrel",
+      hint: "De foto's van jullie samen, de taart en champagne, de felicitaties van vrienden en familie." },
     { id: "diner", titel: "Diner en *speeches*", kort: "Diner en speeches",
-      hint: "Rustig, zodat de speeches en het gelach erbovenuit komen." },
+      hint: "Rustig op de achtergrond, zodat de speeches en het gelach erbovenuit komen." },
     { id: "openingsdans", titel: "De *openingsdans*", kort: "Openingsdans",
-      hint: "Het nummer waarop jullie dansen; dat zet ik meestal letterlijk onder dat moment." },
+      hint: "Het nummer waarop jullie dansen; dat zet ik letterlijk onder dat moment." },
     { id: "feest", titel: "Het *feest*", kort: "Feest",
-      hint: "De nummers waarop de dansvloer vol gaat." },
-    { id: "film", titel: "De *hele film*", kort: "Hele film",
-      hint: "Nummers die het gevoel van jullie dag het best vangen; die gebruik ik voor de rode draad." }
+      hint: "De avondgasten komen binnen en de dansvloer gaat vol. Energiek, als afsluiter van de film." }
   ];
 
-  // Suggesties per moment. Wil je andere, pas deze lijst aan: het video-ID is
-  // het stuk na "v=" in de YouTube-link.
+  // Vier suggesties per scène. Wil je andere, pas deze lijst aan: het video-ID
+  // is het stuk na "v=" in de YouTube-link.
   var MUZIEK_TEMPLATES = [
-    { yt: "-BjZmE2gtdo", titel: "Lover", artiest: "Taylor Swift", moment: "aankleden" },
-    { yt: "hKgl5-lkT8U", titel: "Best Part", artiest: "Daniel Caesar & H.E.R.", moment: "aankleden" },
-    { yt: "PEM0Vs8jf1w", titel: "golden hour", artiest: "JVKE", moment: "aankleden" },
+    { yt: "-BjZmE2gtdo", titel: "Lover", artiest: "Taylor Swift", moment: "voorbereidingen" },
+    { yt: "hKgl5-lkT8U", titel: "Best Part", artiest: "Daniel Caesar & H.E.R.", moment: "voorbereidingen" },
+    { yt: "PEM0Vs8jf1w", titel: "golden hour", artiest: "JVKE", moment: "voorbereidingen" },
+    { yt: "an4ySOlsUMY", titel: "How Long Will I Love You", artiest: "Ellie Goulding", moment: "voorbereidingen" },
     { yt: "rtOvBOTyX00", titel: "A Thousand Years", artiest: "Christina Perri", moment: "ceremonie" },
     { yt: "vGJTaP6anOU", titel: "Can't Help Falling in Love", artiest: "Elvis Presley", moment: "ceremonie" },
     { yt: "ShZ978fBl6Y", titel: "You Are The Reason", artiest: "Calum Scott", moment: "ceremonie" },
-    { yt: "an4ySOlsUMY", titel: "How Long Will I Love You", artiest: "Ellie Goulding", moment: "ceremonie" },
+    { yt: "Y2E71oe0aSM", titel: "10,000 Hours", artiest: "Dan + Shay & Justin Bieber", moment: "ceremonie" },
     { yt: "2Vv-BfVoq4g", titel: "Perfect", artiest: "Ed Sheeran", moment: "fotoshoot" },
-    { yt: "Y2E71oe0aSM", titel: "10,000 Hours", artiest: "Dan + Shay & Justin Bieber", moment: "fotoshoot" },
+    { yt: "KIK3azN4w34", titel: "Anyone", artiest: "Justin Bieber", moment: "fotoshoot" },
     { yt: "uJ_1HMAGb4k", titel: "Riptide", artiest: "Vance Joy", moment: "fotoshoot" },
-    { yt: "EkHTsc9PU2A", titel: "I'm Yours", artiest: "Jason Mraz", moment: "borrel" },
-    { yt: "SPUJIbXN0WY", titel: "Everything", artiest: "Michael Bublé", moment: "borrel" },
+    { yt: "EkHTsc9PU2A", titel: "I'm Yours", artiest: "Jason Mraz", moment: "fotoshoot" },
     { yt: "lbjZPFBD6JU", titel: "Come Away With Me", artiest: "Norah Jones", moment: "diner" },
     { yt: "pKtLNYNWbBw", titel: "Stand By Me", artiest: "Ben E. King", moment: "diner" },
+    { yt: "SPUJIbXN0WY", titel: "Everything", artiest: "Michael Bublé", moment: "diner" },
+    { yt: "xLPGtQoRUbk", titel: "The One", artiest: "Kodaline", moment: "diner" },
     { yt: "450p7goxZqg", titel: "All of Me", artiest: "John Legend", moment: "openingsdans" },
     { yt: "lp-EO5I60KA", titel: "Thinking Out Loud", artiest: "Ed Sheeran", moment: "openingsdans" },
     { yt: "0yW7w8F2TVA", titel: "Say You Won't Let Go", artiest: "James Arthur", moment: "openingsdans" },
@@ -4226,20 +4229,19 @@ button { cursor: pointer; }
     { yt: "dElRVQFqj-k", titel: "Marry You", artiest: "Bruno Mars", moment: "feest" },
     { yt: "eH3giaIzONA", titel: "I Wanna Dance With Somebody", artiest: "Whitney Houston", moment: "feest" },
     { yt: "nBmhCIW7KCA", titel: "Als Het Avond Is", artiest: "Suzan & Freek", moment: "feest" },
-    { yt: "KIK3azN4w34", titel: "Anyone", artiest: "Justin Bieber", moment: "film" },
-    { yt: "VPRjCeoBqrI", titel: "A Sky Full Of Stars", artiest: "Coldplay", moment: "film" },
-    { yt: "xLPGtQoRUbk", titel: "The One", artiest: "Kodaline", moment: "film" }
+    { yt: "VPRjCeoBqrI", titel: "A Sky Full Of Stars", artiest: "Coldplay", moment: "feest" }
   ];
 
   function momentDef(id) {
     for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) if (MUZIEK_MOMENTEN[i].id === id) return MUZIEK_MOMENTEN[i];
     return null;
   }
-  /** Een geldig moment-ID; oude labels en onbekende waarden vallen terug op "film". */
+  /** Een geldig scène-ID; oudere waarden en onbekende vallen terug op een passende scène. */
   function normMoment(m) {
     if (momentDef(m)) return m;
-    var oud = { Trouwfilm: "film", Openingsdans: "openingsdans", Ceremonie: "ceremonie", Feest: "feest" };
-    return oud[m] || "film";
+    var oud = { aankleden: "voorbereidingen", borrel: "fotoshoot", film: "fotoshoot",
+      Trouwfilm: "fotoshoot", Openingsdans: "openingsdans", Ceremonie: "ceremonie", Feest: "feest" };
+    return oud[m] || "voorbereidingen";
   }
   function momentLabel(id) { var d = momentDef(normMoment(id)); return d ? d.kort : ""; }
   function templateOf(yt) {
@@ -4267,7 +4269,7 @@ button { cursor: pointer; }
     }
     return out;
   }
-  /** Nummers gegroepeerd op moment, in de volgorde van de dag. */
+  /** Nummers gegroepeerd op scène, in de volgorde van de dag. */
   function groupByMoment(list) {
     var groups = [];
     for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) {
@@ -4276,6 +4278,16 @@ button { cursor: pointer; }
       if (items.length) groups.push({ moment: m, items: items });
     }
     return groups;
+  }
+  /** Namen van de scènes die nog geen nummer hebben. */
+  function openScenes(list) {
+    var out = [];
+    for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) {
+      var m = MUZIEK_MOMENTEN[i], has = false;
+      for (var j = 0; j < list.length; j++) if (normMoment(list[j].moment) === m.id) { has = true; break; }
+      if (!has) out.push(m.kort);
+    }
+    return out;
   }
 
   /* --- in het klantvenster --------------------------------- */
@@ -4301,8 +4313,8 @@ button { cursor: pointer; }
     var box = $("lMuziekBox");
     if (!l || !l.muziekToken) {
       box.innerHTML = '<span class="label">Muziek voor de film</span>' +
-        '<p>Maak een link en stuur die naar de klant. Daar kiezen ze per moment van de dag — van aankleden tot feest — ' +
-        'uit onze suggesties, en voegen ze zoveel eigen nummers toe als ze willen met een YouTube-link. De keuze komt hier vanzelf terug.</p>' +
+        '<p>Maak een link en stuur die naar de klant. Daar kiezen ze per scène van de film één nummer — zes in totaal, ' +
+        'van de voorbereidingen tot het feest — uit onze suggesties of met een eigen YouTube-link. De keuze komt hier vanzelf terug.</p>' +
         '<div><button type="button" class="btn-line" id="lMakeMuziekLink">Maak muzieklink</button></div>';
       return;
     }
@@ -4311,10 +4323,11 @@ button { cursor: pointer; }
       '<button type="button" class="btn-line" id="lCopyMuziekLink">Kopieer</button>' +
       '<button type="button" class="btn-line" id="lCheckMuziek" title="Kijk of de klant al muziek heeft gekozen">Ververs</button></div>';
     if (l.muziek) {
-      var n = l.muziek.length, g = groupByMoment(l.muziek).length;
+      var n = l.muziek.length, open = openScenes(l.muziek);
       html += '<span class="fstate on">Gekozen op ' + esc(fmtStamp(l.muziekAt)) + ' · ' +
-        (n ? n + (n === 1 ? ' nummer' : ' nummers') + ', ' + g + (g === 1 ? ' moment' : ' momenten') : 'geen nummers, wel een opmerking') + '</span>';
+        (n ? n + ' van ' + MUZIEK_MAX + ' scènes' : 'geen nummers, wel een opmerking') + '</span>';
       if (n) html += songsHtml(l.muziek);
+      if (n && open.length) html += '<p class="s-open">Zonder nummer: ' + esc(open.join(", ")) + '.</p>';
       if (l.muziekOpmerking) html += '<p class="s-note">' + esc(l.muziekOpmerking) + '</p>';
     } else {
       html += '<span class="fstate">Nog geen keuze' +
@@ -4400,21 +4413,22 @@ button { cursor: pointer; }
       }
       html += '</ul>';
     }
+    var open = openScenes(list);
+    if (list.length && open.length) {
+      html += '<p class="mz-note">Zonder nummer: ' + esc(open.join(", ")) + '. Daar kies ik in de montage iets dat bij de rest past.</p>';
+    }
     return html;
   }
 
   function muziekPlain(list, note) {
     var groups = groupByMoment(list), lines = [];
     for (var g = 0; g < groups.length; g++) {
-      lines.push(groups[g].moment.kort + ":");
-      var items = groups[g].items;
-      for (var i = 0; i < items.length; i++) {
-        var s = items[i];
-        lines.push("- " + (s.titel || "") + (s.artiest ? " — " + s.artiest : "") + ": " + ytUrl(s.yt));
-      }
-      lines.push("");
+      var s = groups[g].items[0];
+      lines.push(groups[g].moment.kort + ": " + (s.titel || "") + (s.artiest ? " — " + s.artiest : "") + " (" + ytUrl(s.yt) + ")");
     }
-    if (note) lines.push("Opmerking: " + note);
+    var open = openScenes(list);
+    if (list.length && open.length) lines.push("Zonder nummer: " + open.join(", "));
+    if (note) lines.push("", "Opmerking: " + note);
     return lines.join("\n").trim();
   }
 
@@ -4431,9 +4445,11 @@ button { cursor: pointer; }
 
     function findSong(yt) { for (var i = 0; i < songs.length; i++) if (songs[i].yt === yt) return songs[i]; return null; }
     function inList(yt) { return !!findSong(yt); }
+    /** Het ene nummer van een scène, of null. */
+    function songFor(moment) { for (var i = 0; i < songs.length; i++) if (songs[i].moment === moment) return songs[i]; return null; }
     function titleOf(yt) { var s = findSong(yt) || templateOf(yt); return s ? s.titel + (s.artiest ? " — " + s.artiest : "") : ""; }
 
-    /** Melding onder het invoerveld van een moment; blijft staan bij opnieuw tekenen. */
+    /** Melding bij een scène; blijft staan bij opnieuw tekenen. */
     function say(moment, msg, cls) {
       status[moment] = { msg: msg, cls: cls || "" };
       var el = document.querySelector('[data-status="' + moment + '"]');
@@ -4446,37 +4462,43 @@ button { cursor: pointer; }
     }
 
     function rowHtml(s) {
+      // verplaatsen kan alleen naar een scène die nog leeg is
       var opts = '';
       for (var i = 0; i < MUZIEK_MOMENTEN.length; i++) {
-        opts += '<option value="' + MUZIEK_MOMENTEN[i].id + '"' + (s.moment === MUZIEK_MOMENTEN[i].id ? ' selected' : '') + '>' + esc(MUZIEK_MOMENTEN[i].kort) + '</option>';
+        var m = MUZIEK_MOMENTEN[i];
+        if (m.id !== s.moment && songFor(m.id)) continue;
+        opts += '<option value="' + m.id + '"' + (s.moment === m.id ? ' selected' : '') + '>' + esc(m.kort) + '</option>';
       }
       return '<li class="mz-row' + (playing === s.yt ? ' playing' : '') + '" data-yt="' + esc(s.yt) + '">' + thumbHtml(s) +
         '<div class="mz-info"><b>' + esc(s.titel) + '</b><span>' + esc(s.artiest || "") +
           (s.eigen ? (s.artiest ? ' · ' : '') + '<i>zelf toegevoegd</i>' : '') + '</span>' +
-          '<label class="mz-moment">Moment <select data-moment-of="' + esc(s.yt) + '" aria-label="Moment van ' + esc(s.titel) + '">' + opts + '</select></label></div>' +
-        '<div class="mz-act"><button type="button" class="mz-del" data-del="' + esc(s.yt) + '" aria-label="Haal ' + esc(s.titel) + ' weg">✕</button></div></li>';
+          '<label class="mz-moment">Scène <select data-moment-of="' + esc(s.yt) + '" aria-label="Scène van ' + esc(s.titel) + '">' + opts + '</select></label></div>' +
+        '<div class="mz-act"><button type="button" class="mz-del" data-del="' + esc(s.yt) + '" aria-label="Haal ' + esc(s.titel) + ' weg" title="Ander nummer kiezen">✕</button></div></li>';
     }
 
     function suggHtml(t) {
       return '<li class="mz-row sugg' + (playing === t.yt ? ' playing' : '') + '" data-sugg-yt="' + esc(t.yt) + '">' + thumbHtml(t) +
         '<div class="mz-info"><b>' + esc(t.titel) + '</b><span>' + esc(t.artiest) + '</span></div>' +
-        '<div class="mz-act"><button type="button" class="mz-pick" data-pick="' + esc(t.yt) + '">' + MZ_PLUS + '<span>Voeg toe</span></button></div></li>';
+        '<div class="mz-act"><button type="button" class="mz-pick" data-pick="' + esc(t.yt) + '">' + MZ_PLUS + '<span>Kies dit</span></button></div></li>';
     }
 
     function sectionHtml(m) {
-      var mine = songs.filter(function (s) { return s.moment === m.id; });
-      var sugg = MUZIEK_TEMPLATES.filter(function (t) { return t.moment === m.id && !inList(t.yt); });
+      var s = songFor(m.id);
       var st = status[m.id] || { msg: "", cls: "" };
-      var html = '<section class="ms-sec mz-sec" data-moment="' + m.id + '"><h2>' + accentHtml(m.titel) + '</h2><p class="mz-sub">' + esc(m.hint) + '</p>';
-      html += mine.length
-        ? '<ul class="mz-list" data-list="' + m.id + '">' + mine.map(rowHtml).join("") + '</ul>'
-        : '<p class="mz-empty" data-list="' + m.id + '">Nog niets gekozen voor dit moment.</p>';
-      html += '<div class="ms-field"><div class="mz-add">' +
-        '<input type="url" data-url="' + m.id + '" placeholder="Plak een YouTube-link (of meerdere)" inputmode="url" autocomplete="off" spellcheck="false" aria-label="YouTube-link voor ' + esc(m.kort) + '">' +
-        '<button type="button" class="ms-btn dark small" data-add="' + m.id + '"' + (busy[m.id] ? ' disabled' : '') + '>' + (busy[m.id] ? 'Bezig…' : 'Toevoegen') + '</button></div>' +
-        '<span class="ms-status' + (st.cls ? ' ' + st.cls : '') + '" data-status="' + m.id + '">' + esc(st.msg) + '</span></div>';
-      if (sugg.length) {
-        html += '<div class="mz-sugg"><span class="mz-sugg-lab">Onze suggesties</span><ul class="mz-list" data-sugg="' + m.id + '">' + sugg.map(suggHtml).join("") + '</ul></div>';
+      var statusHtml = '<span class="ms-status' + (st.cls ? ' ' + st.cls : '') + '" data-status="' + m.id + '">' + esc(st.msg) + '</span>';
+      var html = '<section class="ms-sec mz-sec' + (s ? ' filled' : '') + '" data-moment="' + m.id + '"><h2>' + accentHtml(m.titel) + '</h2><p class="mz-sub">' + esc(m.hint) + '</p>';
+      if (s) {
+        html += '<ul class="mz-list" data-list="' + m.id + '">' + rowHtml(s) + '</ul>' +
+          '<p class="mz-filled">Dit is jullie nummer voor deze scène. Toch een ander? Haal het weg met ✕, dan verschijnen de suggesties weer.</p>' + statusHtml;
+      } else {
+        var sugg = MUZIEK_TEMPLATES.filter(function (t) { return t.moment === m.id && !inList(t.yt); });
+        html += '<p class="mz-empty" data-list="' + m.id + '">Nog geen nummer voor deze scène. Kies een suggestie of plak een eigen link; je mag een scène ook aan mij overlaten.</p>';
+        html += '<div class="ms-field"><div class="mz-add">' +
+          '<input type="url" data-url="' + m.id + '" placeholder="Plak een YouTube-link" inputmode="url" autocomplete="off" spellcheck="false" aria-label="YouTube-link voor ' + esc(m.kort) + '">' +
+          '<button type="button" class="ms-btn dark small" data-add="' + m.id + '"' + (busy[m.id] ? ' disabled' : '') + '>' + (busy[m.id] ? 'Bezig…' : 'Toevoegen') + '</button></div>' + statusHtml + '</div>';
+        if (sugg.length) {
+          html += '<div class="mz-sugg"><span class="mz-sugg-lab">Onze suggesties</span><ul class="mz-list" data-sugg="' + m.id + '">' + sugg.map(suggHtml).join("") + '</ul></div>';
+        }
       }
       return html + '</section>';
     }
@@ -4493,10 +4515,12 @@ button { cursor: pointer; }
         var id = again[k].getAttribute("data-url");
         if (keep[id]) again[k].value = keep[id];
       }
-      var n = songs.length, g = groupByMoment(songs).length;
-      $("mpCount").textContent = n
-        ? n + (n === 1 ? ' nummer gekozen' : ' nummers gekozen') + ' voor ' + g + (g === 1 ? ' moment' : ' momenten') + '. Klik op een hoesje om te luisteren.'
-        : 'Nog niets gekozen. Luister de suggesties per moment en voeg toe wat bij jullie past, of plak eigen YouTube-links.';
+      var n = songs.length;
+      $("mpCount").textContent = !n
+        ? 'Nog niets gekozen. Luister per scène onze suggesties en kies er één, of plak een eigen YouTube-link.'
+        : n >= MUZIEK_MAX
+          ? 'Alle ' + MUZIEK_MAX + ' scènes hebben een nummer. Klik op een hoesje om te luisteren, of verstuur jullie keuze onderaan.'
+          : n + ' van ' + MUZIEK_MAX + ' scènes ' + (n === 1 ? 'heeft' : 'hebben') + ' een nummer. Klik op een hoesje om te luisteren.';
     }
 
     function markPlaying() {
@@ -4526,16 +4550,18 @@ button { cursor: pointer; }
 
     function pickTemplate(yt) {
       var t = templateOf(yt);
-      if (!t || inList(yt)) return;
+      if (!t || inList(yt) || songFor(t.moment)) return;
       songs.push({ yt: t.yt, titel: t.titel, artiest: t.artiest, moment: t.moment, eigen: false });
+      say(t.moment, "");
       renderAll();
       markPlaying();
     }
 
-    /** Eén of meer YouTube-links toevoegen aan een moment; onbekende titels zoekt de server op. */
+    /** Een YouTube-link toevoegen aan een scène; de titel zoekt de server op. Per scène past één nummer. */
     function addOwn(moment) {
       var input = document.querySelector('input[data-url="' + moment + '"]');
       var text = input ? input.value.trim() : "";
+      if (songFor(moment)) { say(moment, "Deze scène heeft al een nummer. Haal het eerst weg met ✕ als je een ander wilt.", "err"); return; }
       if (!text) { say(moment, "Plak eerst een YouTube-link.", "err"); if (input) input.focus(); return; }
       var ids = ytIdsFrom(text);
       if (!ids.length) {
@@ -4543,52 +4569,52 @@ button { cursor: pointer; }
         if (input) input.focus();
         return;
       }
-      var added = [], dubbel = [], mislukt = [], todo = [];
+      var dubbel = [], candidate = null, extra = 0;
       for (var i = 0; i < ids.length; i++) {
         var had = findSong(ids[i]);
         if (had) { dubbel.push(had); continue; }
-        var t = templateOf(ids[i]);
-        if (t) {
-          var s0 = { yt: t.yt, titel: t.titel, artiest: t.artiest, moment: moment, eigen: false };
-          songs.push(s0); added.push(s0);
-          continue;
-        }
-        todo.push(ids[i]);
+        if (!candidate) candidate = ids[i]; else extra++;
       }
-      busy[moment] = !!todo.length;
+      var tail = [];
+      if (dubbel.length) {
+        tail.push(dubbel.length === 1
+          ? "“" + dubbel[0].titel + "” staat al in de lijst (bij " + momentLabel(dubbel[0].moment).toLowerCase() + ")."
+          : dubbel.length + " links stonden al in de lijst.");
+      }
+      if (extra) tail.push("Per scène past één nummer, dus " + (extra === 1 ? "de andere link" : "de andere " + extra + " links") + " heb ik niet toegevoegd.");
       if (input) input.value = "";
-      say(moment, todo.length ? "Even opzoeken…" : "");
+      if (!candidate) { say(moment, tail.join(" "), "err"); return; }
+      var t = templateOf(candidate);
+      if (t) {
+        var s0 = { yt: t.yt, titel: t.titel, artiest: t.artiest, moment: moment, eigen: false };
+        songs.push(s0);
+        say(moment, ["Toegevoegd: " + s0.titel + " — " + s0.artiest + "."].concat(tail).join(" "), "ok");
+        renderAll();
+        markPlaying();
+        return;
+      }
+      busy[moment] = true;
+      say(moment, "Even opzoeken…");
       renderAll();
       markPlaying();
-      var chain = Promise.resolve();
-      todo.forEach(function (yt) {
-        chain = chain.then(function () {
-          return api("POST", "", { t: token, actie: "opzoeken", url: ytUrl(yt) }, MUZIEK_URL).then(function (r) {
-            if (r.status === 400 || r.status === 404 || r.status === 429) {
-              mislukt.push({ yt: yt, melding: (r.data && r.data.melding) || apiReason(r) });
-              return;
-            }
-            // Lukt opzoeken niet (YouTube even onbereikbaar), dan komt het nummer er toch in: het ID is genoeg.
-            var s = { yt: yt, titel: r.ok && r.data.titel ? r.data.titel : "Nummer van YouTube (" + yt + ")",
-              artiest: r.ok && r.data.artiest ? r.data.artiest : "", moment: moment, eigen: true };
-            songs.push(s); added.push(s);
-          }, function () { mislukt.push({ yt: yt, melding: "Geen verbinding met de server. Probeer het zo nog eens." }); });
-        });
-      });
-      chain.then(function () {
+      api("POST", "", { t: token, actie: "opzoeken", url: ytUrl(candidate) }, MUZIEK_URL).then(function (r) {
         busy[moment] = false;
-        var parts = [];
-        if (added.length === 1) parts.push("Toegevoegd: " + added[0].titel + (added[0].artiest ? " — " + added[0].artiest : "") + ".");
-        else if (added.length > 1) parts.push(added.length + " nummers toegevoegd.");
-        if (dubbel.length) {
-          parts.push(dubbel.length === 1
-            ? "“" + dubbel[0].titel + "” staat al in de lijst (bij " + momentLabel(dubbel[0].moment).toLowerCase() + ")."
-            : dubbel.length + " nummers stonden al in de lijst.");
+        if (r.status === 400 || r.status === 404 || r.status === 429) {
+          say(moment, [(r.data && r.data.melding) || apiReason(r)].concat(tail).join(" "), "err");
+        } else if (songFor(moment)) {
+          say(moment, "Deze scène heeft intussen al een nummer; de link heb ik niet toegevoegd.", "err");
+        } else {
+          // Lukt opzoeken niet (YouTube even onbereikbaar), dan komt het nummer er toch in: het ID is genoeg.
+          var s = { yt: candidate, titel: r.ok && r.data.titel ? r.data.titel : "Nummer van YouTube (" + candidate + ")",
+            artiest: r.ok && r.data.artiest ? r.data.artiest : "", moment: moment, eigen: true };
+          songs.push(s);
+          say(moment, ["Toegevoegd: " + s.titel + (s.artiest ? " — " + s.artiest : "") + "."].concat(tail).join(" "), "ok");
         }
-        if (mislukt.length) {
-          parts.push(mislukt.length === 1 ? mislukt[0].melding : mislukt.length + " links kon ik niet vinden; controleer of de video's openbaar zijn.");
-        }
-        say(moment, parts.join(" "), mislukt.length && !added.length ? "err" : added.length ? "ok" : "");
+        renderAll();
+        markPlaying();
+      }, function () {
+        busy[moment] = false;
+        say(moment, "Geen verbinding met de server. Probeer het zo nog eens.", "err");
         renderAll();
         markPlaying();
       });
@@ -4652,16 +4678,19 @@ button { cursor: pointer; }
       for (var i = 0; i < picked.length; i++) {
         var o = picked[i];
         if (!o || !o.yt || findSong(o.yt)) continue;
+        var moment = normMoment(o.moment);
+        if (songFor(moment) || songs.length >= MUZIEK_MAX) continue; // één per scène
         var t = templateOf(o.yt);
         songs.push({ yt: o.yt, titel: o.titel || (t ? t.titel : "Nummer van YouTube"), artiest: o.artiest || (t ? t.artiest : ""),
-          moment: normMoment(o.moment), eigen: !t });
+          moment: moment, eigen: !t });
       }
       $("mpTitle").innerHTML = naam
-        ? "Hoi " + esc(naam) + ", welke muziek past bij <em>jullie dag</em>?"
-        : "Welke muziek past bij <em>jullie dag</em>?";
+        ? "Hoi " + esc(naam) + ", welke muziek past bij <em>jullie film</em>?"
+        : "Welke muziek past bij <em>jullie film</em>?";
       $("mpIntro").innerHTML =
-        "Hieronder staat jullie dag in volgorde, van aankleden tot feest. Luister per moment onze suggesties en voeg toe wat past, " +
-        "of plak eigen YouTube-links; zoveel als jullie willen. Niets hoeft, alles mag." +
+        "In jullie film passen <strong>zes nummers: één per scène</strong>, van de voorbereidingen tot het feest. " +
+        "Kies per scène het nummer dat erbij past: luister onze suggesties of plak een eigen YouTube-link. " +
+        "Een scène mag je ook aan mij overlaten." +
         (rec.ingevuld ? " <strong>Jullie hebben al gekozen op " + esc(fmtStamp(rec.ingevuld)) +
           ".</strong> Je kunt alles aanpassen en opnieuw versturen." : "");
       $("mpNote").value = rec.opmerking || "";
@@ -4678,8 +4707,9 @@ button { cursor: pointer; }
       } else if (b.hasAttribute("data-pick")) {
         pickTemplate(b.getAttribute("data-pick"));
       } else if (b.hasAttribute("data-del")) {
-        var id = b.getAttribute("data-del");
+        var id = b.getAttribute("data-del"), gone = findSong(id);
         songs = songs.filter(function (x) { return x.yt !== id; });
+        if (gone) say(gone.moment, "");
         renderAll();
         markPlaying();
       } else if (b.hasAttribute("data-add")) {
@@ -4689,8 +4719,12 @@ button { cursor: pointer; }
     $("mpSections").addEventListener("change", function (e) {
       var sel = e.target.closest("select[data-moment-of]");
       if (!sel) return;
-      var s = findSong(sel.getAttribute("data-moment-of"));
-      if (s) { s.moment = normMoment(sel.value); renderAll(); markPlaying(); }
+      var s = findSong(sel.getAttribute("data-moment-of")), doel = normMoment(sel.value);
+      if (!s || songFor(doel)) return;
+      say(s.moment, "");
+      s.moment = doel;
+      renderAll();
+      markPlaying();
     });
     $("mpSections").addEventListener("keydown", function (e) {
       var inp = e.target.closest("input[data-url]");

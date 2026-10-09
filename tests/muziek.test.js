@@ -98,14 +98,18 @@ async function call(db, method, query, body) {
   const alleen = (await call(db, 'GET', { t: T })).data;
   eq('keuze leeg, opmerking gevuld', [alleen.nummers.length, alleen.opmerking], [0, 'Later meer']);
   const veel = [];
-  for (let i = 0; i < 160; i++) veel.push({ yt: 'aaaaaaaa' + String(i).padStart(3, '0'), titel: 'n' + i, moment: 'feest' });
+  for (let i = 0; i < 10; i++) veel.push({ yt: 'aaaaaaaaa' + String(i).padStart(2, '0'), titel: 'n' + i, moment: 'scene' + i });
   await call(db, 'POST', {}, { t: T, actie: 'kiezen', nummers: veel });
-  eq('maximaal 150 nummers', (await call(db, 'GET', { t: T })).data.nummers.length, 150);
+  eq('maximaal 6 nummers', [(await call(db, 'GET', { t: T })).data.nummers.length, handler.MAX_SONGS], [6, 6]);
+  await call(db, 'POST', {}, { t: T, actie: 'kiezen', nummers: [
+    { yt: 'bbbbbbbbb01', moment: 'feest' }, { yt: 'bbbbbbbbb02', moment: 'feest' }, { yt: 'bbbbbbbbb03', moment: 'diner' }, { yt: 'bbbbbbbbb04' }, { yt: 'bbbbbbbbb05' }
+  ] });
+  eq('één nummer per scène (zonder scène telt apart)', (await call(db, 'GET', { t: T })).data.nummers.map(n => n.yt), ['bbbbbbbbb01', 'bbbbbbbbb03', 'bbbbbbbbb04', 'bbbbbbbbb05']);
 
   // opnieuw aanmaken (naam bijwerken) gooit de keuze niet weg
   await call(db, 'POST', {}, { t: T, actie: 'aanmaken', naam: 'Bram & Lotte', datum: '2026-10-03' });
   const weer = (await call(db, 'GET', { t: T })).data;
-  eq('keuze blijft na hernieuwd aanmaken', [weer.naam, weer.nummers.length, typeof weer.ingevuld], ['Bram & Lotte', 150, 'string']);
+  eq('keuze blijft na hernieuwd aanmaken', [weer.naam, weer.nummers.length, typeof weer.ingevuld], ['Bram & Lotte', 4, 'string']);
 
   // opzoeken via (nep-)YouTube
   eq('opzoeken zonder link', (await call(db, 'POST', {}, { t: 'zzzzzzzzzzzzzzzz', actie: 'opzoeken', url: 'https://youtu.be/2Vv-BfVoq4g' })).status, 404);

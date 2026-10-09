@@ -39,7 +39,7 @@ export function previewHtml(naam, pageUrl, soort) {
     ? (naam ? naam + ", kies de muziek voor jullie film" : "Kies de muziek voor jullie trouwfilm")
     : (naam ? naam + ", vertel me over jullie trouwdag" : "Vertel me over jullie trouwdag");
   const desc = muziek
-    ? "Van aankleden tot feest: luister per moment onze suggesties of voeg eigen nummers toe met een YouTube-link."
+    ? "Zes scènes, zes nummers: luister per scène onze suggesties of plak een eigen YouTube-link."
     : "Vul het formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. Duurt een paar minuten.";
   const img = SITE + (muziek ? "/og-muziek.png" : "/og-formulier.png");
   const t = escHtml(title), d = escHtml(desc), u = escHtml(pageUrl);

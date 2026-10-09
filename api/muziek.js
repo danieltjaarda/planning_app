@@ -18,7 +18,7 @@ const opslag = require("./_opslag.js");
 const sessie = require("./_sessie.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
-const MAX_SONGS = 150; // per klant, over alle momenten van de dag
+const MAX_SONGS = 6; // in een trouwfilm passen zes nummers: één per scène (zelfde grens als MUZIEK_MAX in de app)
 const MAX_LOOKUPS = 500; // per link: ruim voor een bruidspaar, te weinig om als gratis doorgeefluik te dienen
 const MAX_NOTE = 2000;
 
@@ -47,16 +47,19 @@ function splitTitle(title, channel) {
   return { titel: t || raw || "Nummer van YouTube", artiest };
 }
 
-/** Alleen geldige video-ID's, zonder dubbelen, alles begrensd. */
+/** Alleen geldige video-ID's, zonder dubbelen, één per scène, alles begrensd. */
 function cleanSongs(list) {
-  const out = [], seen = {};
+  const out = [], seen = {}, scenes = {};
   if (!Array.isArray(list)) return out;
-  for (const n of list.slice(0, MAX_SONGS * 2)) {
+  for (const n of list.slice(0, 200)) {
     if (!n || typeof n !== "object") continue;
     const yt = String(n.yt || "");
     if (!YT_ID.test(yt) || seen[yt]) continue;
+    const moment = clean(n.moment, 40);
+    if (moment && scenes[moment]) continue;
     seen[yt] = true;
-    out.push({ yt, titel: clean(n.titel, 200), artiest: clean(n.artiest, 200), moment: clean(n.moment, 40), eigen: n.eigen === true });
+    if (moment) scenes[moment] = true;
+    out.push({ yt, titel: clean(n.titel, 200), artiest: clean(n.artiest, 200), moment, eigen: n.eigen === true });
     if (out.length >= MAX_SONGS) break;
   }
   return out;
@@ -188,3 +191,4 @@ module.exports.videoId = videoId;
 module.exports.splitTitle = splitTitle;
 module.exports.cleanSongs = cleanSongs;
 module.exports.MAX_LOOKUPS = MAX_LOOKUPS;
+module.exports.MAX_SONGS = MAX_SONGS;
