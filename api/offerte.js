@@ -276,8 +276,12 @@ async function handle(req, res, db, opts) {
     let bevestiging = false;
     if (verzender.aan()) {
       const b = basis(req);
-      const log = await mailsNaTekenen(verzender, rec, akkoord, b + "/?o=" + t, b + "/mail-logo.png");
-      if (log.length) await db.set(key, Object.assign({}, rec, { mails: logboek(rec.mails, log) }));
+      let log;
+      try { log = await mailsNaTekenen(verzender, rec, akkoord, b + "/?o=" + t, b + "/mail-logo.png"); }
+      catch (e) { log = [{ soort: "melding", aan: "", op: new Date().toISOString(), ok: false, fout: String((e && e.message) || e).slice(0, 300) }]; }
+      try {
+        if (log.length) await db.set(key, Object.assign({}, rec, { mails: logboek(rec.mails, log) }));
+      } catch (e) { /* het logboek mag mislukken; het akkoord staat er al */ }
       bevestiging = log.some((x) => x.soort === "bevestiging" && x.ok);
     }
     return send(res, 200, { ok: true, akkoord, bevestiging });
@@ -296,7 +300,11 @@ async function handle(req, res, db, opts) {
       html: mail.mailHtml({ tekst, knop: { tekst: old.akkoord ? "Bekijk de getekende offerte" : "Bekijk en teken de offerte", url: link }, bedrijf, logo: b + "/mail-logo.png" })
     };
     if (body.pdf === true) {
-      m.bijlagen = [{ naam: offertePdf.pdfNaam(old.offerte, bedrijf, !!old.akkoord), base64: offertePdf.pdfBase64(old.offerte, bedrijf, old.akkoord), type: "application/pdf" }];
+      try {
+        m.bijlagen = [{ naam: offertePdf.pdfNaam(old.offerte, bedrijf, !!old.akkoord), base64: offertePdf.pdfBase64(old.offerte, bedrijf, old.akkoord), type: "application/pdf" }];
+      } catch (e) {
+        return send(res, 500, { error: "pdf", melding: "De pdf voor de bijlage kon niet gemaakt worden. Stuur de mail zonder pdf, of probeer het later nog eens." });
+      }
     }
     const regel = await probeer(verzender, "offerte", m);
     await db.set(key, Object.assign({}, old, { mails: logboek(old.mails, [regel]) }));

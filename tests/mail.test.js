@@ -164,6 +164,20 @@ function nepVerzender(opties) {
   r = await call({ t: T4, actie: 'tekenen', versie: 1, naam: 'Thomas', email: 'thomas@voorbeeld.nl', handtekening: KRUL }, null, nv4);
   ok('tekenen met mailen uit: geen mail, wel akkoord', r.status === 200 && r.data.bevestiging === false && nv4.verstuurd.length === 0 && !(await db.get('offerte:' + T4)).mails);
 
+  // pdf-schrijver kapot (bv. bron niet meegenomen in de functie): akkoord blijft staan, mailen meldt het netjes
+  const echteLib = pdfLib.lib, echtePdf = pdfLib.pdfBase64;
+  pdfLib.lib = pdfLib.pdfBase64 = () => { throw new Error('bron ontbreekt'); };
+  const T5 = 'mailtest00000000000005';
+  await call({ t: T5, actie: 'delen', naam: 'X', offerte: OF, bedrijf: B }, null, nv);
+  const nv5 = nepVerzender();
+  r = await call({ t: T5, actie: 'tekenen', versie: 1, naam: 'Thomas', email: 'thomas@voorbeeld.nl', handtekening: KRUL }, null, nv5);
+  const rec5 = await db.get('offerte:' + T5);
+  ok('pdf stuk bij tekenen: toch 200 en akkoord bewaard', r.status === 200 && r.data.bevestiging === false && rec5.akkoord && rec5.mails[0].ok === false && /bron ontbreekt/.test(rec5.mails[0].fout));
+  r = await call({ t: T5, actie: 'mailen', aan: 'a@voorbeeld.nl', onderwerp: 'x', tekst: 'x', pdf: true }, null, nv5);
+  ok('pdf stuk bij mailen: duidelijke melding', r.status === 500 && r.data.error === 'pdf' && nv5.verstuurd.length === 0);
+  pdfLib.lib = echteLib;
+  pdfLib.pdfBase64 = echtePdf;
+
   // adres van de deploy
   ok('basis: host en proto', api.basis({ headers: { 'x-forwarded-host': 'a.vercel.app', 'x-forwarded-proto': 'https' } }) === 'https://a.vercel.app');
   ok('basis: lokaal http', api.basis({ headers: { host: '127.0.0.1:8787' } }) === 'http://127.0.0.1:8787');
