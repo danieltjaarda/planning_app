@@ -64,6 +64,10 @@ eq("middleware: geen cookie", await sessieGeldig("", "geheim-123"), false);
   eq("middleware: muzieklink altijd door", r5, undefined);
   const r6 = await middleware(new Request("https://x.test/?m=kort"));
   eq("middleware: ongeldig muziektoken telt niet", r6 && r6.status, 302);
+  const r7 = await middleware(new Request("https://x.test/?o=abcdefghijklmnopqrstuv"));
+  eq("middleware: offertelink altijd door", r7, undefined);
+  const r8 = await middleware(new Request("https://x.test/?o=KORT"));
+  eq("middleware: ongeldig offertetoken telt niet", r8 && r8.status, 302);
 }
 
 // inloggen: goed en fout
@@ -132,6 +136,12 @@ eq("crawler herkend", [isCrawler("WhatsApp/2.23.20.0 A"), isCrawler("facebookext
 }
 eq("voorvertoning op naam", /og:title" content="Sanne &amp; Thomas, vertel me over jullie trouwdag"/.test(previewHtml("Sanne & Thomas", "https://x.test/?f=a")), true);
 eq("voorvertoning muziek op naam", /og:title" content="Sanne &amp; Thomas, kies de muziek voor jullie film"/.test(previewHtml("Sanne & Thomas", "https://x.test/?m=a", "muziek")), true);
+{
+  const r = await middleware(new Request("https://x.test/?o=abcdefghijklmnopqrstuv", { headers: { "user-agent": "WhatsApp/2.23.20.0 A" } }));
+  const html = await r.text();
+  eq("voorvertoning offertelink", [r.status, /og:title" content="Jullie offerte voor de trouwfilm"/.test(html), /og:image" content="https:\/\/planning-app-three\.vercel\.app\/og-offerte\.png"/.test(html), /og:url" content="https:\/\/x\.test\/\?o=abcdefghijklmnopqrstuv"/.test(html), /Open de offerte/.test(html)], [200, true, true, true, true]);
+}
+eq("voorvertoning offerte op naam", /og:title" content="Sanne &amp; Thomas, jullie offerte voor de trouwfilm"/.test(previewHtml("Sanne & Thomas", "https://x.test/?o=a", "offerte")), true);
 eq("voorvertoning: html-veilig", /<script>/.test(previewHtml("<script>alert(1)</script>", "https://x.test/?f=a")), false);
 
 console.log("\n" + pass + " geslaagd, " + fail + " gefaald");

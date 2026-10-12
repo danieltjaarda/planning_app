@@ -1439,6 +1439,17 @@ button { cursor: pointer; }
 .of-bedrijf-in { display: flex; flex-direction: column; gap: 11px; padding: 0 12px 12px; }
 .of-bedrijf .field input[type="text"], .of-bedrijf .field textarea { background: var(--surface); }
 .of-bedrijf .field textarea { min-height: 0; }
+.formbox a.btn-line { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
+.of-akkoord .of-let { color: var(--now); }
+.of-getekend { display: flex; align-items: center; gap: 14px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 2px; }
+.of-getekend .of-sig { width: 150px; height: 60px; flex: none; color: var(--ink); }
+.of-getekend div { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12.5px; }
+.of-getekend b { font-weight: 600; overflow-wrap: anywhere; }
+.of-getekend span { font-size: 11.5px; color: var(--ink-3); }
+/* getekend: alles ligt vast, maar blijft leesbaar */
+.of-dicht .mbody input:disabled, .of-dicht .mbody textarea:disabled { color: var(--ink); -webkit-text-fill-color: var(--ink); opacity: 1; }
+.of-dicht .of-weg, .of-dicht .of-add, .of-dicht #oVulIn { display: none; }
+.of-dicht #oBtw button:disabled { opacity: .55; cursor: default; }
 
 /* --- de formulierpagina die de klant ziet (?f=token) — huisstijl mediaspot.nl:
    Geist, lichtgrijs vlak, witte kaarten met ronde hoeken, oranje accent met
@@ -1775,6 +1786,51 @@ button { cursor: pointer; }
 .mz-pick svg { flex: none; }
 .mz-done-h { margin: 8px 0 -8px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ms-ink-3); }
 
+/* --- de offerte voor de klant (?o=token): de offerte zelf en het tekenvak --- */
+.op-main { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.op-main > .ms-card { animation: ms-rise .6s cubic-bezier(.2, .7, .2, 1) .2s both; }
+.op-doc { padding: 28px 30px 26px; display: flex; flex-direction: column; gap: 22px; }
+.op-lab { display: block; margin-bottom: 4px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ms-ink-3); }
+.op-kop { display: flex; flex-wrap: wrap; gap: 14px 36px; padding-bottom: 20px; border-bottom: 1px solid var(--ms-line); }
+.op-kop b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.op-twee { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.op-twee p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ms-ink-2); overflow-wrap: anywhere; }
+.op-betreft h2 { margin: 0 0 6px; font-size: 21px; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; }
+.op-betreft p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ms-ink-2); }
+.op-regels { margin: 0; padding: 0; list-style: none; border-top: 1.5px solid var(--ms-ink); }
+.op-regels li { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--ms-line); }
+.op-oms { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.op-oms b { font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.op-oms span { font-size: 13.5px; line-height: 1.55; color: var(--ms-ink-2); overflow-wrap: anywhere; }
+.op-oms i { font-style: normal; font-size: 13px; color: var(--ms-ink-3); font-variant-numeric: tabular-nums; }
+.op-bedrag { flex: none; font-size: 15.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.op-tot { align-self: flex-end; width: min(320px, 100%); display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
+.op-tot div { display: flex; justify-content: space-between; gap: 18px; }
+.op-tot span { color: var(--ms-ink-2); }
+.op-tot b { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.op-tot .op-eind { margin-top: 4px; padding-top: 10px; border-top: 2px solid var(--ms-accent); font-size: 18px; }
+.op-tot .op-eind span { color: var(--ms-ink); font-weight: 600; }
+.op-tot .op-klein { font-size: 13px; }
+.op-tot .op-klein span, .op-tot .op-klein b { color: var(--ms-ink-3); font-weight: 400; }
+.op-tekst { margin: 0; padding: 16px 18px; border-radius: 16px; background: var(--ms-bg); font-size: 14px; line-height: 1.6; color: var(--ms-ink-2); }
+.op-pdf { display: flex; }
+.op-sign { padding: 28px 30px; display: flex; flex-direction: column; gap: 18px; }
+.op-sign h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+.op-sign h2 em { font-family: var(--ms-serif); font-style: italic; font-weight: 500; color: var(--ms-accent); letter-spacing: 0; }
+.op-sub { margin: -8px 0 0; font-size: 14.5px; line-height: 1.55; color: var(--ms-ink-2); }
+/* zelfde verhouding als het vlak van de handtekening (SIG_W × SIG_H) */
+.op-pad { position: relative; aspect-ratio: 2 / 1; border-radius: 16px; border: 1.5px dashed #C9C9CC; background: #fff; overflow: hidden; }
+.op-pad::after { content: ""; position: absolute; left: 7%; right: 7%; bottom: 24%; border-bottom: 1px solid var(--ms-line); pointer-events: none; }
+.op-pad canvas { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.op-pad-hint { position: absolute; left: 0; right: 0; bottom: calc(24% + 10px); text-align: center; font-size: 14px; color: var(--ms-ink-3); pointer-events: none; }
+.op-wis { position: absolute; right: 10px; top: 10px; z-index: 2; height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ms-line); background: #fff; font: inherit; font-size: 13px; font-weight: 500; color: var(--ms-ink-2); cursor: pointer; }
+.op-wis:hover { color: var(--ms-ink); border-color: #C9C9CC; }
+.op-sign .ms-foot { margin-top: 4px; }
+.op-getekend { display: flex; align-items: center; gap: 18px; padding: 14px 18px; border-radius: 16px; background: var(--ms-bg); }
+.op-getekend .op-sig { width: 200px; height: 80px; flex: none; color: var(--ms-ink); }
+.op-getekend p { margin: 0; font-size: 14px; color: var(--ms-ink-2); }
+.op-getekend p b { display: block; color: var(--ms-ink); font-size: 15.5px; font-weight: 600; }
+
 @media (max-width: 860px) {
   .ms-grid { grid-template-columns: 1fr; }
   .ms-side { position: static; }
@@ -1801,6 +1857,12 @@ button { cursor: pointer; }
   .mz-player { top: 70px; }
   .mz-add { flex-direction: column; }
   .mz-add .ms-btn { width: 100%; }
+  .op-doc { padding: 22px 18px 20px; gap: 18px; }
+  .op-kop { gap: 12px 24px; }
+  .op-twee { grid-template-columns: 1fr; gap: 14px; }
+  .op-sign { padding: 22px 18px; }
+  .op-sign .ms-btn { width: 100%; }
+  .op-getekend { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
 
 @media (max-width: 620px) {
@@ -2189,6 +2251,58 @@ button { cursor: pointer; }
   </div>
 </div>
 
+<div class="formpage" id="offertePage" hidden>
+  <div class="ms-wrap">
+    <header class="ms-nav">
+      <a class="ms-logo" href="https://www.mediaspot.nl" aria-label="Mediaspot">
+        <img id="opLogo" alt="Mediaspot" width="230" height="86" data-src="https://www.mediaspot.nl/mediaspot-logo.svg" hidden>
+        <span class="ms-word" id="opWord">mediasp<b>o</b>t</span>
+      </a>
+      <a class="ms-pill" href="tel:+31620176727"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>06 20176727</span></a>
+    </header>
+    <section class="ms-hero">
+      <h1 id="opTitle">Hier is <em>jullie offerte</em></h1>
+      <p id="opIntro">Even laden…</p>
+    </section>
+    <div class="ms-grid">
+      <div class="op-main">
+        <div class="ms-card" id="opOfferte" hidden></div>
+        <div class="ms-card" id="opTeken" hidden>
+          <div class="op-sign">
+            <h2>Akkoord <em>geven</em></h2>
+            <p class="op-sub" id="opSamen"></p>
+            <div class="ms-field">
+              <label for="opNaam">Je naam</label>
+              <input type="text" id="opNaam" autocomplete="name" placeholder="Voor- en achternaam" maxlength="120">
+            </div>
+            <div class="ms-field">
+              <span class="ms-lab" id="opPadLab">Je handtekening</span>
+              <div class="op-pad">
+                <canvas id="opPad" aria-labelledby="opPadLab"></canvas>
+                <span class="op-pad-hint" id="opPadHint" aria-hidden="true">Teken hier met je vinger of muis</span>
+                <button type="button" class="op-wis" id="opWis">Wissen</button>
+              </div>
+            </div>
+            <div class="ms-foot">
+              <span class="ms-status" id="opStatus" aria-live="polite"></span><span class="ms-spacer"></span>
+              <button type="button" class="ms-btn" id="opSend">Akkoord en ondertekenen<svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div class="ms-card ms-done" id="opDone" hidden></div>
+      </div>
+      <aside class="ms-card ms-side" aria-label="Contact">
+        <h3>Nog vragen over de offerte?</h3>
+        <a class="ms-tile" href="tel:+31620176727"><b>Bel 06 20176727</b><span>Op werkdagen en zaterdag van 9:00 tot 20:00</span></a>
+        <a class="ms-tile" href="https://wa.me/31620176727"><b>Stuur een WhatsApp</b><span>Vaak de snelste manier voor een korte vraag</span></a>
+        <a class="ms-tile" href="mailto:info@mediaspot.nl"><b>info@mediaspot.nl</b><span>Liever uitgebreid mailen? Dat kan ook</span></a>
+        <p class="ms-addr">Mediaspot<br>Brandemeer 6, Joure</p>
+      </aside>
+    </div>
+    <p class="ms-copy">Je naam en handtekening gebruik ik alleen als bevestiging van deze offerte.</p>
+  </div>
+</div>
+
 <div class="overlay" id="evOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTitle">
     <header>
@@ -2355,6 +2469,7 @@ button { cursor: pointer; }
         <label class="label" for="oTekst">Tekst onderaan</label>
         <textarea id="oTekst" rows="3" placeholder="Voorwaarden, aanbetaling, hoe ze akkoord geven…"></textarea>
       </div>
+      <div class="field formbox of-akkoord" id="oAkkoordBox"></div>
       <details class="of-bedrijf">
         <summary>Jouw bedrijfsgegevens <span>— staan op elke offerte</span></summary>
         <div class="of-bedrijf-in">
@@ -3415,7 +3530,8 @@ button { cursor: pointer; }
         ? '<span class="k-when">muziek gekozen</span>'
         : (l.muziekToken ? '<span class="k-when">muzieklink gestuurd</span>' : "");
       var offerteChip = l.offerte
-        ? '<span class="k-when">offerte ' + esc(euro(offerteTotalen(l.offerte).totaal / 100)) + '</span>' : "";
+        ? '<span class="k-when">offerte ' + esc(euro(offerteTotalen(l.offerte).totaal / 100)) +
+          (l.offerteAkkoord ? ' · getekend' : l.offerteToken ? ' · gestuurd' : '') + '</span>' : "";
 
       html += '<div class="klant' + (gone ? " gone" : "") + '" style="--st:' + stVar(l.status) + '">' +
         '<button class="k-main" data-lead="' + esc(l.id) + '">' +
@@ -3891,7 +4007,9 @@ button { cursor: pointer; }
       if (old.muziek) obj.muziek = old.muziek;
       if (old.muziekAt) obj.muziekAt = old.muziekAt;
       if (old.muziekOpmerking) obj.muziekOpmerking = old.muziekOpmerking;
-      if (old.offerte) obj.offerte = old.offerte;
+      for (var ov = 0; ov < OFFERTE_VELDEN.length; ov++) {
+        if (old[OFFERTE_VELDEN[ov]] != null) obj[OFFERTE_VELDEN[ov]] = old[OFFERTE_VELDEN[ov]];
+      }
     }
     return obj;
   }
@@ -3913,6 +4031,9 @@ button { cursor: pointer; }
     }
     if (gone && gone.muziekToken) {
       api("POST", "", { t: gone.muziekToken, actie: "verwijderen" }, MUZIEK_URL)["catch"](function () {});
+    }
+    if (gone && gone.offerteToken) {
+      api("POST", "", { t: gone.offerteToken, actie: "verwijderen" }, OFFERTE_URL)["catch"](function () {});
     }
     drop("leads", editingLead);
     $("ldOverlay").hidden = true;
@@ -4267,13 +4388,16 @@ button { cursor: pointer; }
   var pollingForms = false;
   function pollForms() {
     if (pollingForms) return;
-    var open = state.leads.filter(function (l) { return (l.formToken && !l.form) || (l.muziekToken && !l.muziek); });
+    var open = state.leads.filter(function (l) {
+      return (l.formToken && !l.form) || (l.muziekToken && !l.muziek) || (l.offerteToken && !l.offerteAkkoord);
+    });
     if (!open.length) return;
     pollingForms = true;
     var chain = Promise.resolve();
     open.forEach(function (l) {
       if (l.formToken && !l.form) chain = chain.then(function () { return checkForm(l.id); });
       if (l.muziekToken && !l.muziek) chain = chain.then(function () { return checkMuziek(l.id); });
+      if (l.offerteToken && !l.offerteAkkoord) chain = chain.then(function () { return checkOfferte(l.id); });
     });
     chain.then(function () { pollingForms = false; }, function () { pollingForms = false; });
   }
@@ -5371,8 +5495,8 @@ button { cursor: pointer; }
     };
   }
 
-  function offerteNaam(of, l) {
-    return ("Offerte " + of.nummer + " " + leadName(l)).replace(/[\\\/:*?"<>|]+/g, "")
+  function offerteNaam(of, l, getekend) {
+    return ("Offerte " + of.nummer + " " + leadName(l) + (getekend ? " (getekend)" : "")).replace(/[\\\/:*?"<>|]+/g, "")
       .replace(/\s+/g, " ").trim() + ".pdf";
   }
 
@@ -5517,6 +5641,32 @@ button { cursor: pointer; }
         ops.push("q " + f(w) + " 0 0 " + f(h) + " " + f(x) + " " + f(A4.h - y - h) + " cm /Logo Do Q");
         return h;
       },
+      /** Een handtekening, passend in w × h met linkerbovenhoek x, y; geeft de hoogte terug. */
+      pen: function (lijnen, x, y, w, h, hex) {
+        var kd = sigKader(lijnen);
+        if (!kd) return 0;
+        var k = Math.min(w / Math.max(kd.w, 1), h / Math.max(kd.h, 1));
+        function px(v) { return x + (v - kd.x) * k; }
+        function py(v) { return A4.h - y - (v - kd.y) * k; }
+        var uit = ["q " + kleur(hex || "#1d1d1f") + " RG 1.1 w 1 J 1 j"];
+        lijnen.forEach(function (l) {
+          var cx = 0, cy = 0;
+          sigStukken(l).forEach(function (st) {
+            var ex = px(st.p[0]), ey = py(st.p[1]);
+            if (st.t === "M") uit.push(f(ex) + " " + f(ey) + " m");
+            else if (st.t === "L") uit.push(f(ex) + " " + f(ey) + " l");
+            else {
+              // kwadratische bocht als kubische: controlepunten op 2/3 richting het ene punt
+              var qx = px(st.c[0]), qy = py(st.c[1]);
+              uit.push(f(cx + 2 / 3 * (qx - cx)) + " " + f(cy + 2 / 3 * (qy - cy)) + " " +
+                f(ex + 2 / 3 * (qx - ex)) + " " + f(ey + 2 / 3 * (qy - ey)) + " " + f(ex) + " " + f(ey) + " c");
+            }
+            cx = ex; cy = ey;
+          });
+        });
+        ops.push(uit.join("\n") + "\nS Q");
+        return kd.h * k;
+      },
       bouw: function (titel, auteur) {
         var objs = [];
         function obj(s) { objs.push(s); return objs.length; }
@@ -5555,12 +5705,79 @@ button { cursor: pointer; }
     };
   }
 
+  /* --- handtekening: lijnen, als svg en voor de pdf ----------- */
+
+  // Een handtekening is een lijst lijnen [x, y, x, y, …] in een vlak van
+  // SIG_W × SIG_H, gehele getallen. Zo is hij klein, scherp op elke grootte
+  // en kan de pdf hem als echte lijnen tekenen. Zelfde vlak als in api/offerte.js.
+  var SIG_W = 1000, SIG_H = 500, SIG_DIK = 6;
+
+  /** Een lijn als stukken: begin, vloeiende bochten door de middens, recht eind. */
+  function sigStukken(l) {
+    var n = Math.floor(l.length / 2), out = [];
+    if (!n) return out;
+    out.push({ t: "M", p: [l[0], l[1]] });
+    if (n === 1) { out.push({ t: "L", p: [l[0] + 0.1, l[1]] }); return out; }   // een stip
+    for (var i = 1; i < n - 1; i++) {
+      var x = l[2 * i], y = l[2 * i + 1];
+      out.push({ t: "Q", c: [x, y], p: [(x + l[2 * i + 2]) / 2, (y + l[2 * i + 3]) / 2] });
+    }
+    out.push({ t: "L", p: [l[2 * n - 2], l[2 * n - 1]] });
+    return out;
+  }
+
+  /** Het kleinste vak om de inkt; null zonder inkt. */
+  function sigKader(lijnen) {
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, n = 0;
+    (lijnen || []).forEach(function (l) {
+      for (var i = 0; i + 1 < l.length; i += 2) {
+        n++;
+        x0 = Math.min(x0, l[i]); x1 = Math.max(x1, l[i]);
+        y0 = Math.min(y0, l[i + 1]); y1 = Math.max(y1, l[i + 1]);
+      }
+    });
+    return n ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0, punten: n } : null;
+  }
+
+  /** Genoeg inkt voor een handtekening: geen tik of streepje (zelfde eis als de server). */
+  function sigGenoeg(lijnen) {
+    var kd = sigKader(lijnen);
+    return !!kd && kd.punten >= 8 && Math.max(kd.w, kd.h) >= 60;
+  }
+
+  function sigD(lijnen) {
+    function r(n) { return Math.round(n * 10) / 10; }
+    return (lijnen || []).map(function (l) {
+      return sigStukken(l).map(function (st) {
+        return st.t + (st.c ? r(st.c[0]) + " " + r(st.c[1]) + " " : "") + r(st.p[0]) + " " + r(st.p[1]);
+      }).join(" ");
+    }).join(" ");
+  }
+
+  /** De handtekening als svg, bijgesneden tot de inkt; kleurt mee met de tekst. */
+  function sigSvg(lijnen, cls) {
+    var kd = sigKader(lijnen);
+    if (!kd) return "";
+    var m = 12, vb = [kd.x - m, kd.y - m, kd.w + 2 * m, kd.h + 2 * m].map(Math.round).join(" ");
+    return '<svg class="' + (cls || "sig") + '" viewBox="' + vb + '" role="img" aria-label="Handtekening">' +
+      '<path d="' + sigD(lijnen) + '" fill="none" stroke="currentColor" stroke-width="2.4" vector-effect="non-scaling-stroke" ' +
+      'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  /** "12 oktober 2026 om 14:03", Nederlandse tijd. */
+  function tijdVol(iso) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d.getTime())) return "";
+    var p = instantToAms(d);
+    return datumVol(p.date) + " om " + p.time;
+  }
+
   /* --- pdf: de offerte zelf ------------------------------------ */
 
   var PDF_INKT = "#1d1d1f", PDF_GRIJS = "#6e6e73", PDF_TEKST = "#3a3a3c", PDF_LIJN = "#e2e2e7", PDF_ORANJE = "#fc6a2f";
 
-  /** De offerte als pdf, als tekst (alleen ASCII). */
-  function offertePdf(of, b) {
+  /** De offerte als pdf, als tekst (alleen ASCII). Met akkoord: ook de naam en handtekening van de klant. */
+  function offertePdf(of, b, akkoord) {
     var M = 56, R = A4.w - M, BREED = R - M, ONDER = A4.h - 72;
     var doc = pdfDoc(), y = 0, tot = offerteTotalen(of);
     var regels = of.regels || [];
@@ -5658,11 +5875,12 @@ button { cursor: pointer; }
       y += 27;
     });
 
-    // --- totalen, rechts onder de regels
-    var TX = R - 206;
+    // --- totalen, rechts onder de regels; links ernaast de handtekening als er getekend is
+    var TX = R - 206, getekend = !!(akkoord && akkoord.handtekening);
     var nodig = (tot.modus === "excl" ? 2 : 0) * 16 + (tot.modus === "incl" ? 14 : 0) + 30;
-    if (y + nodig > ONDER) vervolg();
+    if (y + Math.max(nodig, getekend ? 112 : 0) > ONDER) vervolg();
     y += 2;
+    var yTot = y;
     if (tot.modus === "excl") {
       doc.tekst(TX, y, "Subtotaal", { size: 9.5, kleur: PDF_TEKST });
       doc.tekst(R, y, euro(tot.sub / 100), { size: 9.5, align: "r" });
@@ -5681,6 +5899,17 @@ button { cursor: pointer; }
       doc.tekst(R, y, euro(tot.btw / 100), { size: 8.5, kleur: PDF_GRIJS, align: "r" });
     }
 
+    // --- akkoord van de klant: naam, handtekening en wanneer
+    if (getekend) {
+      var AB = TX - M - 36, ay = yTot - 6;
+      label(M, ay, "Voor akkoord");
+      ay += 10 + Math.max(doc.pen(akkoord.handtekening, M + 4, ay + 10, Math.min(200, AB), 52), 26) + 8;
+      doc.lijn(M, ay, M + AB, 0.6, "#c7c7cc");
+      doc.tekst(M, ay + 14, pdfAfbreken(akkoord.naam || "", true, 10, AB)[0] || "", { size: 10, vet: true });
+      doc.tekst(M, ay + 26, "Online getekend op " + tijdVol(akkoord.op), { size: 8, kleur: PDF_GRIJS });
+      y = Math.max(y, ay + 26);
+    }
+
     // --- tekst onderaan
     if (String(of.tekst || "").trim()) {
       y += 40;
@@ -5690,6 +5919,7 @@ button { cursor: pointer; }
         y += 14.5;
       });
     }
+
 
     // --- voet op elke pagina
     var voet = [b.juridisch || b.naam, b.kvk && "KvK " + b.kvk, b.btw && "Btw " + b.btw, b.iban && "IBAN " + b.iban]
@@ -5702,6 +5932,42 @@ button { cursor: pointer; }
       if (n > 1) doc.tekst(R, A4.h - 38, p + " / " + n, { size: 7.5, kleur: PDF_GRIJS, align: "r" });
     }
     return doc.bouw("Offerte " + of.nummer, b.naam || "Mediaspot");
+  }
+
+  /* --- de offerte als webpagina, voor de klant (?o=token) ------ */
+
+  function regelsHtml(s) { return esc(String(s == null ? "" : s).trim()).replace(/\n/g, "<br>"); }
+
+  /** Dezelfde offerte als de pdf, maar als html: kop, aan/van, betreft, regels, totalen, tekst. */
+  function offerteHtml(of, b) {
+    var tot = offerteTotalen(of), regels = of.regels || [];
+    function kv(k, v) { return v ? '<div><span class="op-lab">' + esc(k) + '</span><b>' + esc(v) + '</b></div>' : ""; }
+    var van = [b.naam].concat(String(b.adres || "").split("\n"), [b.telefoon, b.email, b.web])
+      .map(function (x) { return String(x || "").trim(); }).filter(Boolean);
+    var html = '<div class="op-kop">' + kv("Offerte", of.nummer) + kv("Datum", datumVol(of.datum)) +
+      kv("Geldig tot", datumVol(of.geldig)) + '</div>' +
+      '<div class="op-twee"><div><span class="op-lab">Aan</span><p>' + regelsHtml(of.aan) + '</p></div>' +
+      '<div><span class="op-lab">Van</span><p>' + van.map(esc).join("<br>") + '</p></div></div>';
+    if (of.betreft || of.details) {
+      html += '<div class="op-betreft"><span class="op-lab">Betreft</span>' +
+        (of.betreft ? '<h2>' + esc(of.betreft) + '</h2>' : '') +
+        (of.details ? '<p>' + regelsHtml(of.details) + '</p>' : '') + '</div>';
+    }
+    html += '<ul class="op-regels">' + regels.map(function (r, i) {
+      var delen = String(r.oms || "").replace(/\r/g, "").split("\n"), rest = delen.slice(1).join("\n").trim();
+      var maal = r.prijs != null && r.aantal != null && r.aantal !== 1 ? getal(r.aantal) + " × " + euro(r.prijs) : "";
+      return '<li><div class="op-oms"><b>' + esc(delen[0]) + '</b>' +
+        (rest ? '<span>' + regelsHtml(rest) + '</span>' : '') + (maal ? '<i>' + esc(maal) + '</i>' : '') + '</div>' +
+        (r.prijs != null ? '<span class="op-bedrag">' + esc(euro(tot.regels[i] / 100)) + '</span>' : '') + '</li>';
+    }).join("") + '</ul>';
+    var rijen = "";
+    function rij(k, v, cls) { rijen += '<div' + (cls ? ' class="' + cls + '"' : '') + '><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>'; }
+    if (tot.modus === "excl") { rij("Subtotaal", euro(tot.sub / 100)); rij("Btw " + tot.tarief + "%", euro(tot.btw / 100)); }
+    rij(tot.modus === "incl" ? "Totaal incl. btw" : "Totaal", euro(tot.totaal / 100), "op-eind");
+    if (tot.modus === "incl") rij("Waarvan " + tot.tarief + "% btw", euro(tot.btw / 100), "op-klein");
+    html += '<div class="op-tot">' + rijen + '</div>';
+    if (String(of.tekst || "").trim()) html += '<p class="op-tekst">' + regelsHtml(of.tekst) + '</p>';
+    return html;
   }
 
   /* --- offertevenster ------------------------------------------ */
@@ -5719,10 +5985,12 @@ button { cursor: pointer; }
         '<div><button type="button" class="btn-line" id="lMakeOfferte">Maak offerte</button></div>';
       return;
     }
-    var of = l.offerte, t = offerteTotalen(of);
+    var of = l.offerte, t = offerteTotalen(of), a = l.offerteAkkoord;
     box.innerHTML = '<span class="label">Offerte</span>' +
       '<div class="of-kort"><b>' + esc(of.nummer) + '</b><span>' + esc(datumVol(of.datum)) + '</span>' +
       '<span class="of-kort-bedrag">' + esc(euro(t.totaal / 100)) + '</span></div>' +
+      (a ? '<span class="fstate on">Getekend door ' + esc(a.naam) + ' op ' + esc(fmtStamp(a.op)) + '</span>'
+        : l.offerteToken ? '<span class="fstate">Akkoordlink gestuurd · nog niet getekend</span>' : '') +
       '<div class="of-knoppen"><button type="button" class="btn-line" id="lEditOfferte">Bewerken</button>' +
       '<button type="button" class="btn-line" id="lPdfOfferte">Download pdf</button></div>';
   }
@@ -5809,6 +6077,7 @@ button { cursor: pointer; }
     $("oDelete").hidden = !l.offerte;
     resetOfferteWeg();
     offerteRekenen();
+    renderOfferteAkkoord(l);
   }
 
   /** Vanuit het klantvenster: eerst de klant bewaren, zoals bij de formulierlink. */
@@ -5852,6 +6121,7 @@ button { cursor: pointer; }
   function bewaarOfferte() {
     var l = findLead(editingOfferte);
     if (!l) return null;
+    if (l.offerteAkkoord) { offerteVuil = false; return { l: l, of: l.offerte }; }   // getekend: ligt vast
     var of = leesOfferte();
     var upd = {};
     for (var k in l) upd[k] = l[k];
@@ -5867,6 +6137,8 @@ button { cursor: pointer; }
     $("oDelete").hidden = false;
     if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
     render();
+    // de klant heeft al een link: die toont meteen deze versie
+    if (upd.offerteToken) publiceerOfferte(upd.id);
     return { l: upd, of: of };
   }
 
@@ -5893,8 +6165,9 @@ button { cursor: pointer; }
     resetOfferteWeg();
     var l = findLead(editingOfferte);
     if (l) {
+      if (l.offerteToken) api("POST", "", { t: l.offerteToken, actie: "verwijderen" }, OFFERTE_URL)["catch"](function () {});
       var upd = {};
-      for (var k in l) if (k !== "offerte") upd[k] = l[k];
+      for (var k in l) if (OFFERTE_VELDEN.indexOf(k) < 0) upd[k] = l[k];
       put("leads", upd);
       if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
       render();
@@ -5925,10 +6198,16 @@ button { cursor: pointer; }
     });
   }
 
+  /** De pdf zoals hij er nu voor staat; getekend met de gegevens en handtekening van dat moment. */
+  function offertePdfVan(l, of) {
+    var a = l.offerteAkkoord || null;
+    return offertePdf(of, (a && a.bedrijf) || bedrijf(), a);
+  }
+
   function pdfDownloaden(l, of) {
     if (!of.regels || !of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
-    var naam = offerteNaam(of, l);
-    saveFile(naam, offertePdf(of, bedrijf()), "application/pdf")
+    var naam = offerteNaam(of, l, !!l.offerteAkkoord);
+    saveFile(naam, offertePdfVan(l, of), "application/pdf")
       .then(function () { toast("Offerte gedownload: " + naam); })
       ["catch"](function (err) { saveFailed(err); });
   }
@@ -5945,8 +6224,8 @@ button { cursor: pointer; }
     var r = bewaarOfferte();
     if (!r) return;
     if (!r.of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
-    var naam = offerteNaam(r.of, r.l);
-    var file = new File([offertePdf(r.of, bedrijf())], naam, { type: "application/pdf" });
+    var naam = offerteNaam(r.of, r.l, !!r.l.offerteAkkoord);
+    var file = new File([offertePdfVan(r.l, r.of)], naam, { type: "application/pdf" });
     navigator.share({ files: [file], title: naam })["catch"](function (e) {
       if (!e || e.name !== "AbortError") toast("Delen lukte niet — gebruik Download pdf.");
     });
@@ -5967,6 +6246,454 @@ button { cursor: pointer; }
     if (dbReady && db) {
       db.doc("meta/offerte").set({ bedrijf: m.bedrijf, tekst: m.tekst, btw: m.btw, at: m.at })["catch"](function () {});
     }
+  }
+
+  /* ==========================================================
+     6f. Akkoord — de klant tekent de offerte online (?o=token)
+     ========================================================== */
+
+  // Zelfde opzet als formulier en muziek: een link met een eigen token en
+  // api/offerte als serverkant. Daar staat een kopie van de offerte, die we
+  // bijwerken elke keer dat je hem opslaat, tot de klant tekent. Daarna ligt
+  // hij vast, ook hier in het venster, tot je "Toch wijzigen" kiest.
+
+  var OFFERTE_URL = "api/offerte";
+  var OFFERTE_VELDEN = ["offerte", "offerteToken", "offerteVersie", "offerteGedeeld", "offerteAkkoord"];
+  var EMAIL_RE = /[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[a-z]{2,}/i;
+
+  function offerteLink(l) { return location.origin + location.pathname + "?o=" + l.offerteToken; }
+  function offerteVerlopen(of) { return !!(of && of.geldig && of.geldig < amsNow().date); }
+  function leadKopie(l) { var u = {}; for (var k in l) u[k] = l[k]; return u; }
+
+  function offerteReden(r) {
+    if (r && (r.status === 404 || r.status === 405 || r.status === 501)) return "De akkoordlink werkt alleen op de online versie (Vercel).";
+    if (r && r.data && r.data.melding && r.status !== 401 && r.status !== 503) return r.data.melding;
+    return apiReason(r);
+  }
+
+  /* --- in het offertevenster ----------------------------------- */
+
+  function renderOfferteAkkoord(l) {
+    var box = $("oAkkoordBox"), a = l && l.offerteAkkoord;
+    var html = '<span class="label">Akkoord van de klant</span>';
+    if (a) {
+      html += '<div class="of-getekend">' + sigSvg(a.handtekening, "of-sig") +
+        '<div><b>' + esc(a.naam) + '</b><span>Getekend op ' + esc(tijdVol(a.op)) + '</span></div></div>' +
+        '<span class="fstate on">Getekend · deze versie ligt vast, de pdf heeft de handtekening</span>' +
+        '<div class="of-knoppen"><button type="button" class="btn-line" id="oIntrekken" ' +
+        'title="Haalt de handtekening weg zodat je de offerte kunt aanpassen; de klant tekent daarna opnieuw">Toch wijzigen</button></div>';
+    } else if (l && l.offerteToken) {
+      html += '<div class="linkrow"><input type="text" id="oLink" readonly value="' + esc(offerteLink(l)) + '" aria-label="Akkoordlink">' +
+        '<button type="button" class="btn-line" id="oCopyLink">Kopieer</button></div>' +
+        '<div class="of-knoppen"><a class="btn-line" id="oMail" href="#">Mail naar klant</a>' +
+        '<button type="button" class="btn-line" id="oCheck" title="Kijk of de klant al getekend heeft">Ververs</button></div>' +
+        '<span class="fstate">Nog niet getekend' +
+        (l.offerteGedeeld ? ' · bijgewerkt op ' + esc(fmtStamp(l.offerteGedeeld)) : '') + '</span>' +
+        (offerteVerlopen(l.offerte) ? '<p class="of-let">Verlopen op ' + esc(datumVol(l.offerte.geldig)) +
+          ': zo kan de klant niet tekenen. Schuif "Geldig tot" op en sla op.</p>' :
+          '<p>De klant ziet steeds de laatst opgeslagen versie.</p>');
+    } else {
+      html += '<p>Stuur de klant een link. Daar lezen ze de offerte en geven ze akkoord met hun naam en een handtekening. ' +
+        'Het akkoord komt hier vanzelf terug.</p>' +
+        '<div class="of-knoppen"><button type="button" class="btn-line" id="oMaakLink">Maak akkoordlink</button></div>';
+    }
+    box.innerHTML = html;
+    zetOfferteSlot(!!a);
+    $("oDelete").hidden = !!a || !(l && l.offerte);
+  }
+
+  /** Getekend = vast: alle velden op slot, behalve het akkoordvak. */
+  function zetOfferteSlot(dicht) {
+    var box = $("oAkkoordBox"), els = $("ofOverlay").querySelectorAll(".mbody input, .mbody textarea, .mbody button");
+    for (var i = 0; i < els.length; i++) if (!box.contains(els[i])) els[i].disabled = dicht;
+    $("ofOverlay").querySelector(".of-modal").classList.toggle("of-dicht", dicht);
+    $("oSave").textContent = dicht ? "Sluiten" : "Opslaan";
+  }
+
+  // Per klant één tegelijk: twee keer snel opslaan mag niet twee keer dezelfde
+  // versie opleveren met verschillende inhoud.
+  var publiceren = {};
+
+  /** De offerte bij de link neerzetten of bijwerken. Belooft true als de klant deze versie ziet. */
+  function publiceerOfferte(id) {
+    var p = (publiceren[id] || Promise.resolve()).then(function () { return publiceerNu(id); });
+    publiceren[id] = p.then(null, function () {});
+    return p;
+  }
+
+  function publiceerNu(id) {
+    var l = findLead(id);
+    if (!l || !l.offerte || !l.offerteToken || l.offerteAkkoord) return Promise.resolve(false);
+    var t = l.offerteToken;
+    return api("POST", "", { t: t, actie: "delen", naam: l.name || "", offerte: l.offerte, bedrijf: bedrijf() }, OFFERTE_URL).then(function (r) {
+      var nu = findLead(id);
+      if (!nu || nu.offerteToken !== t) return false;
+      if (r.status === 409 && r.data.error === "al_getekend") {
+        // de klant was je voor: wat getekend is, geldt
+        return checkOfferte(id, false).then(function () {
+          toast("De klant heeft net getekend; je laatste wijziging is niet meer naar de klant gegaan.");
+          return false;
+        });
+      }
+      if (!r.ok) { toast(offerteReden(r)); return false; }
+      if (nu.offerteVersie !== r.data.versie || nu.offerteGedeeld !== r.data.gedeeld) {
+        var upd = leadKopie(nu);
+        upd.offerteVersie = r.data.versie;
+        upd.offerteGedeeld = r.data.gedeeld;
+        put("leads", upd);
+        if (editingOfferte === id && !$("ofOverlay").hidden) renderOfferteAkkoord(upd);
+      }
+      return true;
+    }, function () {
+      toast("Geen verbinding: de klant ziet je laatste wijziging nog niet. Sla straks nog eens op.");
+      return false;
+    });
+  }
+
+  function maakOfferteLink() {
+    var r = bewaarOfferte();
+    if (!r) return;
+    if (!r.of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
+    var btn = $("oMaakLink");
+    if (btn) { btn.disabled = true; btn.textContent = "Bezig…"; }
+    var t = newToken(), id = r.l.id;
+    api("POST", "", { t: t, actie: "delen", naam: r.l.name || "", offerte: r.of, bedrijf: bedrijf() }, OFFERTE_URL).then(function (res) {
+      var l = findLead(id);
+      if (!l) return;
+      if (!res.ok) { toast(offerteReden(res)); if (editingOfferte === id) renderOfferteAkkoord(l); return; }
+      var upd = leadKopie(l);
+      upd.offerteToken = t;
+      upd.offerteVersie = res.data.versie;
+      upd.offerteGedeeld = res.data.gedeeld;
+      put("leads", upd);
+      if (editingOfferte === id && !$("ofOverlay").hidden) renderOfferteAkkoord(upd);
+      if (editingLead === id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+      render();
+      copyText(offerteLink(upd), "Akkoordlink gekopieerd. Plak hem in je bericht, of klik op Mail naar klant.");
+    }, function () {
+      toast(apiReason(null));
+      var l = findLead(id);
+      if (l && editingOfferte === id) renderOfferteAkkoord(l);
+    });
+  }
+
+  /** Een mailtje aan de klant met de link, klaar in je mailprogramma. */
+  function offerteMail(l) {
+    var of = l.offerte || {}, b = bedrijf(), f = l.form || {};
+    var aan = (String(of.aan || "").match(EMAIL_RE) || [])[0] || String(f.email || "").trim();
+    var wie = String(f.namen || l.name || "").trim();
+    var onderwerp = "Offerte " + (of.nummer || "") + " van " + (b.naam || "Mediaspot");
+    var tekst = (wie ? "Hoi " + wie + "," : "Hoi,") + "\n\n" +
+      "Hierbij de offerte voor jullie bruiloftsfilm" + (l.date ? " op " + datumVol(l.date) : "") + ". " +
+      "Via deze link bekijk je hem rustig en geef je meteen online akkoord, met je naam en handtekening:\n\n" +
+      offerteLink(l) + "\n\n" +
+      (of.geldig ? "De offerte is geldig tot " + datumVol(of.geldig) + ". " : "") +
+      "Vragen? Bel of app me gerust.\n\nGroet,\n" + (b.naam || "Mediaspot");
+    return "mailto:" + encodeURIComponent(aan).replace(/%40/g, "@") +
+      "?subject=" + encodeURIComponent(onderwerp) + "&body=" + encodeURIComponent(tekst);
+  }
+
+  /* --- akkoord ophalen ------------------------------------------ */
+
+  function applyAkkoord(id, rec) {
+    var l = findLead(id);
+    if (!l || !rec.akkoord) return;
+    var a = rec.akkoord, upd = leadKopie(l);
+    if (rec.offerte) upd.offerte = rec.offerte;   // precies wat de klant gezien en getekend heeft
+    upd.offerteAkkoord = { naam: a.naam, op: a.op, handtekening: a.handtekening, versie: a.versie, bedrijf: rec.bedrijf || null };
+    upd.offerteVersie = rec.versie;
+    // getekend is rond: de klant staat op Akkoord
+    if (upd.status !== "akkoord") {
+      upd.status = "akkoord";
+      if (!upd.calledAt) upd.calledAt = amsNow().date;
+    }
+    put("leads", upd);
+    if (editingOfferte === id && !$("ofOverlay").hidden) {
+      vulOfferte(upd, upd.offerte);
+      offerteVuil = false;
+      var tas = $("oRegels").querySelectorAll("textarea");
+      for (var i = 0; i < tas.length; i++) groei(tas[i]);
+    }
+    if (editingLead === id && !$("ldOverlay").hidden) { renderLeadOfferteBox(upd); setStatusPick("akkoord"); }
+    render();
+  }
+
+  /** Kijkt of de klant getekend heeft. Belooft true bij een nieuw akkoord. */
+  function checkOfferte(id, loud) {
+    var l = findLead(id);
+    if (!l || !l.offerteToken) return Promise.resolve(false);
+    var t = l.offerteToken;
+    return api("GET", "?t=" + t, null, OFFERTE_URL).then(function (r) {
+      if (r.status === 404 && r.data && r.data.error === "onbekend" && !l.offerteAkkoord) {
+        // De server kent de link niet (meer): zet de offerte er opnieuw neer,
+        // dan blijft de link die de klant al heeft gewoon werken.
+        return publiceerOfferte(id).then(function (ok) {
+          if (loud && ok) toast("De link was onbekend op de server en is opnieuw klaargezet. Nog niet getekend.");
+          return false;
+        });
+      }
+      if (!r.ok) { if (loud) toast(offerteReden(r)); return false; }
+      var nu = findLead(id);
+      if (!nu || nu.offerteToken !== t) return false;
+      if (r.data.akkoord && !nu.offerteAkkoord) {
+        applyAkkoord(id, r.data);
+        toast("Offerte getekend door " + r.data.akkoord.naam + ".");
+        return true;
+      }
+      if (loud) toast(nu.offerteAkkoord ? "Al getekend." : "Nog niet getekend.");
+      return false;
+    }, function () { if (loud) toast(apiReason(null)); return false; });
+  }
+
+  var intrekTimer = null;
+  function resetIntrekken() {
+    clearTimeout(intrekTimer);
+    var b = $("oIntrekken");
+    if (b) { b.removeAttribute("data-armed"); b.textContent = "Toch wijzigen"; }
+  }
+
+  /** Handtekening weghalen, in twee stappen: daarna kun je weer wijzigen en tekent de klant opnieuw. */
+  function trekAkkoordIn() {
+    var btn = $("oIntrekken"), id = editingOfferte, l = findLead(id);
+    if (!btn || !l || !l.offerteAkkoord) return;
+    if (!btn.hasAttribute("data-armed")) {
+      btn.setAttribute("data-armed", "1");
+      btn.textContent = "Handtekening vervalt. Zeker?";
+      intrekTimer = setTimeout(resetIntrekken, 5000);
+      return;
+    }
+    clearTimeout(intrekTimer);
+    btn.disabled = true;
+    btn.textContent = "Bezig…";
+    api("POST", "", { t: l.offerteToken, actie: "intrekken" }, OFFERTE_URL).then(function (r) {
+      var nu = findLead(id);
+      if (!nu) return;
+      if (!r.ok && r.status !== 404) { toast(offerteReden(r)); if (editingOfferte === id) renderOfferteAkkoord(nu); return; }
+      var upd = leadKopie(nu);
+      delete upd.offerteAkkoord;
+      if (r.ok) upd.offerteVersie = r.data.versie;
+      put("leads", upd);
+      if (editingOfferte === id && !$("ofOverlay").hidden) renderOfferteAkkoord(upd);
+      if (editingLead === id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+      render();
+      toast("Handtekening weggehaald. Pas de offerte aan en sla op; de klant tekent daarna opnieuw via dezelfde link.");
+    }, function () {
+      toast(apiReason(null));
+      var nu = findLead(id);
+      if (nu && editingOfferte === id) renderOfferteAkkoord(nu);
+    });
+  }
+
+  /* --- tekenvak --------------------------------------------------- */
+
+  /** Tekenen met muis, vinger of pen. Bewaart lijnen in SIG-eenheden, los van de schermgrootte. */
+  function maakSigPad(canvas, onChange) {
+    var lijnen = [], huidig = null, ctx = null;
+    try { ctx = canvas.getContext("2d"); } catch (e) { ctx = null; }
+    function maat() {
+      var r = canvas.getBoundingClientRect();
+      return { l: r.left, t: r.top, w: r.width || SIG_W / 2, h: r.height || SIG_H / 2 };
+    }
+    function stijl() {
+      ctx.setTransform(canvas.width / SIG_W, 0, 0, canvas.height / SIG_H, 0, 0);
+      ctx.lineWidth = SIG_DIK;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#1D1D1F";
+    }
+    function teken() {
+      if (!ctx) return;
+      stijl();
+      ctx.clearRect(0, 0, SIG_W, SIG_H);
+      ctx.beginPath();
+      lijnen.forEach(function (l) {
+        sigStukken(l).forEach(function (st) {
+          if (st.t === "M") ctx.moveTo(st.p[0], st.p[1]);
+          else if (st.t === "Q") ctx.quadraticCurveTo(st.c[0], st.c[1], st.p[0], st.p[1]);
+          else ctx.lineTo(st.p[0], st.p[1]);
+        });
+      });
+      ctx.stroke();
+    }
+    function schaal() {
+      // scherp op elk scherm: het canvas in echte pixels
+      var m = maat(), dpr = window.devicePixelRatio || 1;
+      var w = Math.round(m.w * dpr), h = Math.round(m.h * dpr);
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      teken();
+    }
+    function punt(e) {
+      var m = maat();
+      return [Math.max(0, Math.min(SIG_W, Math.round((e.clientX - m.l) / m.w * SIG_W))),
+              Math.max(0, Math.min(SIG_H, Math.round((e.clientY - m.t) / m.h * SIG_H)))];
+    }
+    function voegToe(e) {
+      var p = punt(e), n = huidig.length;
+      if (n && Math.abs(p[0] - huidig[n - 2]) + Math.abs(p[1] - huidig[n - 1]) < 3) return;
+      if (ctx && n) {
+        ctx.beginPath();
+        ctx.moveTo(huidig[n - 2], huidig[n - 1]);
+        ctx.lineTo(p[0], p[1]);
+        ctx.stroke();
+      }
+      huidig.push(p[0], p[1]);
+    }
+    function klaar() {
+      if (!huidig) return;
+      huidig = null;
+      teken();   // nu met vloeiende bochten, zoals in de pdf
+      if (onChange) onChange();
+    }
+    canvas.addEventListener("pointerdown", function (e) {
+      if (e.button > 0) return;
+      e.preventDefault();
+      if (canvas.setPointerCapture && e.pointerId != null) { try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }
+      if (ctx) stijl();
+      huidig = [];
+      lijnen.push(huidig);
+      voegToe(e);
+      if (onChange) onChange();
+    });
+    canvas.addEventListener("pointermove", function (e) {
+      if (!huidig) return;
+      e.preventDefault();
+      var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+      if (evs && evs.length) for (var i = 0; i < evs.length; i++) voegToe(evs[i]);
+      else voegToe(e);
+    });
+    canvas.addEventListener("pointerup", klaar);
+    canvas.addEventListener("pointercancel", klaar);
+    canvas.addEventListener("lostpointercapture", klaar);
+    if (window.ResizeObserver) new ResizeObserver(schaal).observe(canvas);
+    else window.addEventListener("resize", schaal);
+    schaal();
+    return {
+      lijnen: function () { return lijnen.filter(function (l) { return l.length >= 2; }).map(function (l) { return l.slice(); }); },
+      leeg: function () { return !lijnen.length; },
+      wis: function () { lijnen = []; huidig = null; teken(); if (onChange) onChange(); }
+    };
+  }
+
+  /* --- de pagina van de klant -------------------------------- */
+
+  var PDF_ICOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>';
+  var VINK = '<div class="ms-check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
+
+  function bootOfferte(token) {
+    document.querySelector(".app").hidden = true;
+    $("offertePage").hidden = false;
+    document.title = "Jullie offerte | Mediaspot";
+    var rec = null, pad = null;
+
+    // Het echte logo van de site; lukt laden niet, dan blijft het woordmerk staan.
+    var logo = $("opLogo");
+    logo.addEventListener("load", function () { logo.hidden = false; $("opWord").hidden = true; });
+    logo.src = logo.getAttribute("data-src");
+
+    function say(msg, cls) { var st = $("opStatus"); st.textContent = msg || ""; st.className = "ms-status" + (cls ? " " + cls : ""); }
+    function b() { return rec.bedrijf || BEDRIJF; }
+
+    function pdfNaam() {
+      return ("Offerte " + (rec.offerte.nummer || "") + " " + (b().naam || "Mediaspot") + (rec.akkoord ? " (getekend)" : ""))
+        .replace(/[\\\/:*?"<>|]+/g, "").replace(/\s+/g, " ").trim() + ".pdf";
+    }
+    function download() {
+      saveFile(pdfNaam(), offertePdf(rec.offerte, b(), rec.akkoord || null), "application/pdf")["catch"](function () {});
+    }
+
+    function toonGetekend(net) {
+      var a = rec.akkoord;
+      $("opTeken").hidden = true;
+      $("opDone").innerHTML = (net ? VINK : '') +
+        '<h2>' + (net ? 'Bedankt, <em>' + esc(a.naam) + '</em>!' : 'Getekend, <em>dank je wel</em>') + '</h2>' +
+        '<p>' + (net ? 'Je akkoord is binnen. Ik neem snel contact met jullie op om alles verder af te stemmen. ' : '') +
+        'Bewaar de getekende offerte gerust als pdf.</p>' +
+        '<div class="op-getekend">' + sigSvg(a.handtekening, "op-sig") +
+        '<p><b>' + esc(a.naam) + '</b>Getekend op ' + esc(tijdVol(a.op)) + '</p></div>' +
+        '<div class="ms-actions"><button type="button" class="ms-btn" id="opPdf2">' + PDF_ICOON + 'Download getekende offerte</button></div>';
+      $("opDone").hidden = false;
+      $("opPdf2").addEventListener("click", download);
+    }
+
+    function show(r, verlopen) {
+      rec = r;
+      var of = rec.offerte, a = rec.akkoord;
+      $("opTitle").innerHTML = rec.naam
+        ? "Hoi " + esc(rec.naam) + ", hier is <em>jullie offerte</em>"
+        : "Hier is <em>jullie offerte</em>";
+      $("opOfferte").innerHTML = '<div class="op-doc">' + offerteHtml(of, b()) +
+        '<div class="op-pdf"><button type="button" class="ms-btn ghost small" id="opPdf">' + PDF_ICOON + 'Download als pdf</button></div></div>';
+      $("opOfferte").hidden = false;
+      $("opPdf").addEventListener("click", download);
+      if (a) {
+        $("opIntro").innerHTML = "Deze offerte is getekend door <strong>" + esc(a.naam) + "</strong> op " + esc(tijdVol(a.op)) + ". Dank je wel!";
+        toonGetekend(false);
+        return;
+      }
+      $("opDone").hidden = true;
+      if (verlopen || offerteVerlopen(of)) {
+        $("opIntro").innerHTML = "Deze offerte was geldig tot <strong>" + esc(datumVol(of.geldig)) + "</strong>. " +
+          "Neem even contact op, dan maak ik een nieuwe voor jullie.";
+        $("opTeken").hidden = true;
+        return;
+      }
+      $("opIntro").innerHTML = "Lees hem rustig door. Akkoord? Zet onderaan je naam en handtekening" +
+        (of.geldig ? "; de offerte is geldig tot <strong>" + esc(datumVol(of.geldig)) + "</strong>." : ".");
+      var tot = offerteTotalen(of);
+      $("opSamen").textContent = "Met je handtekening ga je akkoord met offerte " + of.nummer + " van " +
+        euro(tot.totaal / 100) + (tot.modus === "geen" ? "" : " incl. btw") + ".";
+      $("opTeken").hidden = false;
+      if (!pad) pad = maakSigPad($("opPad"), function () { $("opPadHint").hidden = !pad.leeg(); say(""); });
+    }
+
+    function laad(verlopen) {
+      return api("GET", "?t=" + token, null, OFFERTE_URL).then(function (r) {
+        if (r.status === 404) {
+          $("opIntro").textContent = "Deze link is niet (meer) geldig. Vraag gerust om een nieuwe.";
+          $("opOfferte").hidden = true; $("opTeken").hidden = true; $("opDone").hidden = true;
+          return;
+        }
+        if (!r.ok || !r.data.offerte) {
+          $("opIntro").textContent = "De offerte kon niet geladen worden. Laad de pagina over een momentje opnieuw.";
+          return;
+        }
+        show(r.data, verlopen);
+      }, function () {
+        $("opIntro").textContent = "Geen verbinding. Controleer je internet en laad de pagina opnieuw.";
+      });
+    }
+
+    $("opWis").addEventListener("click", function () { if (pad) pad.wis(); });
+    $("opSend").addEventListener("click", function () {
+      var naam = $("opNaam").value.trim();
+      if (naam.length < 2) { say("Vul je naam in.", "err"); $("opNaam").focus(); return; }
+      if (!pad || !sigGenoeg(pad.lijnen())) { say("Zet je handtekening in het vak.", "err"); return; }
+      say("Versturen…");
+      $("opSend").disabled = true;
+      api("POST", "", { t: token, actie: "tekenen", versie: rec.versie, naam: naam, handtekening: pad.lijnen() }, OFFERTE_URL).then(function (r) {
+        $("opSend").disabled = false;
+        if (r.ok) {
+          rec.akkoord = r.data.akkoord;
+          $("opIntro").innerHTML = "Getekend op " + esc(tijdVol(rec.akkoord.op)) + ". Dank je wel!";
+          toonGetekend(true);
+          if ($("opDone").scrollIntoView) $("opDone").scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+        var code = r.data && r.data.error;
+        if (code === "al_getekend" && r.data.akkoord) { rec.akkoord = r.data.akkoord; show(rec); return; }
+        if (code === "gewijzigd") {
+          // nieuwe versie laten zien; naam en handtekening blijven staan
+          return laad().then(function () { say("De offerte is net aangepast. Lees hem nog even door en teken dan opnieuw.", "err"); });
+        }
+        if (code === "verlopen") return laad(true);
+        say((r.data && r.data.melding) || "Versturen lukte niet (" + r.status + "). Probeer het nog eens.", "err");
+      }, function () {
+        $("opSend").disabled = false;
+        say("Geen verbinding. Probeer het nog eens, of laat het me weten via WhatsApp.", "err");
+      });
+    });
+
+    laad();
   }
 
   /* ==========================================================
@@ -6752,6 +7479,20 @@ button { cursor: pointer; }
   });
   $("oShare").addEventListener("click", deelOfferte);
   $("oDelete").addEventListener("click", verwijderOfferte);
+  $("oAkkoordBox").addEventListener("click", function (e) {
+    var b = e.target.closest("button, a");
+    if (!b) return;
+    if (b.id === "oMaakLink") maakOfferteLink();
+    else if (b.id === "oCopyLink") copyText($("oLink").value, "Akkoordlink gekopieerd.");
+    else if (b.id === "oCheck" && editingOfferte) checkOfferte(editingOfferte, true);
+    else if (b.id === "oIntrekken") trekAkkoordIn();
+    else if (b.id === "oMail") {
+      // eerst bewaren, zodat de klant precies ziet wat jij nu ziet; de mail opent daarna gewoon via de link
+      var r = bewaarOfferte();
+      if (r) b.href = offerteMail(r.l);
+      else e.preventDefault();
+    }
+  });
 
   $("lStart").addEventListener("change", function () {
     var s = $("lStart").value, en = $("lEnd").value;
@@ -6813,6 +7554,7 @@ button { cursor: pointer; }
 
   // sneltoetsen
   document.addEventListener("keydown", function (e) {
+    if (FORM_TOKEN || MUZIEK_TOKEN || OFFERTE_TOKEN) return;   // de klant op zijn eigen pagina: geen sneltoetsen van de planning
     if (e.key === "Escape") {
       if (!$("ofOverlay").hidden) { sluitOfferte(); return; }
       closeOverlays(); $("menu").hidden = true; return;
@@ -7247,13 +7989,15 @@ button { cursor: pointer; }
      13. Start
      ========================================================== */
 
-  var FORM_TOKEN = null, MUZIEK_TOKEN = null;
+  var FORM_TOKEN = null, MUZIEK_TOKEN = null, OFFERTE_TOKEN = null;
   try {
     var m = /(?:^|[?&])f=([a-z0-9]{12,40})(?:&|$)/.exec(location.search || "");
     if (m) FORM_TOKEN = m[1];
     var mm = /(?:^|[?&])m=([a-z0-9]{12,40})(?:&|$)/.exec(location.search || "");
     if (mm) MUZIEK_TOKEN = mm[1];
-  } catch (e) { FORM_TOKEN = null; MUZIEK_TOKEN = null; }
+    var mo = /(?:^|[?&])o=([a-z0-9]{12,40})(?:&|$)/.exec(location.search || "");
+    if (mo) OFFERTE_TOKEN = mo[1];
+  } catch (e) { FORM_TOKEN = null; MUZIEK_TOKEN = null; OFFERTE_TOKEN = null; }
 
   if (FORM_TOKEN) {
     // De klant ziet alleen het formulier; de planning blijft dicht.
@@ -7263,6 +8007,11 @@ button { cursor: pointer; }
   if (MUZIEK_TOKEN) {
     // Zelfde idee voor de muzieklink: alleen de muziekpagina, geen planning.
     bootMuziek(MUZIEK_TOKEN);
+    return;
+  }
+  if (OFFERTE_TOKEN) {
+    // en voor de offerte: alleen de offerte en het tekenvak
+    bootOfferte(OFFERTE_TOKEN);
     return;
   }
 

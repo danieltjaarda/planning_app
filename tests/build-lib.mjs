@@ -62,7 +62,8 @@ writeFileSync(join(HERE, "_lead-lib.js"),
   + "state,addD,dowOf,diffD,civ,toMin,toTime,CAPTURED,get LAST_TOAST(){return LAST_TOAST;}};\n",
   "utf8");
 
-// Offerte: bedragen, nummering, invullen vanuit de klant en de pdf-schrijver.
+// Offerte: bedragen, nummering, invullen vanuit de klant, de pdf-schrijver,
+// de handtekening en de offerte als webpagina.
 writeFileSync(join(HERE, "_offerte-lib.js"),
   HEAD
   + "state.offerteMeta={bedrijf:null,tekst:null,btw:null,at:0};\n"
@@ -72,7 +73,8 @@ writeFileSync(join(HERE, "_offerte-lib.js"),
   + cut("  var OFFERTE_DAGEN", "  /* --- offertevenster")
   + "\nmodule.exports={state,parseBedrag,bedragTekst,euro,getal,offerteTotalen,volgendNummer,datumVol,"
   + "offerteAan,offerteBetreft,offerteDetails,bedrijf,nieuweOfferte,offerteNaam,winAnsi,pdfBreedte,"
-  + "pdfAfbreken,pdfStr,ascii85,offertePdf,PAKKETTEN,BEDRIJF,LOGO_PDF};\n",
+  + "pdfAfbreken,pdfStr,ascii85,offertePdf,PAKKETTEN,BEDRIJF,LOGO_PDF,"
+  + "SIG_W,SIG_H,sigStukken,sigKader,sigGenoeg,sigD,sigSvg,tijdVol,offerteHtml};\n",
   "utf8");
 
 console.log("_lib.js, _lead-lib.js en _offerte-lib.js gebouwd");

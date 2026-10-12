@@ -93,6 +93,21 @@ bibliotheek: Helvetica zit in elke pdf-lezer en alleen het logo gaat er als
 plaatje in (`LOGO_PDF`, gemaakt van `mediaspot-logo-dark.svg` van de site).
 Standaardwaarden staan in `BEDRIJF`, `PAKKETTEN` en `OFFERTE_TEKST`.
 
+**Online akkoord** — onder in het offertevenster maakt *Maak akkoordlink* een
+link (`?o=token`) en kopieert hem; *Mail naar klant* opent je mailprogramma
+met een kant-en-klaar mailtje (aan het e-mailadres uit *Aan* of het
+formulier). De klant ziet de offerte in de huisstijl van mediaspot.nl, kan hem
+als pdf downloaden, en geeft akkoord met naam en een handtekening die hij met
+vinger of muis zet. Elke keer dat je de offerte opslaat, ziet de klant die
+nieuwe versie; tekent hij op een versie die intussen veranderd is, dan krijgt
+hij eerst de nieuwe te zien. Na *Geldig tot* kan hij niet meer tekenen. Het
+akkoord komt vanzelf terug (binnen een paar minuten, of meteen
+met *Ververs*): de klant gaat op *Akkoord*, de offerte ligt vast, en de pdf
+krijgt naast het totaal een blok *Voor akkoord* met de handtekening als echte
+lijnen, de naam en het tijdstip. Wil je toch nog iets veranderen, dan haalt
+*Toch wijzigen* (twee keer klikken) de handtekening weg en tekent de klant
+opnieuw via dezelfde link. Offerte of klant verwijderen wist ook de link.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
 **Op de telefoon** (tot 720 px breed, of een telefoon die dwars ligt) wordt het
@@ -152,19 +167,20 @@ andere opslag.
 
 ## Toegang: een wachtwoord op de planning
 
-De planning staat achter een wachtwoord; de formulier- en muzieklinks
-(`?f=token`, `?m=token`) niet.
+De planning staat achter een wachtwoord; de formulier-, muziek- en
+offertelinks (`?f=token`, `?m=token`, `?o=token`) niet.
 Zet in Vercel de omgevingsvariabele `WEEKZICHT_WACHTWOORD` (Settings →
 Environment Variables, Production en Preview) en deploy opnieuw. Daarna:
 
 - `middleware.js` stuurt iedereen zonder geldige cookie van `/` naar
-  `inloggen.html`; een geldige formulier- of muzieklink mag altijd door.
+  `inloggen.html`; een geldige formulier-, muziek- of offertelink mag altijd door.
 - `api/inloggen.js` controleert het wachtwoord en zet een ondertekende,
   HttpOnly-cookie die 30 dagen geldig is. Verander je het wachtwoord, dan
   vervallen alle sessies.
 - Links maken, klanten verwijderen en geüploade draaiboeken bekijken kan
-  alleen ingelogd. Het formulier ophalen, invullen en uploaden, en muziek
-  kiezen en opzoeken, kan de klant met alleen zijn link.
+  alleen ingelogd. Het formulier ophalen, invullen en uploaden, muziek
+  kiezen en opzoeken, en een offerte bekijken en tekenen, kan de klant met
+  alleen zijn link.
 - *Uitloggen* staat in het ⋯-menu.
 
 Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen.
@@ -174,7 +190,8 @@ of Slack, dan haalt die app de link op voor een kaartje. `middleware.js` herkent
 die crawlers en geeft ze een klein pagina'tje met titel op naam van het
 bruidspaar, een omschrijving en `og-formulier.png` (1200×630, huisstijl).
 Gewone bezoekers krijgen gewoon het formulier. Een muzieklink krijgt op
-dezelfde manier een eigen kaartje met `og-muziek.png`. WhatsApp bewaart zo'n
+dezelfde manier een eigen kaartje met `og-muziek.png`, een offertelink met
+`og-offerte.png`. WhatsApp bewaart zo'n
 kaartje een tijdje; een nieuwe link laat altijd de actuele versie zien. Lokaal zet je
 hem in `.env`; `dev.mjs` doet dan hetzelfde als de middleware.
 
@@ -236,6 +253,18 @@ scène; elk nummer is `{ yt, titel, artiest, moment, eigen }`, met als moment ee
 van de zes scène-ID's (`voorbereidingen`, `ceremonie`, `fotoshoot`, `diner`,
 `openingsdans`, `feest`).
 
+### Offerte en akkoord: de serverkant
+
+`api/offerte.js` bewaart per token (`offerte:token`) een kopie van de offerte
+en de bedrijfsgegevens, zonder houdbaarheid. Acties: `delen` (alleen ingelogd;
+zet de offerte neer of werkt hem bij, en hoogt `versie` alleen op als de
+inhoud echt veranderd is), `tekenen` (de klant: naam, handtekening en de
+`versie` die hij zag), `intrekken` en `verwijderen` (alleen ingelogd). Is er
+getekend, dan weigert `delen` met 409: de getekende versie blijft staan tot je
+intrekt. Een handtekening is een lijst lijnen `[x, y, x, y, …]` in een vlak van
+1000 × 500, gehele getallen; de server knipt af op dat vlak en weigert een tik
+of streepje. "Verlopen" rekent met de datum in Nederland.
+
 ## Structuur
 
 ```
@@ -248,14 +277,15 @@ api/_sessie.js       cookie ondertekenen en controleren
 src/inloggen.html    de inlogpagina → public/inloggen.html
 api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
 api/muziek.js        Vercel-functie: muzieklink aanmaken, YouTube-link opzoeken, keuze bewaren en ophalen
+api/offerte.js       Vercel-functie: offerte delen met de klant, akkoord met handtekening bewaren
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
 api/_opslag.js       Redis-opslag (Upstash REST) of geheugen lokaal, gedeeld door de functies
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
-src/og-*.png         kaartjes voor WhatsApp e.d. bij formulier- en muzieklinks
+src/og-*.png         kaartjes voor WhatsApp e.d. bij formulier-, muziek- en offertelinks
 dev.mjs              lokale server voor public/ + de api-functies
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
-tests/               ~650 controles, zie hieronder
+tests/               ~770 controles, zie hieronder
 ```
 
 `src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
@@ -303,6 +333,13 @@ npm test
   pdf, en de pdf zelf: kloppende xref en streamlengtes, het logo links boven,
   meerdere pagina's. Plus de knoppen in de app: regels, pakketten, btw,
   download, bewaren bij de klant, verwijderen, en exporteren zonder artifact
+- **akkoord** — `api/offerte.js` (versies, niets veranderd = zelfde versie,
+  tekenen op een oude versie, naam en handtekening controleren, verlopen op
+  Nederlandse tijd, geen tweede handtekening, intrekken, alleen ingelogd), de
+  handtekening als svg en als lijnen in de pdf, de offerte als webpagina, en
+  de keten: akkoordlink maken → mail → klant tekent op een eigen pagina
+  (terwijl jij nog iets aanpast) → akkoord terug, status Akkoord, offerte op
+  slot → toch wijzigen → verlopen → verwijderen
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
   groottes, de opbouw van de aanroep (foto, PDF, tekst), opschonen van het
   antwoord, fouten van het model, limiet per link
@@ -329,7 +366,10 @@ repository; ze leven in de opslag: Redis achter het wachtwoord op Vercel, de
 - De offerte-pdf gebruikt Helvetica, niet het lettertype van mediaspot.nl: een
   eigen lettertype zou in elke pdf ingesloten moeten worden. Eén offerte per
   klant; het btw-tarief is 21%.
-- Formulier- en muzieklinks werken alleen op de Vercel-deploy (of via
+- Het online akkoord is een eenvoudige elektronische handtekening (naam,
+  getekende lijnen en tijdstip bij precies die versie van de offerte), geen
+  gekwalificeerde zoals bij DigiD of een notaris.
+- Formulier-, muziek- en offertelinks werken alleen op de Vercel-deploy (of via
   `npm start`), niet als artifact: daar zijn geen api-functies.
 - De muziekpagina speelt af via YouTube. Een video die daar privé, verwijderd of
   niet insluitbaar is, speelt ook hier niet; de klant ziet dan de melding van

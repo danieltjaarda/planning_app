@@ -1,0 +1,232 @@
+// Offerte ter ondertekening — één Vercel-functie voor delen, bekijken en tekenen.
+//
+// De app zet een kopie van de offerte hier neer onder een willekeurig token
+// (?o=token). De klant opent die link, leest de offerte en geeft akkoord met
+// naam en handtekening; de app haalt dat akkoord daarna op. Na het tekenen
+// ligt die versie vast: de planner kan hem pas weer wijzigen na "intrekken".
+//
+// Elke inhoudelijke wijziging hoogt `versie` op. De klant tekent altijd voor
+// de versie die hij op het scherm had; is die intussen aangepast, dan weigert
+// de server en ziet de klant eerst de nieuwe versie.
+//
+//   GET  /api/offerte?t=TOKEN                                   → { naam, offerte, bedrijf, versie, gedeeld, akkoord }
+//   POST /api/offerte { t, actie: "delen", naam, offerte, bedrijf }   (alleen ingelogd) → { ok, versie, gedeeld }
+//   POST /api/offerte { t, actie: "tekenen", versie, naam, handtekening }   → { ok, akkoord }
+//   POST /api/offerte { t, actie: "intrekken" }                 (alleen ingelogd)
+//   POST /api/offerte { t, actie: "verwijderen" }               (alleen ingelogd)
+//
+// handtekening: lijnen als [[x, y, x, y, …], …] in een vlak van PAD_W × PAD_H.
+
+const opslag = require("./_opslag.js");
+const sessie = require("./_sessie.js");
+const TOKEN_RE = /^[a-z0-9]{12,40}$/;
+const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
+const PAD_W = 1000, PAD_H = 500;    // zelfde vlak als SIG_W/SIG_H in de app
+const MAX_LIJNEN = 120;
+const MAX_PUNTEN = 10000;
+const MAX_REGELS = 100;
+const MAX_OFFERTE = 120 * 1024;     // de offerte als JSON
+const BTW = ["incl", "excl", "geen"];
+const BEDRIJF_VELDEN = ["naam", "juridisch", "adres", "telefoon", "email", "web", "kvk", "btw", "iban"];
+
+function clean(v, max) {
+  return String(v == null ? "" : v).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "").slice(0, max || 200).trim();
+}
+
+function getal(v, min, max) {
+  const n = typeof v === "number" ? v : NaN;
+  return isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+/** Alleen de velden die de offerte toont, allemaal begrensd. */
+function cleanOfferte(of) {
+  if (!of || typeof of !== "object" || Array.isArray(of)) return null;
+  const regels = (Array.isArray(of.regels) ? of.regels : []).slice(0, MAX_REGELS).map((r) => {
+    r = r && typeof r === "object" ? r : {};
+    const aantal = getal(r.aantal, -1e6, 1e6);
+    return { oms: clean(r.oms, 4000), aantal: aantal == null ? 1 : aantal, prijs: getal(r.prijs, -1e8, 1e8) };
+  }).filter((r) => r.oms || r.prijs != null);
+  if (!regels.length) return null;
+  const tarief = getal(of.tarief, 0, 100);
+  return {
+    nummer: clean(of.nummer, 40),
+    datum: DATUM_RE.test(String(of.datum || "")) ? of.datum : "",
+    geldig: DATUM_RE.test(String(of.geldig || "")) ? of.geldig : null,
+    aan: clean(of.aan, 1000),
+    betreft: clean(of.betreft, 300),
+    details: clean(of.details, 3000),
+    regels,
+    btw: BTW.indexOf(of.btw) >= 0 ? of.btw : "incl",
+    tarief: tarief == null ? 21 : tarief,
+    tekst: clean(of.tekst, 4000)
+  };
+}
+
+function cleanBedrijf(b) {
+  const out = {};
+  b = b && typeof b === "object" ? b : {};
+  for (const k of BEDRIJF_VELDEN) out[k] = clean(b[k], k === "adres" ? 500 : 200);
+  return out;
+}
+
+/** Lijnen van gehele punten binnen het vlak; null als het geen handtekening is. */
+function cleanHandtekening(lijnen) {
+  if (!Array.isArray(lijnen) || !lijnen.length || lijnen.length > MAX_LIJNEN) return null;
+  const out = [];
+  let punten = 0, x0 = PAD_W, x1 = 0, y0 = PAD_H, y1 = 0;
+  for (const l of lijnen) {
+    if (!Array.isArray(l) || l.length < 2 || l.length % 2) return null;
+    const lijn = [];
+    for (let i = 0; i < l.length; i += 2) {
+      const x = l[i], y = l[i + 1];
+      if (typeof x !== "number" || typeof y !== "number" || !isFinite(x) || !isFinite(y)) return null;
+      const px = Math.max(0, Math.min(PAD_W, Math.round(x))), py = Math.max(0, Math.min(PAD_H, Math.round(y)));
+      lijn.push(px, py);
+      x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py);
+    }
+    punten += lijn.length / 2;
+    if (punten > MAX_PUNTEN) return null;
+    out.push(lijn);
+  }
+  // een tik of een streepje is geen handtekening
+  if (punten < 8 || Math.max(x1 - x0, y1 - y0) < 60) return null;
+  return out;
+}
+
+/** De datum van vandaag in Nederland, als JJJJ-MM-DD. */
+function vandaag(nu) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam", year: "numeric", month: "2-digit", day: "2-digit" }).format(nu);
+}
+
+function parseBody(req) {
+  const b = req.body;
+  if (b == null || b === "") return {};
+  if (typeof b === "object") return b;
+  try { return JSON.parse(String(b)); } catch (e) { return null; }
+}
+
+function send(res, status, obj) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  res.end(JSON.stringify(obj));
+}
+
+function tokenOf(req, body) {
+  const q = req.query && req.query.t;
+  const t = clean(q != null ? q : body && body.t, 40);
+  return TOKEN_RE.test(t) ? t : null;
+}
+
+function publiek(rec) {
+  return {
+    naam: rec.naam || "",
+    offerte: rec.offerte || null,
+    bedrijf: rec.bedrijf || null,
+    versie: rec.versie || 0,
+    gedeeld: rec.gedeeld || null,
+    akkoord: rec.akkoord || null
+  };
+}
+
+async function handle(req, res, db, opts) {
+  const nu = (opts && opts.nu) || (() => new Date());
+  if (!db) return send(res, 503, { error: "geen_opslag", melding: "Er is nog geen opslag gekoppeld (KV_REST_API_URL / KV_REST_API_TOKEN)." });
+
+  const method = (req.method || "GET").toUpperCase();
+  if (method !== "GET" && method !== "POST") return send(res, 405, { error: "methode" });
+
+  const body = method === "POST" ? parseBody(req) : {};
+  if (body === null) return send(res, 400, { error: "ongeldige_json" });
+
+  const t = tokenOf(req, body);
+  if (!t) return send(res, 400, { error: "ongeldig_token" });
+  const key = "offerte:" + t;
+
+  if (method === "GET") {
+    const rec = await db.get(key);
+    if (!rec) return send(res, 404, { error: "onbekend" });
+    return send(res, 200, publiek(rec));
+  }
+
+  const actie = clean(body.actie, 20);
+
+  // Delen, intrekken en verwijderen doet alleen de planner zelf.
+  if (actie !== "tekenen" && !sessie.ingelogd(req)) {
+    return send(res, 401, { error: "niet_ingelogd", melding: "Je bent niet (meer) ingelogd. Laad de pagina opnieuw en log in." });
+  }
+
+  if (actie === "delen") {
+    const offerte = cleanOfferte(body.offerte);
+    if (!offerte) return send(res, 400, { error: "leeg", melding: "Zet eerst minstens één regel in de offerte." });
+    if (JSON.stringify(offerte).length > MAX_OFFERTE) return send(res, 413, { error: "te_groot", melding: "De offerte is te lang om te delen." });
+    const bedrijf = cleanBedrijf(body.bedrijf);
+    const old = await db.get(key);
+    if (old && old.akkoord) return send(res, 409, { error: "al_getekend", akkoord: old.akkoord, melding: "De klant heeft deze offerte al getekend." });
+    const naam = clean(body.naam, 200);
+    // niets veranderd: zelfde versie, dan kan een klant die de pagina open heeft gewoon tekenen
+    if (old && JSON.stringify([old.offerte, old.bedrijf]) === JSON.stringify([offerte, bedrijf])) {
+      if (old.naam !== naam) await db.set(key, Object.assign({}, old, { naam }));
+      return send(res, 200, { ok: true, versie: old.versie, gedeeld: old.gedeeld });
+    }
+    const rec = {
+      naam, offerte, bedrijf,
+      versie: (old && old.versie ? old.versie : 0) + 1,
+      gedeeld: nu().toISOString(),
+      aangemaakt: old && old.aangemaakt ? old.aangemaakt : nu().toISOString(),
+      akkoord: null
+    };
+    await db.set(key, rec);
+    return send(res, 200, { ok: true, versie: rec.versie, gedeeld: rec.gedeeld });
+  }
+
+  if (actie === "tekenen") {
+    const old = await db.get(key);
+    if (!old) return send(res, 404, { error: "onbekend", melding: "Deze link is niet (meer) geldig." });
+    if (old.akkoord) return send(res, 409, { error: "al_getekend", akkoord: old.akkoord, melding: "Deze offerte is al getekend." });
+    if (body.versie !== old.versie) {
+      return send(res, 409, { error: "gewijzigd", melding: "De offerte is net aangepast. Bekijk de nieuwe versie en teken opnieuw." });
+    }
+    if (old.offerte && old.offerte.geldig && old.offerte.geldig < vandaag(nu())) {
+      return send(res, 410, { error: "verlopen", melding: "Deze offerte is verlopen. Neem even contact op voor een nieuwe." });
+    }
+    const naam = clean(body.naam, 120);
+    if (naam.length < 2 || !/\p{L}/u.test(naam)) return send(res, 400, { error: "naam", melding: "Vul je naam in." });
+    const handtekening = cleanHandtekening(body.handtekening);
+    if (!handtekening) return send(res, 400, { error: "handtekening", melding: "Zet je handtekening in het vak." });
+    const akkoord = { naam, handtekening, op: nu().toISOString(), versie: old.versie };
+    await db.set(key, Object.assign({}, old, { akkoord }));
+    return send(res, 200, { ok: true, akkoord });
+  }
+
+  if (actie === "intrekken") {
+    const old = await db.get(key);
+    if (!old) return send(res, 404, { error: "onbekend" });
+    // nieuwe versie: een pagina die nog open staat kan de oude niet meer tekenen
+    await db.set(key, Object.assign({}, old, { akkoord: null, versie: (old.versie || 0) + 1 }));
+    return send(res, 200, { ok: true, versie: (old.versie || 0) + 1 });
+  }
+
+  if (actie === "verwijderen") {
+    await db.del(key);
+    return send(res, 200, { ok: true });
+  }
+
+  return send(res, 400, { error: "onbekende_actie" });
+}
+
+module.exports = async function (req, res) {
+  try {
+    await handle(req, res, opslag.store(), null);
+  } catch (e) {
+    send(res, 502, { error: "opslag", melding: String(e && e.message || e) });
+  }
+};
+module.exports.handle = handle;
+module.exports.memoryStore = opslag.memoryStore;
+module.exports.cleanOfferte = cleanOfferte;
+module.exports.cleanHandtekening = cleanHandtekening;
+module.exports.vandaag = vandaag;
+module.exports.PAD_W = PAD_W;
+module.exports.PAD_H = PAD_H;

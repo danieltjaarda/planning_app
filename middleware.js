@@ -1,5 +1,5 @@
-// Vercel-middleware: de planning zit achter een wachtwoord, de formulier- en
-// muzieklinks (?f=token, ?m=token) niet. Draait vóór het serveren van de statische pagina.
+// Vercel-middleware: de planning zit achter een wachtwoord, de formulier-,
+// muziek- en offertelinks (?f=token, ?m=token, ?o=token) niet. Draait vóór het serveren van de statische pagina.
 //
 // Zelfde cookie-controle als api/_sessie.js, maar met Web Crypto omdat
 // middleware in de edge-runtime draait. Geen WEEKZICHT_WACHTWOORD → open.
@@ -15,7 +15,7 @@ function escHtml(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** Naam van het bruidspaar bij een token, uit dezelfde Redis als api/formulier en api/muziek. */
+/** Naam van het bruidspaar bij een token, uit dezelfde Redis als api/formulier, api/muziek en api/offerte. */
 export async function lookupName(token, prefix) {
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const key = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -33,15 +33,28 @@ export async function lookupName(token, prefix) {
 }
 
 /** De kleine pagina die WhatsApp, iMessage e.d. te zien krijgen: alleen de kaart. */
+const PREVIEW = {
+  formulier: {
+    title: (naam) => naam ? naam + ", vertel me over jullie trouwdag" : "Vertel me over jullie trouwdag",
+    desc: "Vul het formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. Duurt een paar minuten.",
+    img: "/og-formulier.png", link: "Open het formulier"
+  },
+  muziek: {
+    title: (naam) => naam ? naam + ", kies de muziek voor jullie film" : "Kies de muziek voor jullie trouwfilm",
+    desc: "Zes scènes, zes nummers: luister per scène onze suggesties of plak een eigen YouTube-link.",
+    img: "/og-muziek.png", link: "Open de muziekpagina"
+  },
+  offerte: {
+    title: (naam) => naam ? naam + ", jullie offerte voor de trouwfilm" : "Jullie offerte voor de trouwfilm",
+    desc: "Lees de offerte rustig door en geef akkoord met je naam en handtekening.",
+    img: "/og-offerte.png", link: "Open de offerte"
+  }
+};
+const PARAM = { formulier: "f", muziek: "m", offerte: "o" };
+
 export function previewHtml(naam, pageUrl, soort) {
-  const muziek = soort === "muziek";
-  const title = muziek
-    ? (naam ? naam + ", kies de muziek voor jullie film" : "Kies de muziek voor jullie trouwfilm")
-    : (naam ? naam + ", vertel me over jullie trouwdag" : "Vertel me over jullie trouwdag");
-  const desc = muziek
-    ? "Zes scènes, zes nummers: luister per scène onze suggesties of plak een eigen YouTube-link."
-    : "Vul het formulier in, dan weet ik precies wat ik op jullie dag moet vastleggen. Duurt een paar minuten.";
-  const img = SITE + (muziek ? "/og-muziek.png" : "/og-formulier.png");
+  const p = PREVIEW[soort] || PREVIEW.formulier;
+  const title = p.title(naam), desc = p.desc, img = SITE + p.img;
   const t = escHtml(title), d = escHtml(desc), u = escHtml(pageUrl);
   return "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\">" +
     "<title>" + t + " | Mediaspot</title>" +
@@ -59,7 +72,15 @@ export function previewHtml(naam, pageUrl, soort) {
     "<meta name=\"twitter:title\" content=\"" + t + "\">" +
     "<meta name=\"twitter:description\" content=\"" + d + "\">" +
     "<meta name=\"twitter:image\" content=\"" + img + "\">" +
-    "</head><body><p>" + t + ". <a href=\"" + u + "\">" + (muziek ? "Open de muziekpagina" : "Open het formulier") + "</a>.</p></body></html>";
+    "</head><body><p>" + t + ". <a href=\"" + u + "\">" + p.link + "</a>.</p></body></html>";
+}
+
+/** "formulier", "muziek" of "offerte" als de url een geldige klantlink is, anders null. */
+export function linkSoort(params) {
+  for (const soort of Object.keys(PARAM)) {
+    if (TOKEN_RE.test(params.get(PARAM[soort]) || "")) return soort;
+  }
+  return null;
 }
 
 export function isCrawler(userAgent) {
@@ -91,11 +112,10 @@ export async function sessieGeldig(cookieHeader, secret) {
 
 export default async function middleware(request) {
   const url = new URL(request.url);
-  // de klant met een formulier- of muzieklink mag altijd door
-  const f = url.searchParams.get("f") || "", m = url.searchParams.get("m") || "";
-  const soort = TOKEN_RE.test(f) ? "formulier" : TOKEN_RE.test(m) ? "muziek" : null;
+  // de klant met een formulier-, muziek- of offertelink mag altijd door
+  const soort = linkSoort(url.searchParams);
   if (soort) {
-    const token = soort === "muziek" ? m : f, param = soort === "muziek" ? "m" : "f";
+    const param = PARAM[soort], token = url.searchParams.get(param);
     // WhatsApp e.d. halen de link op voor een voorvertoning: geef ze een
     // kleine pagina met titel, tekst en afbeelding, op naam van het bruidspaar.
     if (isCrawler(request.headers.get("user-agent"))) {

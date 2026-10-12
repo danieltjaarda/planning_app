@@ -4,11 +4,14 @@
 //
 // Met { planning: true } beantwoordt hij ook api/planning (anders 404, en
 // bewaart de app alles lokaal). fetch.offline = true laat elk verzoek mislukken.
+// api/offerte rekent met dezelfde bevroren klok als de tests (1 september 2026),
+// tenzij { nu } iets anders geeft.
 const handler = require('../api/formulier.js');
 const draaiboek = require('../api/draaiboek.js');
 const muziek = require('../api/muziek.js');
 const bestanden = require('../api/_bestanden.js');
 const planning = require('../api/planning.js');
+const offerte = require('../api/offerte.js');
 
 module.exports = function fakeApi(map, options) {
   const routes = options || {};
@@ -29,6 +32,11 @@ module.exports = function fakeApi(map, options) {
     if (u.pathname === '/api/planning' && routes.planning) {
       fetch.planning.push(req.method + ' ' + u.search);
       await planning.handle(req, res, db, { eisWachtwoord: false });
+      return { ok: status >= 200 && status < 300, status, text: async () => out };
+    }
+    if (u.pathname === '/api/offerte') {
+      fetch.offerte.push(req.method + ' ' + (req.body ? req.body.actie : u.search));
+      await offerte.handle(req, res, db, { nu: routes.nu || (() => new Date(Date.UTC(2026, 8, 1, 10, 0, 0))) });
       return { ok: status >= 200 && status < 300, status, text: async () => out };
     }
     if (u.pathname === '/api/draaiboek') {
@@ -59,5 +67,6 @@ module.exports = function fakeApi(map, options) {
   fetch.files = files;
   fetch.offline = false;
   fetch.planning = [];
+  fetch.offerte = [];
   return fetch;
 };
