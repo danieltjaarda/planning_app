@@ -1441,6 +1441,18 @@ button { cursor: pointer; }
 .of-bedrijf .field textarea { min-height: 0; }
 .formbox a.btn-line { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
 .of-akkoord .of-let { color: var(--now); }
+.ml-rij { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.field select, .ml-rij input[type="time"] {
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink);
+  font-size: 14px;
+}
+.field select { width: 100%; height: 38px; }
+.ml-rij input[type="time"] { width: 120px; font-family: var(--mono); font-size: 13px; }
+.ml-uitleg { margin-top: -6px; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
 .of-mailform .field textarea { min-height: 170px; background: var(--surface); }
 .of-mailform .field input[type="email"], .of-mailform .field input[type="text"] { background: var(--surface); }
 #omVan:empty { display: none; }
@@ -2150,6 +2162,7 @@ button { cursor: pointer; }
           <div class="menu-head"><span class="mark">WZ</span><span class="menu-title">Weekzicht</span><button id="menuClose" aria-label="Menu sluiten">✕</button></div>
           <button id="miImport">Importeer .ics-bestand…</button>
           <button id="miWeekend"><span>Weekend tonen</span><span class="k" id="weekendState">aan</span></button>
+          <button id="miMeldingen">Meldingen per mail…</button>
           <hr>
           <button id="miCsv">Exporteer periode (.csv)</button>
           <button id="miKlantCsv">Exporteer klanten (.csv)</button>
@@ -2517,6 +2530,42 @@ button { cursor: pointer; }
   </div>
 </div>
 
+<div class="overlay" id="mlOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
+    <header>
+      <h2 id="mlTitle">Meldingen per mail</h2>
+      <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <p class="note" id="mlNaar">Even kijken of mailen aan staat…</p>
+      <div class="ml-rij">
+        <label class="check"><input type="checkbox" id="mlDag"> Elke ochtend een dagoverzicht om</label>
+        <input type="time" id="mlDagTijd" step="300" aria-label="Tijd van het dagoverzicht">
+      </div>
+      <span class="ml-uitleg">Afspraken, belafspraken en geboekte klussen van die dag, open taken en de bruiloften van morgen.</span>
+      <div class="field">
+        <label class="label" for="mlVooraf">Herinnering vóór afspraken en belafspraken</label>
+        <select id="mlVooraf">
+          <option value="0">Uit</option>
+          <option value="10">10 minuten van tevoren</option>
+          <option value="15">15 minuten van tevoren</option>
+          <option value="30">30 minuten van tevoren</option>
+          <option value="60">1 uur van tevoren</option>
+          <option value="120">2 uur van tevoren</option>
+        </select>
+      </div>
+      <label class="check"><input type="checkbox" id="mlKlant"> Bericht als een klant het formulier invult of muziek kiest</label>
+      <span class="ml-uitleg">Een getekende offerte meld ik altijd, met de getekende pdf.</span>
+    </div>
+    <footer>
+      <button class="btn-line" id="mlTest" title="Stuurt meteen het dagoverzicht van vandaag">Stuur nu een dagoverzicht</button>
+      <span class="spacer"></span>
+      <button class="btn-line" data-close>Annuleren</button>
+      <button class="btn-primary" id="mlSave">Opslaan</button>
+    </footer>
+  </div>
+</div>
+
 <div class="overlay" id="impOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="impTitle">
     <header>
@@ -2748,6 +2797,7 @@ button { cursor: pointer; }
     stHidden: {},        // status-id → true als weggefilterd
     settings: { weekend: true, dayStart: 7, dayEnd: 21 },
     offerteMeta: { bedrijf: null, tekst: null, btw: null, at: 0 },   // zie 6e
+    meldingen: { dagoverzicht: true, dagTijd: "07:00", vooraf: 30, klant: true, at: 0 },   // zie 6g
     hidden: {},          // categorie-id → true als verborgen
     query: ""
   };
@@ -2768,7 +2818,7 @@ button { cursor: pointer; }
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({
         events: state.events, tasks: state.tasks, leads: state.leads, settings: state.settings,
-        offerte: state.offerteMeta
+        offerte: state.offerteMeta, meldingen: state.meldingen
       }));
     } catch (e) { /* privémodus e.d. — de app werkt door */ }
   }
@@ -2787,6 +2837,7 @@ button { cursor: pointer; }
         if (typeof d.settings.dayEnd === "number") state.settings.dayEnd = d.settings.dayEnd;
       }
       if (d && d.offerte && typeof d.offerte === "object") neemOfferteMeta(d.offerte);
+      if (d && d.meldingen && typeof d.meldingen === "object") neemMeldingen(d.meldingen);
     } catch (e) { /* onleesbare cache — start leeg */ }
   }
 
@@ -6802,6 +6853,80 @@ button { cursor: pointer; }
   }
 
   /* ==========================================================
+     6g. Meldingen per mail — dagoverzicht en herinneringen vooraf
+     ========================================================== */
+
+  // De server stuurt ze (api/herinneringen.js, elke vijf minuten via Vercel
+  // Cron); hier stel je in wat je wilt. De instellingen gaan als
+  // meta/meldingen mee naar de server, net als de rest van de planning.
+
+  var HERINNERING_URL = "api/herinneringen";
+  var VOORAF_KEUZES = [0, 10, 15, 30, 60, 120];
+
+  function neemMeldingen(d) {
+    var m = state.meldingen;
+    if (typeof d.dagoverzicht === "boolean") m.dagoverzicht = d.dagoverzicht;
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(d.dagTijd || ""))) m.dagTijd = d.dagTijd;
+    if (VOORAF_KEUZES.indexOf(d.vooraf) >= 0) m.vooraf = d.vooraf;
+    if (typeof d.klant === "boolean") m.klant = d.klant;
+    m.at = typeof d.at === "number" ? d.at : 0;
+  }
+
+  function meldingenDoc() {
+    var m = state.meldingen;
+    return { dagoverzicht: m.dagoverzicht, dagTijd: m.dagTijd, vooraf: m.vooraf, klant: m.klant, at: m.at };
+  }
+
+  function openMeldingen() {
+    var m = state.meldingen;
+    $("mlDag").checked = m.dagoverzicht;
+    $("mlDagTijd").value = m.dagTijd;
+    $("mlVooraf").value = String(m.vooraf);
+    $("mlKlant").checked = m.klant;
+    $("menu").hidden = true;
+    $("menuBtn").setAttribute("aria-expanded", "false");
+    $("mlOverlay").hidden = false;
+    $("mlNaar").textContent = "Even kijken of mailen aan staat…";
+    vraagMailStatus().then(function (aan) {
+      $("mlNaar").textContent = aan
+        ? "De meldingen gaan naar " + (mailVan || "je eigen adres") + "; Forward Email stuurt ze door naar je inbox."
+        : "Mailen staat nog niet aan op de server (MAIL_VAN en MAIL_WACHTWOORD in Vercel). Je kunt dit al wel instellen.";
+      $("mlTest").disabled = !aan;
+    });
+  }
+
+  function bewaarMeldingen() {
+    var m = state.meldingen, tijd = $("mlDagTijd").value;
+    m.dagoverzicht = $("mlDag").checked;
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(tijd)) m.dagTijd = tijd;
+    var v = parseInt($("mlVooraf").value, 10);
+    m.vooraf = VOORAF_KEUZES.indexOf(v) >= 0 ? v : 30;
+    m.klant = $("mlKlant").checked;
+    m.at = Date.now();
+    saveLocal();
+    if (dbReady && db) db.doc("meta/meldingen").set(meldingenDoc())["catch"](function () {});
+    $("mlOverlay").hidden = true;
+    toast("Meldingen opgeslagen.");
+  }
+
+  function testMeldingen() {
+    var btn = $("mlTest");
+    btn.disabled = true;
+    btn.textContent = "Versturen…";
+    api("POST", "", { actie: "test" }, HERINNERING_URL).then(function (r) {
+      btn.disabled = false;
+      btn.textContent = "Stuur nu een dagoverzicht";
+      if (r.ok) toast("Dagoverzicht gestuurd naar " + r.data.aan + ".");
+      else if (r.status === 404 || r.status === 405 || r.status === 501) toast("Meldingen werken alleen op de online versie (Vercel).");
+      else toast(offerteReden(r));
+    }, function () {
+      btn.disabled = false;
+      btn.textContent = "Stuur nu een dagoverzicht";
+      toast(apiReason(null));
+    });
+  }
+
+  /* ==========================================================
      7. ICS-import
      ========================================================== */
 
@@ -7267,6 +7392,7 @@ button { cursor: pointer; }
     $("evOverlay").hidden = true;
     $("impOverlay").hidden = true;
     $("ldOverlay").hidden = true;
+    $("mlOverlay").hidden = true;
     editingId = null;
     editingLead = null;
   }
@@ -7339,6 +7465,9 @@ button { cursor: pointer; }
   });
   $("menuClose").addEventListener("click", closeMenu);
   $("miImport").addEventListener("click", openImport);
+  $("miMeldingen").addEventListener("click", openMeldingen);
+  $("mlSave").addEventListener("click", bewaarMeldingen);
+  $("mlTest").addEventListener("click", testMeldingen);
   $("miWeekend").addEventListener("click", function () {
     state.settings.weekend = !state.settings.weekend;
     $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
@@ -7821,6 +7950,17 @@ button { cursor: pointer; }
         return;
       }
       neemOfferteMeta(d);
+      saveLocal();
+    }, function () {});
+
+    // meldingen per mail: zelfde regel, de laatste wijziging wint
+    db.doc("meta/meldingen").onSnapshot(function (snap) {
+      var d = snap.exists ? (snap.data() || {}) : null, m = state.meldingen;
+      if (!d || (m.at || 0) > (d.at || 0)) {
+        if (m.at && db) db.doc("meta/meldingen").set(meldingenDoc())["catch"](function () {});
+        return;
+      }
+      neemMeldingen(d);
       saveLocal();
     }, function () {});
 

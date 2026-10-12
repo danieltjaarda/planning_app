@@ -23,5 +23,11 @@
       "includeFiles": "src/weekzicht.html",
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/herinneringen",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

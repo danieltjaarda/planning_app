@@ -12,6 +12,7 @@ const muziek = require('../api/muziek.js');
 const bestanden = require('../api/_bestanden.js');
 const planning = require('../api/planning.js');
 const offerte = require('../api/offerte.js');
+const herinneringen = require('../api/herinneringen.js');
 
 module.exports = function fakeApi(map, options) {
   const routes = options || {};
@@ -39,6 +40,10 @@ module.exports = function fakeApi(map, options) {
       await offerte.handle(req, res, db, { nu: routes.nu || (() => new Date(Date.UTC(2026, 8, 1, 10, 0, 0))), mail: routes.mail });
       return { ok: status >= 200 && status < 300, status, text: async () => out };
     }
+    if (u.pathname === '/api/herinneringen') {
+      await herinneringen.handle(req, res, db, { nu: routes.nu || (() => new Date(Date.UTC(2026, 8, 1, 10, 0, 0))), mail: routes.mail });
+      return { ok: status >= 200 && status < 300, status, text: async () => out };
+    }
     if (u.pathname === '/api/draaiboek') {
       // nep-OpenRouter: geeft altijd dezelfde tijdlijn terug en onthoudt wat er gevraagd is
       fetch.openrouter.push(req.body);
@@ -54,11 +59,11 @@ module.exports = function fakeApi(map, options) {
         const id = decodeURIComponent(url).match(/v=([A-Za-z0-9_-]{11})/)[1];
         if (id === 'weg00000000') return { ok: false, status: 404, json: async () => ({}) };
         return { ok: true, status: 200, json: async () => ({ title: 'BANNERS - Someone To You (Official Video)', author_name: 'BANNERSVEVO' }) };
-      });
+      }, { mail: routes.mail });
       return { ok: status >= 200 && status < 300, status, text: async () => out };
     }
     if (u.pathname !== '/api/formulier') return { ok: false, status: 404, text: async () => 'niet gevonden' };
-    await handler.handle(req, res, db, files);
+    await handler.handle(req, res, db, files, { mail: routes.mail });
     return { ok: status >= 200 && status < 300, status, text: async () => out };
   }
   fetch.store = store;

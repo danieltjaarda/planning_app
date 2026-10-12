@@ -14,6 +14,8 @@
 const opslag = require("./_opslag.js");
 const bestanden = require("./_bestanden.js");
 const sessie = require("./_sessie.js");
+const mail = require("./_mail.js");
+const meldingen = require("./_meldingen.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const MAX_TEXT = 4000;
 const MAX_LIST = 40;
@@ -58,7 +60,7 @@ function tokenOf(req, body) {
   return TOKEN_RE.test(t) ? t : null;
 }
 
-async function handle(req, res, db, files) {
+async function handle(req, res, db, files, opts) {
   if (!db) return send(res, 503, { error: "geen_opslag", melding: "Er is nog geen opslag gekoppeld (KV_REST_API_URL / KV_REST_API_TOKEN)." });
 
   const method = (req.method || "GET").toUpperCase();
@@ -112,6 +114,8 @@ async function handle(req, res, db, files) {
     if (!Object.keys(antwoorden).length) return send(res, 400, { error: "leeg" });
     const rec = Object.assign({}, old, { antwoorden, ingevuld: new Date().toISOString() });
     await db.set(key, rec);
+    // een mailtje aan de planner; mislukt dat, dan staat het formulier er toch
+    await meldingen.klantMelding(db, (opts && opts.mail) || mail.forwardEmail(), meldingen.formulierMelding(rec, !!old.ingevuld));
     return send(res, 200, { ok: true, ingevuld: rec.ingevuld });
   }
 

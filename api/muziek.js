@@ -16,6 +16,8 @@
 
 const opslag = require("./_opslag.js");
 const sessie = require("./_sessie.js");
+const mail = require("./_mail.js");
+const meldingen = require("./_meldingen.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 const MAX_SONGS = 6; // in een trouwfilm passen zes nummers: één per scène (zelfde grens als MUZIEK_MAX in de app)
@@ -96,7 +98,7 @@ async function lookup(doFetch, yt) {
   return { yt, titel: parts.titel, artiest: parts.artiest, kanaal: clean(j && j.author_name, 200) };
 }
 
-async function handle(req, res, db, fetchFn) {
+async function handle(req, res, db, fetchFn, opts) {
   const doFetch = fetchFn || fetch;
   if (!db) return send(res, 503, { error: "geen_opslag", melding: "Er is nog geen opslag gekoppeld (KV_REST_API_URL / KV_REST_API_TOKEN)." });
 
@@ -152,6 +154,7 @@ async function handle(req, res, db, fetchFn) {
     if (!nummers.length && !opmerking) return send(res, 400, { error: "leeg", melding: "Kies minstens één nummer, of laat een opmerking achter." });
     const rec = Object.assign({}, old, { nummers, opmerking, ingevuld: new Date().toISOString() });
     await db.set(key, rec);
+    await meldingen.klantMelding(db, (opts && opts.mail) || mail.forwardEmail(), meldingen.muziekMelding(rec, !!old.ingevuld));
     return send(res, 200, { ok: true, ingevuld: rec.ingevuld, nummers });
   }
 

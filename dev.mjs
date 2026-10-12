@@ -29,6 +29,7 @@ const formulier = require("./api/formulier.js");
 const draaiboek = require("./api/draaiboek.js");
 const muziek = require("./api/muziek.js");
 const offerte = require("./api/offerte.js");
+const herinneringen = require("./api/herinneringen.js");
 const planning = require("./api/planning.js");
 const opslag = require("./api/_opslag.js");
 const bestanden = require("./api/_bestanden.js");
@@ -113,6 +114,14 @@ createServer(async (req, res) => {
     } else {
       await offerte(req, res);
     }
+    return;
+  }
+
+  if (url.pathname === "/api/herinneringen") {
+    req.query = Object.fromEntries(url.searchParams);
+    req.body = req.method === "POST" ? await readBody(req) : undefined;
+    try { await herinneringen.handle(req, res, memory || opslag.store(), null); }
+    catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: "opslag", melding: String(e) })); }
     return;
   }
 

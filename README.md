@@ -116,6 +116,14 @@ de klant een bevestiging met dezelfde pdf als hij zijn e-mailadres invult
 (dat staat er al in als het in *Aan* stond). Zonder Forward Email opent *Mail
 naar klant* gewoon je eigen mailprogramma.
 
+**Meldingen per mail** — in het ⋯-menu onder *Meldingen per mail…*: elke
+ochtend een dagoverzicht (standaard 07:00: afspraken, belafspraken en geboekte
+klussen van vandaag, open taken en wat te laat is, de bruiloften van morgen),
+een herinnering vlak voor elke afspraak en belafspraak (standaard 30 minuten
+van tevoren, met telefoon, locatie en notitie), en een bericht als een klant
+het formulier invult of muziek kiest. *Stuur nu een dagoverzicht* laat meteen
+zien hoe het eruitziet. De server stuurt ze ook als de app dicht is.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
 **Op de telefoon** (tot 720 px breed, of een telefoon die dwars ligt) wordt het
@@ -298,6 +306,21 @@ pdf-schrijver uit `src/weekzicht.html` (zelfde stukken als
 mail die mislukt maakt een handtekening nooit ongedaan; elke poging staat in
 het logboek van de offerte (`mails`).
 
+### Meldingen: de serverkant
+
+`api/herinneringen.js` draait elke vijf minuten via Vercel Cron (`crons` in
+`vercel.json`; minder dan één keer per dag kan alleen op een Pro-team). Hij
+leest de planning uit Redis, kijkt wat er binnen het ingestelde aantal
+minuten begint en of het tijd is voor het dagoverzicht (tot drie uur na de
+ingestelde tijd, voor als een ronde mislukt), en onthoudt in
+`herinneringen:verstuurd` wat al weg is: niets gaat dubbel, ook niet als je hem
+vaker aanroept. Een mislukte mail wordt nog twee keer geprobeerd. Zet je
+`CRON_SECRET` in Vercel (als Secret), dan stuurt Vercel dat mee en weigert de
+functie iedereen zonder. De instellingen staan als `meta/meldingen` in de
+planning. Klantmeldingen komen uit `api/formulier.js` en `api/muziek.js`
+(`api/_meldingen.js`); een mail die mislukt raakt nooit wat de klant instuurde.
+Links in de meldingen gaan naar `APP_URL` (standaard https://app.mediaspot.nl).
+
 ## Structuur
 
 ```
@@ -313,6 +336,8 @@ api/muziek.js        Vercel-functie: muzieklink aanmaken, YouTube-link opzoeken,
 api/offerte.js       Vercel-functie: offerte delen met de klant, akkoord met handtekening bewaren, mailen
 api/_mail.js         mail versturen via Forward Email, en de mail in de huisstijl
 api/_offertepdf.js   de pdf-schrijver uit de app, voor de bijlage
+api/herinneringen.js Vercel Cron: dagoverzicht en herinneringen vooraf per mail
+api/_meldingen.js    instellingen van de meldingen, en de mail als een klant iets doet
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
 api/_opslag.js       Redis-opslag (Upstash REST) of geheugen lokaal, gedeeld door de functies
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
@@ -321,7 +346,7 @@ src/mail-logo.png    het logo in de mails (Gmail toont geen svg)
 dev.mjs              lokale server voor public/ + de api-functies
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
-tests/               ~830 controles, zie hieronder
+tests/               ~880 controles, zie hieronder
 ```
 
 `src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
@@ -382,6 +407,12 @@ npm test
   pdf mee, logboek), melding en bevestiging na het tekenen met de getekende
   pdf (ook als mailen mislukt blijft het akkoord staan), en de knoppen in de
   app en het e-mailveld op de klantpagina, met en zonder mailen
+- **herinneringen** — vooraf (precies binnen het venster, niet als het al
+  begonnen is, over middernacht, twee tegelijk in één mail, niets dubbel,
+  opgeven na drie pogingen), het dagoverzicht (volgorde, alleen geboekte
+  klussen, taken die te laat zijn, morgen, tijdvenster, lege dag), de cron
+  (Nederlandse tijd, CRON_SECRET, opruimen), de testknop, de meldingen bij
+  formulier en muziek, en het instellingenvenster in de app
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
   groottes, de opbouw van de aanroep (foto, PDF, tekst), opschonen van het
   antwoord, fouten van het model, limiet per link
