@@ -1,12 +1,17 @@
 // Een fetch() die rechtstreeks de Vercel-functie aanroept, met een geheugen-
 // opslag in plaats van Redis. Zo test de smoketest de hele keten: app →
 // api/formulier → klantpagina → api/formulier → app.
+//
+// Met { planning: true } beantwoordt hij ook api/planning (anders 404, en
+// bewaart de app alles lokaal). fetch.offline = true laat elk verzoek mislukken.
 const handler = require('../api/formulier.js');
 const draaiboek = require('../api/draaiboek.js');
 const muziek = require('../api/muziek.js');
 const bestanden = require('../api/_bestanden.js');
+const planning = require('../api/planning.js');
 
-module.exports = function fakeApi(map) {
+module.exports = function fakeApi(map, options) {
+  const routes = options || {};
   const store = map || new Map();
   const db = handler.memoryStore(store);
   const files = bestanden.memoryFiles();
@@ -18,8 +23,14 @@ module.exports = function fakeApi(map) {
       query: Object.fromEntries(u.searchParams),
       body: opts.body ? JSON.parse(opts.body) : undefined
     };
+    if (fetch.offline) throw new TypeError('Failed to fetch');
     let status = 200, out = '';
     const res = { statusCode: 200, setHeader() {}, end(s) { status = res.statusCode; out = s; } };
+    if (u.pathname === '/api/planning' && routes.planning) {
+      fetch.planning.push(req.method + ' ' + u.search);
+      await planning.handle(req, res, db, { eisWachtwoord: false });
+      return { ok: status >= 200 && status < 300, status, text: async () => out };
+    }
     if (u.pathname === '/api/draaiboek') {
       // nep-OpenRouter: geeft altijd dezelfde tijdlijn terug en onthoudt wat er gevraagd is
       fetch.openrouter.push(req.body);
@@ -46,5 +57,7 @@ module.exports = function fakeApi(map) {
   fetch.openrouter = [];
   fetch.oembed = [];
   fetch.files = files;
+  fetch.offline = false;
+  fetch.planning = [];
   return fetch;
 };

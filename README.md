@@ -1,8 +1,8 @@
 # Weekzicht
 
 Week-, dag- en klantenoverzicht voor een videografie-planning. Eén HTML-bestand,
-geen build-stap, geen afhankelijkheden in de browser — plus één kleine
-serverfunctie voor het klantformulier. Alles rekent in
+geen build-stap, geen afhankelijkheden in de browser — plus een paar kleine
+serverfuncties voor de opslag en de klantlinks. Alles rekent in
 **Europe/Amsterdam**, ongeacht de tijdzone van de browser — inclusief zomer- en
 wintertijd.
 
@@ -12,8 +12,9 @@ wintertijd.
 npm start          # bouwt public/ en serveert op http://127.0.0.1:8787
 ```
 
-`dev.mjs` serveert `public/` én `api/formulier`, zodat de formulierlink ook
-lokaal werkt (formulieren blijven dan in het geheugen tot je de server stopt).
+`dev.mjs` serveert `public/` én de api-functies, zodat opslag en klantlinks ook
+lokaal werken (zonder Redis-instellingen in `.env` blijft alles in het geheugen
+tot je de server stopt).
 
 De server bindt bewust alleen op `127.0.0.1`; er staan telefoonnummers van
 klanten in.
@@ -73,7 +74,39 @@ de keuze. Scènes en suggesties staan in `MUZIEK_MOMENTEN` en
 `MUZIEK_TEMPLATES` in `src/weekzicht.html`; het maximum in `MUZIEK_MAX` (app)
 en `MAX_SONGS` (server).
 
+**Offerte** — in het klantvenster maak je met *Maak offerte* een offerte voor
+die klant. Nummer (2026-001, 2026-002, … per jaar), datum en geldigheid (30
+dagen) staan er al in, net als wat over de klant bekend is: namen, e-mail en
+telefoon onder *Aan*, de trouwdatum onder *Betreft*, en tijden, locaties en
+gasten uit het formulier onder *Over de dag*. Daaronder zet je zoveel regels
+als je wilt: een omschrijving (de eerste regel is de titel, wat eronder staat
+komt er klein onder), een aantal en een prijs. De pakketten Zilver, Goud en
+Diamant van mediaspot.nl staan als knop klaar. Prijzen zijn incl. of excl.
+21% btw, of zonder btw; de totalen rekenen mee. *Download pdf* maakt een
+A4-pdf met het Mediaspot-logo links boven, je bedrijfsgegevens rechts boven en
+KvK, btw-nummer en IBAN in de voet; op de telefoon zet *Delen* hem meteen in
+WhatsApp of de mail. De offerte wordt bij de klant bewaard (dus ook op je andere
+apparaten), en de klantenlijst noemt het totaal. Bedrijfsgegevens, de tekst
+onderaan en de btw-keuze onthoudt de app voor de volgende offerte (in
+`meta/offerte`). De pdf wordt in de browser zelf geschreven, zonder
+bibliotheek: Helvetica zit in elke pdf-lezer en alleen het logo gaat er als
+plaatje in (`LOGO_PDF`, gemaakt van `mediaspot-logo-dark.svg` van de site).
+Standaardwaarden staan in `BEDRIJF`, `PAKKETTEN` en `OFFERTE_TEKST`.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
+
+**Op de telefoon** (tot 720 px breed, of een telefoon die dwars ligt) wordt het
+een app-indeling: een smalle bovenbalk met de periode, bladeren, een
+kalendertje met de datum van vandaag en een hamburgermenu dat als lade van
+rechts inschuift. Onderin een tabbalk (Week, Dag, Lijst, Klanten, Overzicht).
+*Overzicht* is de zijkolom van de computer: hierna, de week in cijfers, taken,
+klanten en categorieën. Een ronde +-knop rechtsonder maakt een afspraak, of in
+de klantenweergave een klant. In de dagweergave veeg je naar links of rechts
+voor de volgende of vorige dag. De weekweergave schuift vanzelf naar vandaag.
+Vensters komen als blad van onderen, en tekstvelden zijn 16 px, zodat de
+iPhone niet inzoomt. Met *Zet op beginscherm* opent de app zonder
+browserbalk. De schakelpunten staan in de CSS bij "telefoon" en in
+`PHONE_MQ` in het script; houd die twee gelijk.
 
 **Import** van `.ics` uit Google Agenda, Outlook of Apple Agenda: terugkerende
 afspraken worden uitgerekend (dagelijks, wekelijks, maandelijks, jaarlijks,
@@ -83,10 +116,39 @@ overschrijft, in plaats van te verdubbelen.
 
 ## Opslag
 
-Als de pagina als Claude-artifact draait, gebruikt hij de `db`-capability: de
-gegevens leven bij de pagina en zijn op elk apparaat beschikbaar. Lokaal is er
-geen `window.claude`, dus valt de app terug op `localStorage` van die ene
-browser. **De twee delen hun gegevens niet** — ander adres, andere opslag.
+Op de Vercel-deploy (en met `npm start`) bewaart `api/planning.js` de
+afspraken, taken, klanten en instellingen in dezelfde Redis als de formulieren.
+Zo is de planning op elk apparaat en in elke browser dezelfde. Als
+Claude-artifact gebruikt de pagina in plaats daarvan de `db`-capability. Is er
+geen van beide, dan blijft alles in `localStorage` van die ene browser. Het
+labeltje onder in de zijkolom zegt welke van de drie het is: *online
+opgeslagen*, *opgeslagen bij deze pagina* of *alleen op dit apparaat*.
+
+Hoe de serveropslag werkt:
+
+- **Per document.** Elke afspraak, taak en klant is een eigen veld in een
+  Redis-hash (`planning:events`, `planning:tasks`, `planning:leads`,
+  `planning:meta`). Twee apparaten die tegelijk iets wijzigen, overschrijven zo
+  alleen hetzelfde document, nooit de hele lijst. Geen houdbaarheid: dit zijn
+  de gegevens zelf.
+- **Verversen.** De app kijkt elke 30 seconden, en meteen als je het tabblad
+  weer opent, of er iets veranderd is. Een teller (`planning:versie`) zorgt dat
+  er alleen iets wordt opgehaald als er echt iets veranderd is.
+- **Offline.** Wijzigingen gaan via een wachtrij in `localStorage`
+  (`weekzicht.v1.wachtrij`). Valt de verbinding weg, dan blijven ze staan en
+  gaan ze mee zodra hij terug is, ook na herladen. Het labeltje zegt dan *nog
+  niet online opgeslagen*. Start de pagina zonder verbinding, dan werkt hij
+  lokaal; wat je dan maakt, gaat bij de volgende verbinding alsnog mee.
+- **Eerste keer per browser.** Wat er al in `localStorage` stond, gaat
+  eenmalig naar de server; wat de server al heeft, komt erbij. Er raakt dus
+  niets kwijt, ook niet als meerdere browsers elk hun eigen klanten hadden. Een
+  kopie van vóór die koppeling blijft staan in `weekzicht.v1.voor-sync`.
+- **Alleen ingelogd.** Lezen en schrijven kan alleen met de sessiecookie. Op
+  Vercel weigert de functie als `WEEKZICHT_WACHTWOORD` niet is gezet: anders kon
+  iedereen met het adres de klantenlijst ophalen.
+
+Als artifact en op Vercel zijn het twee aparte opslagplekken: ander adres,
+andere opslag.
 
 ## Toegang: een wachtwoord op de planning
 
@@ -118,8 +180,7 @@ hem in `.env`; `dev.mjs` doet dan hetzelfde als de middleware.
 
 ## Formulieren: de serverkant
 
-De planning zelf leeft in de browser, maar een formulier komt van het apparaat
-van de klant. Daarvoor is `api/formulier.js`, een Vercel-functie die per token
+Een formulier komt van het apparaat van de klant. Daarvoor is `api/formulier.js`, een Vercel-functie die per token
 één record bewaart in Redis (Upstash REST, twee jaar houdbaar). Eenmalig
 instellen:
 
@@ -181,6 +242,7 @@ van de zes scène-ID's (`voorbereidingen`, `ceremonie`, `fotoshoot`, `diner`,
 src/weekzicht.html   bron: het artifact-fragment (zonder <head>)
 build.mjs            zet daar de <head> omheen → public/index.html
 middleware.js        wachtwoordcontrole vóór de planning (formulierlinks vrij)
+api/planning.js      Vercel-functie: afspraken, taken, klanten en instellingen ophalen en bewaren
 api/inloggen.js      inloggen/uitloggen, zet de sessiecookie
 api/_sessie.js       cookie ondertekenen en controleren
 src/inloggen.html    de inlogpagina → public/inloggen.html
@@ -193,7 +255,7 @@ src/og-*.png         kaartjes voor WhatsApp e.d. bij formulier- en muzieklinks
 dev.mjs              lokale server voor public/ + de api-functies
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
-tests/               ~440 controles, zie hieronder
+tests/               ~650 controles, zie hieronder
 ```
 
 `src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
@@ -230,6 +292,17 @@ npm test
   onbereikbaar, limiet per link), verwijderen
 - **toegang** — wachtwoord, cookie (Node én Web Crypto geven dezelfde
   handtekening), middleware, en welke API-acties ingelogd vereisen
+- **planning** — `api/planning.js` (schrijven, verwijderen, versie, controle
+  van elke wijziging, alleen ingelogd) en de app op meerdere "apparaten" met één
+  server: lokale klanten gaan mee bij de eerste koppeling, een klant op het ene
+  apparaat verschijnt en verdwijnt op het andere, de wachtrij bij wegvallend
+  net en na herladen, offline opstarten, samenvoegen zonder verlies, en een
+  offerte met bedrijfsgegevens die op het andere apparaat aankomt
+- **offerte** — bedragen lezen en schrijven ("1.950,50"), totalen incl./excl.
+  btw, nummering per jaar, invullen vanuit de klant, tekens en afbreken voor de
+  pdf, en de pdf zelf: kloppende xref en streamlengtes, het logo links boven,
+  meerdere pagina's. Plus de knoppen in de app: regels, pakketten, btw,
+  download, bewaren bij de klant, verwijderen, en exporteren zonder artifact
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
   groottes, de opbouw van de aanroep (foto, PDF, tekst), opschonen van het
   antwoord, fouten van het model, limiet per link
@@ -245,16 +318,17 @@ De tests draaien op verzonnen klanten uit `tests/fixture.js`.
 ## Geen gegevens in deze repository
 
 De app start leeg. Namen en telefoonnummers van klanten horen niet in een
-repository en al helemaal niet op een openbare deploy; ze leven in de opslag van
-de pagina zelf — de `db`-capability als artifact, anders `localStorage`.
+repository; ze leven in de opslag: Redis achter het wachtwoord op Vercel, de
+`db`-capability als artifact, anders `localStorage`.
 
 ## Bekende grenzen
 
 - **Geen live koppeling met Google Agenda.** Import is een momentopname. De
   pagina kan zelf geen URL ophalen, dus een iCal-adres werkt niet; het moet via
   een bestand of plakken.
-- Export naar `.csv` en `.json` werkt alleen als artifact — lokaal ontbreekt de
-  `downloads`-capability.
+- De offerte-pdf gebruikt Helvetica, niet het lettertype van mediaspot.nl: een
+  eigen lettertype zou in elke pdf ingesloten moeten worden. Eén offerte per
+  klant; het btw-tarief is 21%.
 - Formulier- en muzieklinks werken alleen op de Vercel-deploy (of via
   `npm start`), niet als artifact: daar zijn geen api-functies.
 - De muziekpagina speelt af via YouTube. Een video die daar privé, verwijderd of

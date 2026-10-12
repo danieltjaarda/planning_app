@@ -840,7 +840,8 @@ button { cursor: pointer; }
 .tk-t { font-size: 13px; line-height: 1.35; word-break: break-word; }
 .tasklist li.done .tk-t { text-decoration: line-through; color: var(--ink-3); }
 .tk-d {
-  display: inline-block;
+  display: block;
+  width: fit-content;
   margin-top: 2px;
   font-family: var(--mono);
   font-size: 9.5px;
@@ -851,6 +852,7 @@ button { cursor: pointer; }
 .tk-d.today { color: var(--accent); font-weight: 600; }
 .tk-x { background: none; border: 0; color: var(--ink-3); font-size: 14px; line-height: 1; padding: 2px 3px; opacity: 0; }
 .tasklist li:hover .tk-x { opacity: 1; }
+@media (hover: none) { .tk-x { opacity: .7; padding: 6px 8px; margin: -4px -6px 0 0; } }
 .tk-x:hover { color: var(--now); }
 
 /* legenda + filter */
@@ -1356,6 +1358,88 @@ button { cursor: pointer; }
 .formbox .s-note { white-space: pre-wrap; }
 .formbox .s-open { margin: 0; font-size: 12px; color: var(--ink-3); }
 
+/* --- offerte: vak in het klantvenster en het offertevenster --- */
+.of-kort { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 13px; }
+.of-kort b { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.of-kort span { color: var(--ink-2); }
+.of-kort .of-kort-bedrag { margin-left: auto; font-family: var(--mono); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.of-knoppen { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.of-modal { width: min(780px, 100%); }
+.of-modal > footer { flex-wrap: wrap; }
+.of-labelrij { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.of-link { padding: 0; background: none; border: 0; font-size: 11.5px; color: var(--accent); text-align: right; }
+.of-link:hover { text-decoration: underline; }
+.of-head, .of-regel { display: grid; gap: 8px; }
+.of-head { grid-template-columns: minmax(0, 1fr) 64px 116px 92px 26px; padding-bottom: 2px; }
+.of-head span { font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); }
+.of-head span + span { text-align: right; }
+.of-regels { display: flex; flex-direction: column; gap: 8px; }
+.of-regel { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.of-regel textarea.of-oms {
+  min-height: 36px;
+  padding: 8px 10px;
+  resize: none;
+  overflow: hidden;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.of-num { display: flex; align-items: center; gap: 8px; }
+.of-aantal, .of-prijs {
+  display: flex; align-items: center; gap: 4px;
+  height: 36px; padding: 0 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.of-aantal { width: 64px; }
+.of-prijs { width: 116px; }
+.of-aantal:focus-within, .of-prijs:focus-within { border-color: var(--accent); }
+.of-aantal > span, .of-prijs > span { font-size: 12px; color: var(--ink-3); }
+.of-num input[type="text"] {
+  width: 100%; min-width: 0; padding: 0;
+  background: none; border: 0; outline: none;
+  font-family: var(--mono); font-size: 13px; text-align: right;
+}
+.of-num input[type="text"].bad { color: var(--now); }
+.of-bedrag {
+  width: 92px;
+  font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
+  text-align: right; white-space: nowrap;
+}
+.of-weg { width: 26px; height: 36px; padding: 0; background: none; border: 0; font-size: 12px; color: var(--ink-3); }
+.of-weg:hover { color: var(--now); }
+.of-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 2px; }
+.of-pk { display: contents; }
+.of-pk button {
+  height: 32px; padding: 0 11px;
+  background: var(--surface);
+  border: 1px dashed var(--line-2);
+  border-radius: 2px;
+  font-size: 12.5px; color: var(--ink-2);
+}
+.of-pk button:hover { border-style: solid; color: var(--ink); }
+.of-pk button b { margin-left: 6px; font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink-3); }
+.of-onder {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start;
+  padding-top: 13px; border-top: 1px solid var(--line);
+}
+.of-totaal { min-width: 250px; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+.of-totaal div { display: flex; justify-content: space-between; gap: 18px; }
+.of-totaal span { color: var(--ink-2); }
+.of-totaal b { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.of-totaal .of-eind { margin-top: 2px; padding-top: 7px; border-top: 2px solid #FC6A2F; font-size: 14px; }
+.of-totaal .of-eind span { color: var(--ink); font-weight: 700; }
+.of-totaal .of-eind b { font-weight: 700; }
+.of-totaal .of-klein { font-size: 11px; }
+.of-totaal .of-klein span, .of-totaal .of-klein b { color: var(--ink-3); }
+.of-bedrijf { background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; }
+.of-bedrijf summary { padding: 10px 12px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+.of-bedrijf summary span { font-weight: 400; color: var(--ink-3); }
+.of-bedrijf-in { display: flex; flex-direction: column; gap: 11px; padding: 0 12px 12px; }
+.of-bedrijf .field input[type="text"], .of-bedrijf .field textarea { background: var(--surface); }
+.of-bedrijf .field textarea { min-height: 0; }
+
 /* --- de formulierpagina die de klant ziet (?f=token) — huisstijl mediaspot.nl:
    Geist, lichtgrijs vlak, witte kaarten met ronde hoeken, oranje accent met
    cursieve Playfair-woorden, pilvormige knoppen en de donkere navigatiepil. --- */
@@ -1731,6 +1815,235 @@ button { cursor: pointer; }
   .k-main { grid-template-columns: 1fr; gap: 6px; }
   .k-side { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; padding: 0 16px 13px 13px; }
 }
+
+/* --- telefoon: compacte balk, menu als lade, tabbalk onderin --------
+   Geldt voor smalle schermen en voor telefoons die dwars liggen. Houd de
+   query gelijk aan PHONE_MQ in het script. */
+
+.tb-num, .mb-hamb, .vs-ico, .menu-head, .menu-scrim, .viewswitch .vs-rail { display: none; }
+
+@media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
+  :root { --tabh: 58px; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { -webkit-tap-highlight-color: transparent; }
+
+  /* de app vult precies het scherm; alleen de inhoud scrolt. minmax(0, …):
+     anders duwt een lange datum in de balk de hele pagina breder dan het scherm */
+  .app { height: 100vh; height: 100dvh; min-height: 0; grid-template-columns: minmax(0, 1fr); }
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    padding-bottom: calc(var(--tabh) + env(safe-area-inset-bottom));
+  }
+  .canvas { min-height: 0; }
+  .rail { display: none; }
+  .app.pane-rail .canvas { display: none; }
+  .app.pane-rail .rail { display: flex; overflow-y: auto; border-top: 0; padding-bottom: 96px; }
+
+  /* bovenbalk: periode links, bladeren en menu rechts */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+  }
+  .brand { display: none; }
+  .weeknav { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 5px; }
+  .period { order: -1; flex: 1; min-width: 0; margin: 0 4px 0 0; }
+  .period-week { font-size: 13.5px; letter-spacing: .05em; overflow: hidden; text-overflow: ellipsis; }
+  .period-range { overflow: hidden; text-overflow: ellipsis; }
+  .navbtn { width: 34px; height: 36px; font-size: 18px; }
+  .btn-today { width: 38px; height: 36px; padding: 0; display: grid; place-items: center; }
+  .tb-word { display: none; }
+  .tb-num {
+    display: grid;
+    place-items: center;
+    width: 22px; height: 21px;
+    border: 1.5px solid currentColor;
+    border-top-width: 4px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .topbar-actions { flex: none; flex-wrap: nowrap; gap: 0; }
+  #menuBtn { width: 38px; height: 36px; padding: 0; display: grid; place-items: center; }
+  .mb-dots { display: none; }
+  .mb-hamb { display: block; }
+
+  /* + wordt een ronde knop rechtsonder, boven de tabbalk */
+  #newBtn {
+    position: fixed;
+    z-index: 40;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: calc(var(--tabh) + env(safe-area-inset-bottom) + 16px);
+    width: 56px; height: 56px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 28px;
+    font-weight: 400;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .22);
+  }
+  .nb-word { display: none; }
+  .nb-plus { line-height: 1; margin-top: -3px; }
+
+  /* tabbalk onderin */
+  .viewswitch {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    height: calc(var(--tabh) + env(safe-area-inset-bottom));
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    gap: 0;
+    background: var(--surface);
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .viewswitch button {
+    flex: 1;
+    min-width: 0;
+    height: var(--tabh);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10.5px;
+    color: var(--ink-3);
+  }
+  .viewswitch .vs-rail { display: flex; }
+  .viewswitch button[aria-pressed="true"] { background: none; box-shadow: none; color: var(--accent); font-weight: 600; }
+  .vs-ico { display: block; }
+
+  /* menu: een lade van rechts */
+  .menu {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: auto;
+    z-index: 120;
+    width: min(320px, 86vw);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 10px;
+    border: 0;
+    border-left: 1px solid var(--line-2);
+    border-radius: 0;
+    animation: wz-lade .2s ease-out;
+  }
+  .menu button { padding: 13px 12px; font-size: 15px; }
+  .menu button .k { font-size: 11px; }
+  .menu hr { margin: 6px 4px; }
+  .menu-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 2px 12px 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .menu-head .mark { width: 30px; height: 30px; font-size: 11px; }
+  .menu-title { flex: 1; font-size: 14px; font-stretch: 118%; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .menu .menu-head button {
+    width: 38px; height: 38px;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid var(--line);
+    font-size: 15px;
+    color: var(--ink-2);
+  }
+  .menu-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    background: color-mix(in oklab, var(--ink) 38%, transparent);
+    animation: wz-vervaag .2s ease-out;
+  }
+  .menu[hidden] + .menu-scrim { display: none; }
+
+  /* ruimte onderin, zodat het laatste item niet onder de +-knop valt */
+  .grid-scroll, .listwrap, .klantwrap { padding-bottom: 88px; }
+  .toast { bottom: calc(var(--tabh) + env(safe-area-inset-bottom) + 84px); }
+
+  /* klanten: filters op één regel om door te vegen; + Klant zit in de ronde knop */
+  .filterbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 10px 12px; }
+  .filterbar::-webkit-scrollbar { display: none; }
+  .filterbar .fchip { flex: none; height: 34px; }
+  .filterbar .tally { display: none; }
+
+  .listbar { padding: 10px 12px; flex-wrap: wrap; gap: 6px 10px; }
+
+  /* taken: tekst over de hele breedte, datum en + eronder */
+  .taskadd { grid-template-columns: 1fr auto; }
+  .taskadd input[type="text"] { grid-column: 1 / -1; height: 40px; }
+  .taskadd input[type="date"] { width: auto; height: 38px; font-size: 16px; }
+  .taskadd button { height: 38px; width: 44px; font-size: 18px; }
+  .tk-t { font-size: 14.5px; }
+  .tasklist input[type="checkbox"] { width: 18px; height: 18px; margin-top: 1px; }
+  .search { max-width: none; height: 38px; }
+
+  /* vensters als blad van onderen */
+  .overlay { padding: 0; place-items: end center; }
+  .modal {
+    width: 100%;
+    max-height: calc(100dvh - 12px);
+    border: 0;
+    border-radius: 14px 14px 0 0;
+    animation: wz-blad .22s ease-out;
+  }
+  .modal > footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+  /* iPhone zoomt in op tekstvelden onder de 16px */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px; }
+}
+
+/* hele-dagrij blijft staan onder de datums (daar staan de klussen); op
+   tablets en telefoons valt hij anders half onder de koprij */
+@media (max-width: 960px), (pointer: coarse) and (max-height: 500px) {
+  .allday-cell { position: sticky; top: var(--headh); z-index: 5; background: var(--surface); }
+  .allday-cell.weekend { background: var(--surface-2); }
+  .allday-gut { top: var(--headh); z-index: 6; }
+}
+
+/* offerte op de telefoon: regels onder elkaar, bedragen eronder */
+@media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
+  .overlay { grid-template-columns: minmax(0, 1fr); }   /* een breed veld mag het blad niet oprekken */
+  .of-kop { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .of-kop .field:first-child { grid-column: 1 / -1; }
+  .of-kop input { min-width: 0; }
+  .of-head { display: none; }
+  .of-regels { gap: 12px; }
+  .of-regel { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .of-regel + .of-regel { padding-top: 12px; border-top: 1px dashed var(--line); }
+  .of-aantal, .of-prijs { height: 40px; }
+  .of-aantal { width: 64px; }
+  .of-prijs { width: 120px; }
+  .of-num input[type="text"] { font-family: var(--sans); font-variant-numeric: tabular-nums; }   /* mono op 16px past niet */
+  .of-bedrag { flex: 1; width: auto; }
+  .of-weg { width: 34px; height: 40px; }
+  .of-onder { grid-template-columns: minmax(0, 1fr); }
+  .of-totaal { min-width: 0; }
+  .of-modal > footer .spacer { display: none; }
+  .of-modal > footer .btn-line, .of-modal > footer .btn-primary { flex: 1 1 auto; height: 40px; }
+  .of-modal #oDelete { order: 5; flex-basis: 100%; }
+  .of-knoppen .btn-line { flex: 1 1 auto; height: 38px; }
+}
+
+@media (max-width: 380px) {
+  .period-week { font-size: 12.5px; letter-spacing: .03em; }
+}
+
+@keyframes wz-lade { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes wz-vervaag { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wz-blad { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
 </style>
 
 <div class="app">
@@ -1749,7 +2062,7 @@ button { cursor: pointer; }
 
     <nav class="weeknav" aria-label="Periode">
       <button class="navbtn" id="prevBtn" aria-label="Vorige periode" title="Vorige (←)">‹</button>
-      <button class="btn-today" id="todayBtn" title="Vandaag (T)">Vandaag</button>
+      <button class="btn-today" id="todayBtn" title="Vandaag (T)" aria-label="Vandaag"><span class="tb-word">Vandaag</span><span class="tb-num" id="todayNum" aria-hidden="true"></span></button>
       <button class="navbtn" id="nextBtn" aria-label="Volgende periode" title="Volgende (→)">›</button>
       <div class="period">
         <span class="period-week" id="periodWeek">—</span>
@@ -1759,15 +2072,17 @@ button { cursor: pointer; }
 
     <div class="topbar-actions">
       <div class="viewswitch" role="group" aria-label="Weergave">
-        <button data-view="week" aria-pressed="true">Week</button>
-        <button data-view="dag" aria-pressed="false">Dag</button>
-        <button data-view="lijst" aria-pressed="false">Lijst</button>
-        <button data-view="klanten" aria-pressed="false">Klanten</button>
+        <button data-view="week" aria-pressed="true"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12.5" rx="1.5"/><path d="M3 8.5h14M7 2.5v3M13 2.5v3"/><path d="M7.7 8.5V17M12.3 8.5V17"/></svg><span>Week</span></button>
+        <button data-view="dag" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12.5" rx="1.5"/><path d="M3 8.5h14M7 2.5v3M13 2.5v3"/><rect x="6" y="11" width="3.5" height="3" rx=".5" fill="currentColor" stroke="none"/></svg><span>Dag</span></button>
+        <button data-view="lijst" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 5.5H17M7.5 10H17M7.5 14.5H17"/><circle cx="3.8" cy="5.5" r=".6" fill="currentColor"/><circle cx="3.8" cy="10" r=".6" fill="currentColor"/><circle cx="3.8" cy="14.5" r=".6" fill="currentColor"/></svg><span>Lijst</span></button>
+        <button data-view="klanten" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="6.8" r="3.2"/><path d="M3.8 17c.8-3.2 3.3-5 6.2-5s5.4 1.8 6.2 5"/></svg><span>Klanten</span></button>
+        <button class="vs-rail" data-pane="overzicht" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16.5V11M10 16.5V4M16 16.5V8"/></svg><span>Overzicht</span></button>
       </div>
-      <button class="btn-primary" id="newBtn" title="Nieuwe afspraak (N)">+ Nieuw</button>
+      <button class="btn-primary" id="newBtn" title="Nieuwe afspraak (N)" aria-label="Nieuw"><span class="nb-plus" aria-hidden="true">+</span> <span class="nb-word">Nieuw</span></button>
       <div class="menuwrap">
-        <button class="btn-ghost" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Meer opties">⋯</button>
+        <button class="btn-ghost" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Menu"><span class="mb-dots" aria-hidden="true">⋯</span><svg class="mb-hamb" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         <div class="menu" id="menu" hidden>
+          <div class="menu-head"><span class="mark">WZ</span><span class="menu-title">Weekzicht</span><button id="menuClose" aria-label="Menu sluiten">✕</button></div>
           <button id="miImport">Importeer .ics-bestand…</button>
           <button id="miWeekend"><span>Weekend tonen</span><span class="k" id="weekendState">aan</span></button>
           <hr>
@@ -1779,6 +2094,7 @@ button { cursor: pointer; }
           <hr>
           <button id="miUit">Uitloggen</button>
         </div>
+        <div class="menu-scrim" aria-hidden="true"></div>
       </div>
     </div>
   </header>
@@ -1971,6 +2287,7 @@ button { cursor: pointer; }
         <label class="label" for="lNote">Notitie</label>
         <textarea id="lNote" placeholder="Waar staat het gesprek, wat is afgesproken…"></textarea>
       </div>
+      <div class="field formbox" id="lOfferteBox"></div>
       <div class="field formbox" id="lFormBox"></div>
       <div class="field formbox" id="lMuziekBox"></div>
     </div>
@@ -1979,6 +2296,92 @@ button { cursor: pointer; }
       <span class="spacer"></span>
       <button class="btn-line" data-close>Annuleren</button>
       <button class="btn-primary" id="lSave">Opslaan</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="ofOverlay" hidden>
+  <div class="modal of-modal" role="dialog" aria-modal="true" aria-labelledby="ofTitle">
+    <header>
+      <h2 id="ofTitle">Offerte</h2>
+      <button class="btn-ghost" id="oClose" aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <div class="row3 of-kop">
+        <div class="field">
+          <label class="label" for="oNummer">Offertenummer</label>
+          <input type="text" id="oNummer" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="label" for="oDatum">Datum</label>
+          <input type="date" id="oDatum">
+        </div>
+        <div class="field">
+          <label class="label" for="oGeldig">Geldig tot</label>
+          <input type="date" id="oGeldig">
+        </div>
+      </div>
+      <div class="field">
+        <div class="of-labelrij">
+          <label class="label" for="oAan">Aan</label>
+          <button type="button" class="of-link" id="oVulIn" title="Naam, e-mail, datum en locatie opnieuw uit de klant halen">Opnieuw uit de klant halen</button>
+        </div>
+        <textarea id="oAan" rows="3" placeholder="Naam, e-mail, telefoon of adres van de klant"></textarea>
+      </div>
+      <div class="field">
+        <label class="label" for="oBetreft">Betreft</label>
+        <input type="text" id="oBetreft" autocomplete="off" placeholder="Bruiloftsfilm op …">
+      </div>
+      <div class="field">
+        <label class="label" for="oDetails">Over de dag</label>
+        <textarea id="oDetails" rows="3" placeholder="Tijden, locatie, aantal gasten…"></textarea>
+      </div>
+      <div class="field">
+        <div class="of-head" aria-hidden="true"><span>Omschrijving</span><span>Aantal</span><span>Prijs</span><span>Bedrag</span></div>
+        <div class="of-regels" id="oRegels"></div>
+        <div class="of-add">
+          <button type="button" class="btn-line" id="oAddRegel">+ Regel</button>
+          <span class="of-pk" id="oPakketten"></span>
+        </div>
+      </div>
+      <div class="of-onder">
+        <div class="field">
+          <span class="label">Btw</span>
+          <div class="catpick" id="oBtw"></div>
+        </div>
+        <div class="of-totaal" id="oTotaal" aria-live="polite"></div>
+      </div>
+      <div class="field">
+        <label class="label" for="oTekst">Tekst onderaan</label>
+        <textarea id="oTekst" rows="3" placeholder="Voorwaarden, aanbetaling, hoe ze akkoord geven…"></textarea>
+      </div>
+      <details class="of-bedrijf">
+        <summary>Jouw bedrijfsgegevens <span>— staan op elke offerte</span></summary>
+        <div class="of-bedrijf-in">
+          <div class="row2">
+            <div class="field"><label class="label" for="ob_naam">Naam</label><input type="text" id="ob_naam" autocomplete="off"></div>
+            <div class="field"><label class="label" for="ob_juridisch">Ingeschreven als</label><input type="text" id="ob_juridisch" autocomplete="off"></div>
+          </div>
+          <div class="field"><label class="label" for="ob_adres">Adres</label><textarea id="ob_adres" rows="2"></textarea></div>
+          <div class="row3">
+            <div class="field"><label class="label" for="ob_telefoon">Telefoon</label><input type="text" id="ob_telefoon" autocomplete="off"></div>
+            <div class="field"><label class="label" for="ob_email">E-mail</label><input type="text" id="ob_email" autocomplete="off"></div>
+            <div class="field"><label class="label" for="ob_web">Website</label><input type="text" id="ob_web" autocomplete="off"></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label class="label" for="ob_kvk">KvK</label><input type="text" id="ob_kvk" autocomplete="off"></div>
+            <div class="field"><label class="label" for="ob_btw">Btw-nummer</label><input type="text" id="ob_btw" autocomplete="off" placeholder="NL…B01"></div>
+            <div class="field"><label class="label" for="ob_iban">IBAN</label><input type="text" id="ob_iban" autocomplete="off" placeholder="NL.."></div>
+          </div>
+        </div>
+      </details>
+    </div>
+    <footer>
+      <button class="btn-line danger" id="oDelete" hidden>Verwijderen</button>
+      <span class="spacer"></span>
+      <button class="btn-line" id="oShare" hidden>Delen</button>
+      <button class="btn-line" id="oPdf">Download pdf</button>
+      <button class="btn-primary" id="oSave">Opslaan</button>
     </footer>
   </div>
 </div>
@@ -2092,6 +2495,9 @@ button { cursor: pointer; }
   var LS_KEY = "weekzicht.v1";
   var LS_SYNCED = "weekzicht.v1.synced";
   var LS_SEEDED = "weekzicht.v1.leads-seeded";
+  var LS_PENDING = "weekzicht.v1.pending";     // offline gemaakt, nog niet bij de opslag
+  var LS_QUEUE = "weekzicht.v1.wachtrij";      // onderweg naar api/planning
+  var LS_BACKUP = "weekzicht.v1.voor-sync";    // kopie van vóór de allereerste koppeling
 
   /* ==========================================================
      2. Tijd — altijd Nederlandse tijd, ongeacht de browser
@@ -2210,6 +2616,7 @@ button { cursor: pointer; }
     leads: [],
     stHidden: {},        // status-id → true als weggefilterd
     settings: { weekend: true, dayStart: 7, dayEnd: 21 },
+    offerteMeta: { bedrijf: null, tekst: null, btw: null, at: 0 },   // zie 6e
     hidden: {},          // categorie-id → true als verborgen
     query: ""
   };
@@ -2229,7 +2636,8 @@ button { cursor: pointer; }
   function saveLocal() {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({
-        events: state.events, tasks: state.tasks, leads: state.leads, settings: state.settings
+        events: state.events, tasks: state.tasks, leads: state.leads, settings: state.settings,
+        offerte: state.offerteMeta
       }));
     } catch (e) { /* privémodus e.d. — de app werkt door */ }
   }
@@ -2247,6 +2655,7 @@ button { cursor: pointer; }
         if (typeof d.settings.dayStart === "number") state.settings.dayStart = d.settings.dayStart;
         if (typeof d.settings.dayEnd === "number") state.settings.dayEnd = d.settings.dayEnd;
       }
+      if (d && d.offerte && typeof d.offerte === "object") neemOfferteMeta(d.offerte);
     } catch (e) { /* onleesbare cache — start leeg */ }
   }
 
@@ -2255,6 +2664,33 @@ button { cursor: pointer; }
   }
   function markSynced() {
     try { localStorage.setItem(LS_SYNCED, "1"); } catch (e) {}
+  }
+  function localSeeded() {
+    try { return localStorage.getItem(LS_SEEDED) === "1"; } catch (e) { return false; }
+  }
+
+  // Wat offline gemaakt of gewist is, onthouden over herladen heen: anders
+  // gaat het verloren als de pagina dicht is gegaan vóór er verbinding was.
+  function savePending() {
+    try { localStorage.setItem(LS_PENDING, JSON.stringify({ ids: pendingIds, weg: pendingDeletes })); } catch (e) {}
+  }
+  function loadPending() {
+    try {
+      var p = JSON.parse(localStorage.getItem(LS_PENDING) || "null");
+      if (!p) return;
+      for (var c in pendingIds) {
+        if (p.ids && p.ids[c] && typeof p.ids[c] === "object") pendingIds[c] = p.ids[c];
+        if (p.weg && p.weg[c] && typeof p.weg[c] === "object") pendingDeletes[c] = p.weg[c];
+      }
+    } catch (e) {}
+  }
+
+  /** Eenmalig, vóór de eerste koppeling: een kopie van wat er in deze browser stond. */
+  function backupLocal() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw && !localStorage.getItem(LS_BACKUP)) localStorage.setItem(LS_BACKUP, raw);
+    } catch (e) {}
   }
 
   /* --- schrijfpaden: db als die er is, anders lokaal --------- */
@@ -2272,6 +2708,7 @@ button { cursor: pointer; }
     } else {
       pendingIds[coll][obj.id] = true;
       delete pendingDeletes[coll][obj.id];
+      savePending();
     }
   }
 
@@ -2283,6 +2720,7 @@ button { cursor: pointer; }
     } else {
       delete pendingIds[coll][id];
       pendingDeletes[coll][id] = true;
+      savePending();
     }
   }
 
@@ -2514,7 +2952,7 @@ button { cursor: pointer; }
 
   var $ = function (id) { return document.getElementById(id); };
   var canvas = $("canvas");
-  var lastScrollTop = 0, lastScrollKey = null;
+  var lastScrollTop = 0, lastScrollLeft = 0, lastScrollKey = null;
 
   function render() {
     renderPeriodLabel();
@@ -2529,6 +2967,7 @@ button { cursor: pointer; }
   }
 
   function renderPeriodLabel() {
+    $("todayNum").textContent = dayNum(amsNow().date);   // het kalendertje op de telefoon
     var isK = state.view === "klanten";
     $("prevBtn").disabled = isK;
     $("nextBtn").disabled = isK;
@@ -2582,14 +3021,17 @@ button { cursor: pointer; }
     // scrollpositie bewaren zolang we naar dezelfde periode kijken
     var key = state.view + "|" + dates[0] + "|" + dates.length;
     var live = $("gridScroll");
-    if (live && key === lastScrollKey) lastScrollTop = live.scrollTop;
+    if (live && key === lastScrollKey) { lastScrollTop = live.scrollTop; lastScrollLeft = live.scrollLeft; }
 
     var cols = single
       ? "var(--gutter) minmax(240px, 1fr)"
       : "var(--gutter) repeat(" + dates.length + ", minmax(112px, 1fr))";
+    // Het raster moet zelf zo breed zijn als zijn kolommen: anders schuiven de
+    // vastgezette uurkolom en datums mee weg als je op een smal scherm opzij scrolt.
+    var minW = single ? "calc(var(--gutter) + 240px)" : "calc(var(--gutter) + " + (dates.length * 112) + "px)";
 
     var html = '<div class="grid-scroll" id="gridScroll"><div class="grid" style="grid-template-columns:' +
-      cols + ';--bodyh:calc(' + rows + ' * var(--rowh))">';
+      cols + ';min-width:' + minW + ';--bodyh:calc(' + rows + ' * var(--rowh))">';
 
     // koprij
     var wk = isoWeek(dates[0]);
@@ -2690,12 +3132,20 @@ button { cursor: pointer; }
     if (sc) {
       if (key === lastScrollKey) {
         sc.scrollTop = lastScrollTop;
+        sc.scrollLeft = lastScrollLeft;
       } else {
         // nieuwe periode: scroll zo dat "nu" (of de werkdagstart) in beeld staat
         var focusMin = todayIn ? now.min : state.settings.dayStart * 60;
         var rowh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--rowh")) || 56;
         sc.scrollTop = Math.max(0, ((focusMin - lo * 60) / 60) * rowh - 140);
         lastScrollTop = sc.scrollTop;
+        // op een smal scherm past de week niet: schuif naar de kolom van vandaag
+        var todayHead = todayIn && sc.scrollWidth - sc.clientWidth > 120 ? sc.querySelector(".dayhead.today") : null;
+        if (todayHead) {
+          var gut = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gutter")) || 58;
+          sc.scrollLeft = Math.max(0, todayHead.offsetLeft - gut);
+        }
+        lastScrollLeft = sc.scrollLeft;
       }
       lastScrollKey = key;
     }
@@ -2964,6 +3414,8 @@ button { cursor: pointer; }
       var muziekChip = l.muziek
         ? '<span class="k-when">muziek gekozen</span>'
         : (l.muziekToken ? '<span class="k-when">muzieklink gestuurd</span>' : "");
+      var offerteChip = l.offerte
+        ? '<span class="k-when">offerte ' + esc(euro(offerteTotalen(l.offerte).totaal / 100)) + '</span>' : "";
 
       html += '<div class="klant' + (gone ? " gone" : "") + '" style="--st:' + stVar(l.status) + '">' +
         '<button class="k-main" data-lead="' + esc(l.id) + '">' +
@@ -2972,7 +3424,7 @@ button { cursor: pointer; }
             '<span class="k-name' + (l.name && l.name.trim() ? "" : " anon") + '">' + esc(leadName(l)) + '</span>' +
             '<span class="k-tags">' + statusPill(l.status) +
               (l.calledAt ? '<span class="k-when">gebeld op ' + esc(fmtShort(l.calledAt)) + '</span>' : '') +
-              (gone ? '<span class="label">datum geweest</span>' : '') + timeChip + formChip + muziekChip + callChip + '</span>' +
+              (gone ? '<span class="label">datum geweest</span>' : '') + timeChip + formChip + muziekChip + offerteChip + callChip + '</span>' +
             (l.note ? '<span class="k-note">' + esc(l.note) + '</span>' : '') +
           '</span>' +
         '</button>' +
@@ -3388,6 +3840,7 @@ button { cursor: pointer; }
     $("lNote").value = l ? (l.note || "") : "";
     setStatusPick(l ? l.status : "wacht");
     $("lDelete").hidden = !l;
+    renderLeadOfferteBox(l);
     renderLeadFormBox(l);
     renderLeadMuziekBox(l);
     $("ldOverlay").hidden = false;
@@ -3438,6 +3891,7 @@ button { cursor: pointer; }
       if (old.muziek) obj.muziek = old.muziek;
       if (old.muziekAt) obj.muziekAt = old.muziekAt;
       if (old.muziekOpmerking) obj.muziekOpmerking = old.muziekOpmerking;
+      if (old.offerte) obj.offerte = old.offerte;
     }
     return obj;
   }
@@ -3519,9 +3973,10 @@ button { cursor: pointer; }
   // — lokaal, of als artifact — werkt de rest van de app gewoon door.
   var API_URL = "api/formulier";
 
-  function api(method, query, body, path) {
+  function api(method, query, body, path, keepalive) {
     if (typeof fetch !== "function") return Promise.reject({ code: "geen_fetch" });
     var opts = { method: method, headers: { "Accept": "application/json" } };
+    if (keepalive) opts.keepalive = true;
     if (body) {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
@@ -4743,6 +5198,778 @@ button { cursor: pointer; }
   }
 
   /* ==========================================================
+     6e. Offerte — regels met een prijs, als pdf met het Mediaspot-logo
+     ========================================================== */
+
+  // Eén offerte per klant, bewaard in de klant zelf (l.offerte): zo gaat hij
+  // mee naar elk apparaat, net als de rest. De pdf schrijven we hier zelf,
+  // zonder bibliotheek: Helvetica zit in elke pdf-lezer, dus alleen het logo
+  // gaat er als plaatje in. Bedrijfsgegevens, de tekst onderaan en de
+  // btw-keuze onthouden we in meta/offerte voor de volgende offerte.
+
+  var OFFERTE_DAGEN = 30;          // standaard geldig
+  var BTW_TARIEF = 21;
+  var BTW_KEUZES = [
+    { id: "incl", label: "Prijzen incl. btw" },
+    { id: "excl", label: "Prijzen excl. btw" },
+    { id: "geen", label: "Zonder btw" }
+  ];
+  var OFFERTE_TEKST = "Akkoord met deze offerte? Laat het me weten per WhatsApp of e-mail, dan leg ik jullie datum definitief vast.";
+  // Zoals op mediaspot.nl; aan te passen onder "Jouw bedrijfsgegevens".
+  var BEDRIJF = {
+    naam: "Mediaspot", juridisch: "Tjaarda Holding B.V.", adres: "Brandemeer 6\nJoure",
+    telefoon: "085 060 2672", email: "info@mediaspot.nl", web: "mediaspot.nl",
+    kvk: "96808845", btw: "", iban: ""
+  };
+  var BEDRIJF_VELDEN = ["naam", "juridisch", "adres", "telefoon", "email", "web", "kvk", "btw", "iban"];
+  // De pakketten van mediaspot.nl (tarieven), als snelle start voor een regel.
+  // Omschrijving en prijs pas je daarna per offerte gewoon aan.
+  var PAKKETTEN = [
+    { id: "zilver", naam: "Zilver", prijs: 799, oms: "Pakket Zilver — 8 uur filmen\n" +
+      "Bijvoorbeeld tot en met de trouwceremonie. 1 videograaf, trouwfilm van circa 6–7 minuten, " +
+      "professionele nabewerking en color grading. In 4K én Full HD, binnen 3 weken geleverd in een " +
+      "houten cadeauverpakking met USB. Geen reiskosten." },
+    { id: "goud", naam: "Goud", prijs: 899, oms: "Pakket Goud — 10 uur filmen\n" +
+      "Bijvoorbeeld tot en met het diner. 1 videograaf, trouwfilm van circa 7–8 minuten, " +
+      "professionele nabewerking en color grading. In 4K én Full HD, binnen 3 weken geleverd in een " +
+      "houten cadeauverpakking met USB. Geen reiskosten." },
+    { id: "diamant", naam: "Diamant", prijs: 1199, oms: "Pakket Diamant — 12 uur filmen\n" +
+      "Bijvoorbeeld tot en met het avondfeest. 1 videograaf, drone-opnames van jullie locatie, " +
+      "trouwfilm van circa 8–10 minuten, professionele nabewerking en color grading. In 4K én Full HD, " +
+      "binnen 3 weken geleverd in een houten cadeauverpakking met USB. Geen reiskosten." }
+  ];
+
+  /* --- bedragen ---------------------------------------------- */
+
+  /** "1.950,50", "1950", "€ 899" → 1950.5; leeg → null, onzin → NaN. */
+  function parseBedrag(s) {
+    var t = String(s == null ? "" : s).replace(/[€\s\u00a0]/g, "");
+    if (!t) return null;
+    var neg = /^[-−]/.test(t);
+    t = t.replace(/^[-−+]/, "");
+    if (t.indexOf(",") >= 0) t = t.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");   // 1.950 = duizendtal
+    if (!/^(\d+(\.\d*)?|\.\d+)$/.test(t)) return NaN;
+    var n = Math.round(parseFloat(t) * 100) / 100;
+    return neg ? -n : n;
+  }
+
+  function centen(n) { return Math.round((Number(n) || 0) * 100); }
+
+  /** 1950.5 → "1.950,50" */
+  function bedragTekst(n) {
+    var c = Math.abs(centen(n));
+    var heel = String(Math.floor(c / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (centen(n) < 0 ? "-" : "") + heel + "," + pad(c % 100);
+  }
+
+  /** 1950.5 → "€ 1.950,50" (met een harde spatie, zodat het nooit afbreekt) */
+  function euro(n) {
+    var t = bedragTekst(n);
+    return t.charAt(0) === "-" ? "-€\u00a0" + t.slice(1) : "€\u00a0" + t;
+  }
+
+  /** aantal: 1 → "1", 2.5 → "2,5" */
+  function getal(n) {
+    return String(Math.round((Number(n) || 0) * 100) / 100).replace(".", ",");
+  }
+
+  /** Alle bedragen van een offerte, in centen. */
+  function offerteTotalen(of) {
+    var sub = 0;
+    var regels = ((of && of.regels) || []).map(function (r) {
+      var c = r.prijs == null ? 0 : Math.round((r.aantal == null ? 1 : r.aantal) * centen(r.prijs));
+      sub += c;
+      return c;
+    });
+    var modus = (of && of.btw) || "incl", tarief = (of && of.tarief) || BTW_TARIEF;
+    var btw = 0, totaal = sub;
+    if (modus === "excl") { btw = Math.round(sub * tarief / 100); totaal = sub + btw; }
+    else if (modus === "incl") btw = sub - Math.round(sub * 100 / (100 + tarief));
+    return { regels: regels, sub: sub, btw: btw, totaal: totaal, modus: modus, tarief: tarief };
+  }
+
+  /* --- een nieuwe offerte, ingevuld vanuit de klant ---------- */
+
+  /** Volgend nummer in het jaar van de offerte: 2026-001, 2026-002, … */
+  function volgendNummer(datum, eigenId) {
+    var jaar = String(datum || amsNow().date).slice(0, 4), max = 0;
+    for (var i = 0; i < state.leads.length; i++) {
+      var l = state.leads[i];
+      if (l.id === eigenId || !l.offerte) continue;
+      var m = /^(\d{4})-(\d+)$/.exec(l.offerte.nummer || "");
+      if (m && m[1] === jaar) max = Math.max(max, parseInt(m[2], 10));
+    }
+    var n = String(max + 1);
+    while (n.length < 3) n = "0" + n;
+    return jaar + "-" + n;
+  }
+
+  function datumVol(s) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(s || "") ? dayNum(s) + " " + MONTHS[monIdx(s)] + " " + s.slice(0, 4) : "";
+  }
+
+  function urenTekst(min) {
+    return String(Math.round(min / 6) / 10).replace(".", ",") + " uur";
+  }
+
+  /** Naam, e-mail en telefoon: uit het formulier als de klant dat heeft ingevuld. */
+  function offerteAan(l) {
+    var f = l.form || {}, out = [];
+    var naam = String(f.namen || "").trim() || String(l.name || "").trim();
+    var tel = String(l.phone || f.telefoon || "").trim();
+    if (naam) out.push(naam);
+    if (f.email) out.push(String(f.email).trim());
+    if (tel) out.push(tel);
+    return out.join("\n");
+  }
+
+  function offerteBetreft(l) {
+    return "Bruiloftsfilm" + (l.date ? " op " + fmtLong(l.date) + " " + l.date.slice(0, 4) : "");
+  }
+
+  /** Tijden, locaties en gasten: wat er over de dag bekend is. */
+  function offerteDetails(l) {
+    var f = l.form || {}, out = [], gezien = {};
+    if (leadTimes(l)) {
+      var min = toMin(l.end) - toMin(l.start);
+      if (min <= 0) min += 1440;   // tot na middernacht
+      out.push("Tijden: " + l.start + " – " + l.end + " (" + urenTekst(min) + ")");
+    }
+    [["Locatie", f.locVoorbereiding], ["Ceremonie", f.locCeremonie], ["Diner en feest", f.locFeest]].forEach(function (p) {
+      var v = String(p[1] || "").trim();
+      if (!v || gezien[v.toLowerCase()]) return;
+      gezien[v.toLowerCase()] = true;
+      out.push(p[0] + ": " + v);
+    });
+    if (f.gasten) out.push("Gasten: ongeveer " + f.gasten);
+    return out.join("\n");
+  }
+
+  function bedrijf() {
+    var b = {}, eigen = state.offerteMeta.bedrijf || {};
+    for (var i = 0; i < BEDRIJF_VELDEN.length; i++) {
+      var k = BEDRIJF_VELDEN[i];
+      b[k] = typeof eigen[k] === "string" ? eigen[k] : BEDRIJF[k];
+    }
+    return b;
+  }
+
+  function nieuweOfferte(l) {
+    var vandaag = amsNow().date, meta = state.offerteMeta;
+    return {
+      nummer: volgendNummer(vandaag, l.id),
+      datum: vandaag,
+      geldig: addD(vandaag, OFFERTE_DAGEN),
+      aan: offerteAan(l),
+      betreft: offerteBetreft(l),
+      details: offerteDetails(l),
+      regels: [{ oms: "", aantal: 1, prijs: null }],
+      btw: meta.btw || "incl",
+      tarief: BTW_TARIEF,
+      tekst: typeof meta.tekst === "string" ? meta.tekst : OFFERTE_TEKST
+    };
+  }
+
+  function offerteNaam(of, l) {
+    return ("Offerte " + of.nummer + " " + leadName(l)).replace(/[\\\/:*?"<>|]+/g, "")
+      .replace(/\s+/g, " ").trim() + ".pdf";
+  }
+
+  /* --- pdf: tekens, breedtes, afbreken ------------------------ */
+
+  // Breedtes van Helvetica en Helvetica-Bold in 1/1000 em, voor WinAnsi 32–255,
+  // gemeten aan de Helvetica van macOS/iOS: daar openen klanten de pdf meestal.
+  var PDF_W = {
+    r: [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,0,744,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500],
+    b: [278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,0,744,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556]
+  };
+  // WinAnsi 128–159 waar Unicode iets anders zegt
+  var WIN_ANSI = { 8364: 128, 8218: 130, 402: 131, 8222: 132, 8230: 133, 8224: 134, 8225: 135, 710: 136, 8240: 137,
+    352: 138, 8249: 139, 338: 140, 381: 142, 8216: 145, 8217: 146, 8220: 147, 8221: 148, 8226: 149, 8211: 150,
+    8212: 151, 732: 152, 8482: 153, 353: 154, 8250: 155, 339: 156, 382: 158, 376: 159 };
+
+  /** Tekst → WinAnsi-codes; wat Helvetica niet kent (emoji e.d.) wordt een vraagteken. */
+  function winAnsi(s) {
+    s = String(s == null ? "" : s);
+    if (s.normalize) s = s.normalize("NFC");
+    var out = [];
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c >= 0xD800 && c <= 0xDBFF) { i++; out.push(63); continue; }
+      if (c === 9) c = 32;
+      else if (c === 0x2212) c = 45;
+      if (c === 173) continue;   // zacht afbreekstreepje
+      if ((c >= 32 && c <= 126) || (c >= 160 && c <= 255)) out.push(c);
+      else if (WIN_ANSI[c]) out.push(WIN_ANSI[c]);
+      else if (c >= 32) out.push(63);
+    }
+    return out;
+  }
+
+  function pdfBreedte(s, vet, size) {
+    var codes = typeof s === "string" ? winAnsi(s) : s, t = vet ? PDF_W.b : PDF_W.r, w = 0;
+    for (var i = 0; i < codes.length; i++) w += t[codes[i] - 32] || 0;
+    return w * size / 1000;
+  }
+
+  /** Breekt af op woorden zodat elke regel binnen `breed` past; \n blijft een nieuwe regel. */
+  function pdfAfbreken(s, vet, size, breed) {
+    var out = [];
+    String(s == null ? "" : s).replace(/\r/g, "").split("\n").forEach(function (alinea) {
+      if (!alinea.trim()) { out.push(""); return; }
+      var regel = "";
+      alinea.split(/ +/).forEach(function (w) {
+        if (!w) return;
+        var probeer = regel ? regel + " " + w : w;
+        if (pdfBreedte(probeer, vet, size) <= breed) { regel = probeer; return; }
+        if (regel) out.push(regel);
+        // één woord breder dan de regel (een lange link): op letters knippen
+        while (w.length > 1 && pdfBreedte(w, vet, size) > breed) {
+          var n = w.length - 1;
+          while (n > 1 && pdfBreedte(w.slice(0, n), vet, size) > breed) n--;
+          out.push(w.slice(0, n));
+          w = w.slice(n);
+        }
+        regel = w;
+      });
+      out.push(regel);
+    });
+    return out;
+  }
+
+  function pdfStr(codes) {
+    var s = "(";
+    for (var i = 0; i < codes.length; i++) {
+      var c = codes[i];
+      if (c === 40 || c === 41 || c === 92) s += "\\" + String.fromCharCode(c);
+      else if (c < 32 || c > 126) s += "\\" + ("00" + c.toString(8)).slice(-3);
+      else s += String.fromCharCode(c);
+    }
+    return s + ")";
+  }
+
+  /** Voor de documenteigenschappen: UTF-16 als hex, dan kan alles. */
+  function pdfUnicode(s) {
+    var h = "<FEFF";
+    s = String(s || "");
+    for (var i = 0; i < s.length; i++) h += ("000" + s.charCodeAt(i).toString(16)).slice(-4);
+    return h + ">";
+  }
+
+  /** Binair → ASCII85: zo blijft de hele pdf gewone tekst. */
+  function ascii85(bin) {
+    var out = [], lijn = 0;
+    for (var i = 0; i < bin.length; i += 4) {
+      var n = Math.min(4, bin.length - i), v = 0, g;
+      for (var k = 0; k < 4; k++) v = v * 256 + (k < n ? bin.charCodeAt(i + k) & 255 : 0);
+      if (v === 0 && n === 4) g = "z";
+      else {
+        var cs = "";
+        for (var j = 0; j < 5; j++) { cs = String.fromCharCode(33 + v % 85) + cs; v = Math.floor(v / 85); }
+        g = cs.slice(0, n + 1);
+      }
+      out.push(g);
+      lijn += g.length;
+      if (lijn >= 75) { out.push("\n"); lijn = 0; }
+    }
+    return out.join("") + "~>";
+  }
+
+  // Het logo van mediaspot.nl (mediaspot-logo-dark.svg) op wit, 1383×205 px,
+  // als zlib-gecomprimeerde RGB-pixels: dat neemt een pdf rechtstreeks aan.
+  var LOGO_PDF = { w: 1383, h: 205, z: "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" };
+  var logoA85 = null;
+
+  var A4 = { w: 595.28, h: 841.89 };
+
+  /** Een kleine pdf-schrijver: pagina's met tekst, lijnen en het logo. y telt vanaf de bovenkant. */
+  function pdfDoc() {
+    var paginas = [], ops = null;
+    function f(n) { return String(Math.round(n * 100) / 100); }
+    function kleur(hex) {
+      var n = parseInt(String(hex).slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function (x) { return f(x / 255); }).join(" ");
+    }
+    return {
+      pagina: function () { ops = []; paginas.push(ops); },
+      aantal: function () { return paginas.length; },
+      naar: function (n) { ops = paginas[n - 1]; },
+      /** y = basislijn. o: { size, vet, kleur, align: "r" | "c", ls } — geeft de breedte terug. */
+      tekst: function (x, y, s, o) {
+        o = o || {};
+        var size = o.size || 10, ls = o.ls || 0, codes = winAnsi(s);
+        if (!codes.length) return 0;
+        var w = pdfBreedte(codes, o.vet, size) + ls * (codes.length - 1);
+        if (o.align === "r") x -= w;
+        else if (o.align === "c") x -= w / 2;
+        ops.push("BT /" + (o.vet ? "F2" : "F1") + " " + f(size) + " Tf " + f(ls) + " Tc " +
+          kleur(o.kleur || "#1d1d1f") + " rg " + f(x) + " " + f(A4.h - y) + " Td " + pdfStr(codes) + " Tj ET");
+        return w;
+      },
+      lijn: function (x1, y, x2, dikte, hex) {
+        ops.push(kleur(hex) + " RG " + f(dikte) + " w " + f(x1) + " " + f(A4.h - y) + " m " +
+          f(x2) + " " + f(A4.h - y) + " l S");
+      },
+      /** y = bovenkant; geeft de hoogte terug */
+      logo: function (x, y, w) {
+        var h = w * LOGO_PDF.h / LOGO_PDF.w;
+        ops.push("q " + f(w) + " 0 0 " + f(h) + " " + f(x) + " " + f(A4.h - y - h) + " cm /Logo Do Q");
+        return h;
+      },
+      bouw: function (titel, auteur) {
+        var objs = [];
+        function obj(s) { objs.push(s); return objs.length; }
+        function breedtes(t) { return "/FirstChar 32 /LastChar 255 /Widths [" + t.join(" ") + "]"; }
+        if (!logoA85) logoA85 = ascii85(atob(LOGO_PDF.z));
+        var catalogus = obj(""), boom = obj("");
+        var f1 = obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding " + breedtes(PDF_W.r) + " >>");
+        var f2 = obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding " + breedtes(PDF_W.b) + " >>");
+        var beeld = obj("<< /Type /XObject /Subtype /Image /Width " + LOGO_PDF.w + " /Height " + LOGO_PDF.h +
+          " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Interpolate true /Filter [/ASCII85Decode /FlateDecode] /Length " +
+          logoA85.length + " >>\nstream\n" + logoA85 + "\nendstream");
+        var kids = [];
+        for (var p = 0; p < paginas.length; p++) {
+          var inhoud = paginas[p].join("\n");
+          var c = obj("<< /Length " + inhoud.length + " >>\nstream\n" + inhoud + "\nendstream");
+          kids.push(obj("<< /Type /Page /Parent " + boom + " 0 R /MediaBox [0 0 " + A4.w + " " + A4.h + "] " +
+            "/Resources << /Font << /F1 " + f1 + " 0 R /F2 " + f2 + " 0 R >> /XObject << /Logo " + beeld + " 0 R >> " +
+            "/ProcSet [/PDF /Text /ImageC] >> /Contents " + c + " 0 R >>"));
+        }
+        objs[catalogus - 1] = "<< /Type /Catalog /Pages " + boom + " 0 R >>";
+        objs[boom - 1] = "<< /Type /Pages /Kids [" + kids.map(function (k) { return k + " 0 R"; }).join(" ") +
+          "] /Count " + kids.length + " >>";
+        var info = obj("<< /Title " + pdfUnicode(titel) + " /Author " + pdfUnicode(auteur) + " /Producer (Weekzicht) >>");
+        // alles is ASCII, dus de lengte van de tekst is het aantal bytes
+        var out = "%PDF-1.4\n", plek = [];
+        for (var i = 0; i < objs.length; i++) {
+          plek.push(out.length);
+          out += (i + 1) + " 0 obj\n" + objs[i] + "\nendobj\n";
+        }
+        var xref = out.length;
+        out += "xref\n0 " + (objs.length + 1) + "\n0000000000 65535 f \n";
+        for (var j = 0; j < plek.length; j++) out += ("000000000" + plek[j]).slice(-10) + " 00000 n \n";
+        return out + "trailer\n<< /Size " + (objs.length + 1) + " /Root " + catalogus + " 0 R /Info " + info +
+          " 0 R >>\nstartxref\n" + xref + "\n%%EOF\n";
+      }
+    };
+  }
+
+  /* --- pdf: de offerte zelf ------------------------------------ */
+
+  var PDF_INKT = "#1d1d1f", PDF_GRIJS = "#6e6e73", PDF_TEKST = "#3a3a3c", PDF_LIJN = "#e2e2e7", PDF_ORANJE = "#fc6a2f";
+
+  /** De offerte als pdf, als tekst (alleen ASCII). */
+  function offertePdf(of, b) {
+    var M = 56, R = A4.w - M, BREED = R - M, ONDER = A4.h - 72;
+    var doc = pdfDoc(), y = 0, tot = offerteTotalen(of);
+    var regels = of.regels || [];
+    var metAantal = regels.some(function (r) { return r.prijs != null && r.aantal != null && r.aantal !== 1; });
+    var cBedrag = R, cPrijs = R - 92, cAantal = cPrijs - 80;
+    var omsBreed = (metAantal ? cAantal - 50 : cBedrag - 110) - M;
+
+    function label(x, yy, s, align) {
+      doc.tekst(x, yy, s.toUpperCase(), { size: 7, vet: true, kleur: PDF_GRIJS, ls: 0.9, align: align });
+    }
+    function vervolg() {
+      doc.pagina();
+      doc.logo(M, 44, 96);
+      doc.tekst(R, 56, "Offerte " + of.nummer + " (vervolg)", { size: 8.5, kleur: PDF_GRIJS, align: "r" });
+      y = 104;
+    }
+    function tabelKop() {
+      label(M, y, "Omschrijving");
+      if (metAantal) { label(cAantal, y, "Aantal", "r"); label(cPrijs, y, "Prijs", "r"); }
+      label(cBedrag, y, "Bedrag", "r");
+      doc.lijn(M, y + 8, R, 0.8, "#c7c7cc");
+      y += 26;
+    }
+
+    // --- kop: logo links, bedrijf rechts
+    doc.pagina();
+    doc.logo(M, 50, 156);
+    var by = 56;
+    if (b.naam) { doc.tekst(R, by, b.naam, { size: 9.5, vet: true, align: "r" }); by += 13; }
+    String(b.adres || "").split("\n").concat([b.telefoon, b.email, b.web]).forEach(function (r) {
+      r = String(r || "").trim();
+      if (!r) return;
+      doc.tekst(R, by, r, { size: 8.5, kleur: PDF_GRIJS, align: "r" });
+      by += 12;
+    });
+
+    y = Math.max(by + 40, 168);
+    var tw = doc.tekst(M, y, "Offerte", { size: 28, vet: true });
+    doc.tekst(M + tw + 0.5, y, ".", { size: 28, vet: true, kleur: PDF_ORANJE });
+    y += 36;
+
+    // --- aan (links) en de gegevens van de offerte (rechts)
+    var ly = y, ry = y, KX = R - 196;
+    label(M, ly, "Aan");
+    ly += 17;
+    pdfAfbreken(of.aan, false, 10, KX - M - 24).forEach(function (r) {
+      doc.tekst(M, ly, r, { size: 10 });
+      ly += 14;
+    });
+    ry += 17;
+    [["Nummer", of.nummer], ["Datum", datumVol(of.datum)], ["Geldig tot", datumVol(of.geldig)]].forEach(function (p) {
+      if (!p[1]) return;
+      doc.tekst(KX, ry, p[0], { size: 9, kleur: PDF_GRIJS });
+      doc.tekst(R, ry, p[1], { size: 9.5, align: "r" });
+      ry += 14;
+    });
+    y = Math.max(ly, ry) + 22;
+
+    // --- waar het over gaat
+    if (of.betreft || of.details) {
+      label(M, y, "Betreft");
+      y += 18;
+      pdfAfbreken(of.betreft, true, 12, BREED).forEach(function (r) {
+        if (!r) return;
+        doc.tekst(M, y, r, { size: 12, vet: true });
+        y += 16;
+      });
+      pdfAfbreken(of.details, false, 9, BREED).forEach(function (r) {
+        doc.tekst(M, y, r, { size: 9, kleur: PDF_GRIJS });
+        y += 13;
+      });
+      y += 22;
+    }
+
+    // --- de regels
+    tabelKop();
+    regels.forEach(function (r, i) {
+      var delen = String(r.oms || "").replace(/\r/g, "").split("\n");
+      var kop = pdfAfbreken(delen[0], false, 10, omsBreed);
+      var rest = delen.length > 1 ? pdfAfbreken(delen.slice(1).join("\n"), false, 8.5, omsBreed) : [];
+      while (rest.length && !rest[rest.length - 1]) rest.pop();
+      var hoog = (kop.length - 1) * 14 + rest.length * 12.5;
+      if (y + hoog > ONDER) { vervolg(); tabelKop(); }
+      var top = y;
+      kop.forEach(function (t, k) { doc.tekst(M, y, t, { size: 10 }); if (k < kop.length - 1) y += 14; });
+      rest.forEach(function (t) { y += 12.5; doc.tekst(M, y, t, { size: 8.5, kleur: PDF_GRIJS }); });
+      if (r.prijs != null) {
+        if (metAantal) {
+          doc.tekst(cAantal, top, getal(r.aantal == null ? 1 : r.aantal), { size: 10, align: "r" });
+          doc.tekst(cPrijs, top, euro(r.prijs), { size: 10, align: "r" });
+        }
+        doc.tekst(cBedrag, top, euro(tot.regels[i] / 100), { size: 10, align: "r" });
+      }
+      doc.lijn(M, y + 10, R, 0.5, PDF_LIJN);
+      y += 27;
+    });
+
+    // --- totalen, rechts onder de regels
+    var TX = R - 206;
+    var nodig = (tot.modus === "excl" ? 2 : 0) * 16 + (tot.modus === "incl" ? 14 : 0) + 30;
+    if (y + nodig > ONDER) vervolg();
+    y += 2;
+    if (tot.modus === "excl") {
+      doc.tekst(TX, y, "Subtotaal", { size: 9.5, kleur: PDF_TEKST });
+      doc.tekst(R, y, euro(tot.sub / 100), { size: 9.5, align: "r" });
+      y += 16;
+      doc.tekst(TX, y, "Btw " + tot.tarief + "%", { size: 9.5, kleur: PDF_TEKST });
+      doc.tekst(R, y, euro(tot.btw / 100), { size: 9.5, align: "r" });
+      y += 16;
+    }
+    doc.lijn(TX, y - 8, R, 1.4, PDF_ORANJE);
+    y += 9;
+    doc.tekst(TX, y, tot.modus === "incl" ? "Totaal incl. btw" : "Totaal", { size: 12, vet: true });
+    doc.tekst(R, y, euro(tot.totaal / 100), { size: 12, vet: true, align: "r" });
+    if (tot.modus === "incl") {
+      y += 15;
+      doc.tekst(TX, y, "Waarvan " + tot.tarief + "% btw", { size: 8.5, kleur: PDF_GRIJS });
+      doc.tekst(R, y, euro(tot.btw / 100), { size: 8.5, kleur: PDF_GRIJS, align: "r" });
+    }
+
+    // --- tekst onderaan
+    if (String(of.tekst || "").trim()) {
+      y += 40;
+      pdfAfbreken(of.tekst, false, 9.5, BREED).forEach(function (r) {
+        if (y > ONDER) vervolg();
+        doc.tekst(M, y, r, { size: 9.5, kleur: PDF_TEKST });
+        y += 14.5;
+      });
+    }
+
+    // --- voet op elke pagina
+    var voet = [b.juridisch || b.naam, b.kvk && "KvK " + b.kvk, b.btw && "Btw " + b.btw, b.iban && "IBAN " + b.iban]
+      .filter(function (x) { return x && String(x).trim(); }).join("   ·   ");
+    var n = doc.aantal();
+    for (var p = 1; p <= n; p++) {
+      doc.naar(p);
+      doc.lijn(M, A4.h - 52, R, 0.5, PDF_LIJN);
+      if (voet) doc.tekst(M, A4.h - 38, voet, { size: 7.5, kleur: PDF_GRIJS });
+      if (n > 1) doc.tekst(R, A4.h - 38, p + " / " + n, { size: 7.5, kleur: PDF_GRIJS, align: "r" });
+    }
+    return doc.bouw("Offerte " + of.nummer, b.naam || "Mediaspot");
+  }
+
+  /* --- offertevenster ------------------------------------------ */
+
+  var editingOfferte = null;     // id van de klant
+  var offerteVuil = false;       // iets veranderd sinds openen of bewaren
+  var btwKeuze = "incl";
+
+  function renderLeadOfferteBox(l) {
+    var box = $("lOfferteBox");
+    if (!l || !l.offerte) {
+      box.innerHTML = '<span class="label">Offerte</span>' +
+        '<p>Zet regels met een omschrijving en prijs onder elkaar en download het als pdf met het ' +
+        'Mediaspot-logo. Naam, datum en locatie van de klant staan er al in.</p>' +
+        '<div><button type="button" class="btn-line" id="lMakeOfferte">Maak offerte</button></div>';
+      return;
+    }
+    var of = l.offerte, t = offerteTotalen(of);
+    box.innerHTML = '<span class="label">Offerte</span>' +
+      '<div class="of-kort"><b>' + esc(of.nummer) + '</b><span>' + esc(datumVol(of.datum)) + '</span>' +
+      '<span class="of-kort-bedrag">' + esc(euro(t.totaal / 100)) + '</span></div>' +
+      '<div class="of-knoppen"><button type="button" class="btn-line" id="lEditOfferte">Bewerken</button>' +
+      '<button type="button" class="btn-line" id="lPdfOfferte">Download pdf</button></div>';
+  }
+
+  function regelHtml(r) {
+    return '<div class="of-regel">' +
+      '<textarea class="of-oms" rows="1" aria-label="Omschrijving" placeholder="Omschrijving — details eventueel op een nieuwe regel">' +
+        esc(r.oms || "") + '</textarea>' +
+      '<div class="of-num">' +
+        '<label class="of-aantal"><span aria-hidden="true">×</span><input type="text" inputmode="decimal" aria-label="Aantal" value="' +
+          esc(getal(r.aantal == null ? 1 : r.aantal)) + '"></label>' +
+        '<label class="of-prijs"><span aria-hidden="true">€</span><input type="text" inputmode="decimal" aria-label="Prijs" placeholder="0,00" value="' +
+          esc(r.prijs == null ? "" : bedragTekst(r.prijs)) + '"></label>' +
+        '<span class="of-bedrag"></span>' +
+        '<button type="button" class="of-weg" aria-label="Regel verwijderen" title="Regel verwijderen">✕</button>' +
+      '</div></div>';
+  }
+
+  function regelEls() { return Array.prototype.slice.call($("oRegels").querySelectorAll(".of-regel")); }
+
+  function leesRegels() {
+    return regelEls().map(function (el) {
+      var a = parseBedrag(el.querySelector(".of-aantal input").value);
+      var p = parseBedrag(el.querySelector(".of-prijs input").value);
+      return {
+        oms: el.querySelector(".of-oms").value.replace(/\s+$/, ""),
+        aantal: a == null || isNaN(a) ? 1 : a,
+        prijs: p == null || isNaN(p) ? null : p
+      };
+    });
+  }
+
+  function groei(ta) {
+    ta.style.height = "auto";
+    if (ta.scrollHeight) ta.style.height = ta.scrollHeight + 2 + "px";
+  }
+
+  /** Bedragen per regel en de totalen onderaan bijwerken. */
+  function offerteRekenen() {
+    var els = regelEls(), regels = leesRegels();
+    var tot = offerteTotalen({ regels: regels, btw: btwKeuze, tarief: BTW_TARIEF });
+    els.forEach(function (el, i) {
+      var ai = el.querySelector(".of-aantal input"), pi = el.querySelector(".of-prijs input");
+      ai.classList.toggle("bad", isNaN(parseBedrag(ai.value)));
+      pi.classList.toggle("bad", isNaN(parseBedrag(pi.value)));
+      el.querySelector(".of-bedrag").textContent = regels[i].prijs == null ? "" : euro(tot.regels[i] / 100);
+    });
+    var html = "";
+    function rij(k, v, cls) { html += '<div class="' + (cls || "") + '"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>'; }
+    if (tot.modus === "excl") { rij("Subtotaal", euro(tot.sub / 100)); rij("Btw " + tot.tarief + "%", euro(tot.btw / 100)); }
+    rij(tot.modus === "incl" ? "Totaal incl. btw" : "Totaal", euro(tot.totaal / 100), "of-eind");
+    if (tot.modus === "incl") rij("Waarvan " + tot.tarief + "% btw", euro(tot.btw / 100), "of-klein");
+    $("oTotaal").innerHTML = html;
+  }
+
+  function setBtwKeuze(id) {
+    btwKeuze = id;
+    var bs = $("oBtw").querySelectorAll("button");
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute("aria-pressed", bs[i].getAttribute("data-btw") === id ? "true" : "false");
+  }
+
+  function vulBedrijf(b) {
+    for (var i = 0; i < BEDRIJF_VELDEN.length; i++) $("ob_" + BEDRIJF_VELDEN[i]).value = b[BEDRIJF_VELDEN[i]] || "";
+  }
+  function leesBedrijf() {
+    var b = {};
+    for (var i = 0; i < BEDRIJF_VELDEN.length; i++) b[BEDRIJF_VELDEN[i]] = $("ob_" + BEDRIJF_VELDEN[i]).value.trim();
+    return b;
+  }
+
+  function vulOfferte(l, of) {
+    $("ofTitle").textContent = "Offerte · " + leadName(l);
+    $("oNummer").value = of.nummer || "";
+    $("oDatum").value = of.datum || "";
+    $("oGeldig").value = of.geldig || "";
+    $("oAan").value = of.aan || "";
+    $("oBetreft").value = of.betreft || "";
+    $("oDetails").value = of.details || "";
+    $("oTekst").value = of.tekst || "";
+    var regels = of.regels && of.regels.length ? of.regels : [{ oms: "", aantal: 1, prijs: null }];
+    $("oRegels").innerHTML = regels.map(regelHtml).join("");
+    setBtwKeuze(of.btw || "incl");
+    vulBedrijf(bedrijf());
+    $("oDelete").hidden = !l.offerte;
+    resetOfferteWeg();
+    offerteRekenen();
+  }
+
+  /** Vanuit het klantvenster: eerst de klant bewaren, zoals bij de formulierlink. */
+  function openOfferte() {
+    var obj = collectLead();
+    if (!obj) return;
+    put("leads", obj);
+    editingLead = obj.id;
+    $("ldTitle").textContent = "Klant bewerken";
+    $("lDelete").hidden = false;
+    render();
+    editingOfferte = obj.id;
+    var of = obj.offerte ? JSON.parse(JSON.stringify(obj.offerte)) : nieuweOfferte(obj);
+    vulOfferte(obj, of);
+    offerteVuil = false;
+    $("oShare").hidden = !kanDelen();
+    $("ofOverlay").hidden = false;
+    var tas = $("oRegels").querySelectorAll("textarea");
+    for (var i = 0; i < tas.length; i++) groei(tas[i]);
+    if (!obj.offerte) setTimeout(function () { var t = $("oRegels").querySelector("textarea"); if (t) t.focus(); }, 0);
+  }
+
+  function leesOfferte() {
+    var datum = $("oDatum").value || amsNow().date;
+    return {
+      nummer: $("oNummer").value.trim() || volgendNummer(datum, editingOfferte),
+      datum: datum,
+      geldig: $("oGeldig").value || null,
+      aan: $("oAan").value.trim(),
+      betreft: $("oBetreft").value.trim(),
+      details: $("oDetails").value.trim(),
+      regels: leesRegels().filter(function (r) { return r.oms.trim() || r.prijs != null; }),
+      btw: btwKeuze,
+      tarief: BTW_TARIEF,
+      tekst: $("oTekst").value.trim(),
+      gewijzigd: Date.now()
+    };
+  }
+
+  /** Bewaart de offerte in de klant; geeft { l, of } of null. */
+  function bewaarOfferte() {
+    var l = findLead(editingOfferte);
+    if (!l) return null;
+    var of = leesOfferte();
+    var upd = {};
+    for (var k in l) upd[k] = l[k];
+    upd.offerte = of;
+    put("leads", upd);
+    // gegevens, tekst en btw-keuze gelden ook voor de volgende offerte
+    var meta = state.offerteMeta, b = leesBedrijf(), anders = false;
+    if (JSON.stringify(b) !== JSON.stringify(bedrijf())) { meta.bedrijf = b; anders = true; }
+    if (of.tekst !== (typeof meta.tekst === "string" ? meta.tekst : OFFERTE_TEKST)) { meta.tekst = of.tekst; anders = true; }
+    if (of.btw !== (meta.btw || "incl")) { meta.btw = of.btw; anders = true; }
+    if (anders) bewaarOfferteMeta();
+    offerteVuil = false;
+    $("oDelete").hidden = false;
+    if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+    render();
+    return { l: upd, of: of };
+  }
+
+  function sluitOfferte() {
+    if (offerteVuil) bewaarOfferte();
+    $("ofOverlay").hidden = true;
+    editingOfferte = null;
+  }
+
+  var offerteWegTimer = null;
+  function resetOfferteWeg() {
+    clearTimeout(offerteWegTimer);
+    $("oDelete").textContent = "Verwijderen";
+    $("oDelete").removeAttribute("data-armed");
+  }
+  function verwijderOfferte() {
+    var btn = $("oDelete");
+    if (!btn.hasAttribute("data-armed")) {
+      btn.setAttribute("data-armed", "1");
+      btn.textContent = "Echt verwijderen?";
+      offerteWegTimer = setTimeout(resetOfferteWeg, 4000);
+      return;
+    }
+    resetOfferteWeg();
+    var l = findLead(editingOfferte);
+    if (l) {
+      var upd = {};
+      for (var k in l) if (k !== "offerte") upd[k] = l[k];
+      put("leads", upd);
+      if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+      render();
+    }
+    offerteVuil = false;
+    $("ofOverlay").hidden = true;
+    editingOfferte = null;
+    toast("Offerte verwijderd.");
+  }
+
+  /** Bestand naar de gebruiker: via het platform als dat er is, anders als gewone download. */
+  function saveFile(name, data, type) {
+    if (downloads) return downloads.save({ filename: name, data: data });
+    return new Promise(function (resolve, reject) {
+      try {
+        var url = URL.createObjectURL(new Blob([data], { type: type || "application/octet-stream" }));
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.rel = "noopener";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+        resolve();
+      } catch (e) { reject(e); }
+    });
+  }
+
+  function pdfDownloaden(l, of) {
+    if (!of.regels || !of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
+    var naam = offerteNaam(of, l);
+    saveFile(naam, offertePdf(of, bedrijf()), "application/pdf")
+      .then(function () { toast("Offerte gedownload: " + naam); })
+      ["catch"](function (err) { saveFailed(err); });
+  }
+
+  function kanDelen() {
+    try {
+      return !!(navigator.share && navigator.canShare && window.File &&
+        navigator.canShare({ files: [new File(["x"], "x.pdf", { type: "application/pdf" })] }));
+    } catch (e) { return false; }
+  }
+
+  /** Op de telefoon: de pdf meteen in WhatsApp of de mail zetten. */
+  function deelOfferte() {
+    var r = bewaarOfferte();
+    if (!r) return;
+    if (!r.of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
+    var naam = offerteNaam(r.of, r.l);
+    var file = new File([offertePdf(r.of, bedrijf())], naam, { type: "application/pdf" });
+    navigator.share({ files: [file], title: naam })["catch"](function (e) {
+      if (!e || e.name !== "AbortError") toast("Delen lukte niet — gebruik Download pdf.");
+    });
+  }
+
+  function neemOfferteMeta(d) {
+    var m = state.offerteMeta;
+    m.bedrijf = d.bedrijf && typeof d.bedrijf === "object" ? d.bedrijf : null;
+    m.tekst = typeof d.tekst === "string" ? d.tekst : null;
+    m.btw = typeof d.btw === "string" ? d.btw : null;
+    m.at = typeof d.at === "number" ? d.at : 0;
+  }
+
+  function bewaarOfferteMeta() {
+    var m = state.offerteMeta;
+    m.at = Date.now();
+    saveLocal();
+    if (dbReady && db) {
+      db.doc("meta/offerte").set({ bedrijf: m.bedrijf, tekst: m.tekst, btw: m.btw, at: m.at })["catch"](function () {});
+    }
+  }
+
+  /* ==========================================================
      7. ICS-import
      ========================================================== */
 
@@ -5057,7 +6284,6 @@ button { cursor: pointer; }
   }
 
   function exportCsv() {
-    if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
     var dates = state.view === "lijst"
       ? null
       : periodDates();
@@ -5081,13 +6307,12 @@ button { cursor: pointer; }
     var name = dates
       ? "weekzicht-week-" + isoWeek(dates[0]).week + "-" + dates[0].slice(0, 4) + ".csv"
       : "weekzicht-alles.csv";
-    downloads.save({ filename: name, data: "\uFEFF" + rows.join("\r\n") })
+    saveFile(name, "\uFEFF" + rows.join("\r\n"), "text/csv;charset=utf-8")
       .then(function () { toast("Opgeslagen als " + name); })
       .catch(function (err) { saveFailed(err); });
   }
 
   function exportLeadsCsv() {
-    if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
     if (!state.leads.length) { toast("Nog geen klanten om te exporteren."); return; }
     var list = sortLeads(state.leads);
     var rows = ["Datum;Dag;Van;Tot;Naam;Telefoon;Status;Gebeld;Gebeld op;Belafspraak;Beltijd;Formulier;Muziek;Notitie"];
@@ -5102,19 +6327,18 @@ button { cursor: pointer; }
         (l.note || "").replace(/\n/g, " ")
       ].map(csvCell).join(";"));
     }
-    downloads.save({ filename: "weekzicht-klanten.csv", data: "\uFEFF" + rows.join("\r\n") })
+    saveFile("weekzicht-klanten.csv", "\uFEFF" + rows.join("\r\n"), "text/csv;charset=utf-8")
       .then(function () { toast("Klantenlijst opgeslagen."); })
       ["catch"](function (err) { saveFailed(err); });
   }
 
   function exportJson() {
-    if (!downloads) { toast("Opslaan is hier niet beschikbaar."); return; }
     var data = JSON.stringify({
       app: "weekzicht", version: 1, exportedAt: new Date().toISOString(),
       timezone: AMS, events: state.events, tasks: state.tasks, leads: state.leads,
       settings: state.settings
     }, null, 2);
-    downloads.save({ filename: "weekzicht-backup.json", data: data })
+    saveFile("weekzicht-backup.json", data, "application/json")
       .then(function () { toast("Back-up opgeslagen."); })
       .catch(function (err) { saveFailed(err); });
   }
@@ -5207,6 +6431,7 @@ button { cursor: pointer; }
   }
 
   function closeOverlays() {
+    if (!$("ofOverlay").hidden) sluitOfferte();
     $("evOverlay").hidden = true;
     $("impOverlay").hidden = true;
     $("ldOverlay").hidden = true;
@@ -5214,11 +6439,48 @@ button { cursor: pointer; }
     editingLead = null;
   }
 
-  // weergaveknoppen
+  // weergaveknoppen; op de telefoon is "Overzicht" een eigen tab met de zijkolom
+  var PHONE_MQ = "(max-width: 720px), (pointer: coarse) and (max-height: 500px)";   // gelijk aan de CSS
+
+  function showRail(on) {
+    document.querySelector(".app").classList.toggle("pane-rail", on);
+    if (!on) return;
+    var btns = document.querySelectorAll(".viewswitch button");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", btns[i].hasAttribute("data-pane") ? "true" : "false");
+    }
+  }
+
   document.querySelector(".viewswitch").addEventListener("click", function (e) {
+    if (e.target.closest("[data-pane]")) { showRail(true); return; }
     var b = e.target.closest("[data-view]");
-    if (b) setView(b.getAttribute("data-view"));
+    if (b) { showRail(false); setView(b.getAttribute("data-view")); }
   });
+
+  // terug naar een breed scherm (draaien, venster groter): zijkolom staat er dan gewoon naast
+  if (window.matchMedia) {
+    var phone = window.matchMedia(PHONE_MQ);
+    var leavePhone = function () {
+      if (!phone.matches && document.querySelector(".app").classList.contains("pane-rail")) {
+        showRail(false); setView(state.view);
+      }
+    };
+    if (phone.addEventListener) phone.addEventListener("change", leavePhone);
+    else if (phone.addListener) phone.addListener(leavePhone);
+  }
+
+  // dagweergave: vegen naar links of rechts bladert een dag verder of terug
+  var swipe = null;
+  $("canvas").addEventListener("touchstart", function (e) {
+    swipe = state.view === "dag" && e.touches.length === 1
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  }, { passive: true });
+  $("canvas").addEventListener("touchend", function (e) {
+    if (!swipe || state.view !== "dag") return;
+    var t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) shift(dx < 0 ? 1 : -1);
+  }, { passive: true });
 
   $("prevBtn").addEventListener("click", function () { shift(-1); });
   $("nextBtn").addEventListener("click", function () { shift(1); });
@@ -5234,13 +6496,16 @@ button { cursor: pointer; }
     m.hidden = !m.hidden;
     $("menuBtn").setAttribute("aria-expanded", m.hidden ? "false" : "true");
   });
+  function closeMenu() {
+    $("menu").hidden = true;
+    $("menuBtn").setAttribute("aria-expanded", "false");
+    resetWipe();
+  }
+  // buiten het menu tikken sluit het; op de telefoon is dat ook de schaduw naast de lade
   document.addEventListener("click", function (e) {
-    if (!e.target.closest(".menuwrap")) {
-      $("menu").hidden = true;
-      $("menuBtn").setAttribute("aria-expanded", "false");
-      resetWipe();
-    }
+    if (!e.target.closest(".menu")) closeMenu();
   });
+  $("menuClose").addEventListener("click", closeMenu);
   $("miImport").addEventListener("click", openImport);
   $("miWeekend").addEventListener("click", function () {
     state.settings.weekend = !state.settings.weekend;
@@ -5402,6 +6667,92 @@ button { cursor: pointer; }
     else if (b.id === "lCopyMuziekLink") copyText($("lMuziekLink").value, "Muzieklink gekopieerd.");
     else if (b.id === "lCheckMuziek" && editingLead) checkMuziek(editingLead, true);
   });
+  $("lOfferteBox").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "lMakeOfferte" || b.id === "lEditOfferte") openOfferte();
+    else if (b.id === "lPdfOfferte") {
+      var l = editingLead && findLead(editingLead);
+      if (l && l.offerte) pdfDownloaden(l, l.offerte);
+    }
+  });
+
+  // offertevenster
+  $("oBtw").innerHTML = BTW_KEUZES.map(function (k) {
+    return '<button type="button" data-btw="' + k.id + '" aria-pressed="false">' + esc(k.label) + '</button>';
+  }).join("");
+  $("oPakketten").innerHTML = PAKKETTEN.map(function (p) {
+    return '<button type="button" data-pakket="' + p.id + '" title="' + esc(p.oms.split("\n")[0]) + '">+ ' +
+      esc(p.naam) + '<b>' + esc(euro(p.prijs)) + '</b></button>';
+  }).join("");
+  function nieuweRegel(r) {
+    var els = regelEls(), last = els[els.length - 1];
+    // een lege laatste regel vullen in plaats van er een onder te zetten
+    if (r && last && !last.querySelector(".of-oms").value.trim() && !last.querySelector(".of-prijs input").value.trim()) {
+      last.parentNode.removeChild(last);
+    }
+    $("oRegels").insertAdjacentHTML("beforeend", regelHtml(r || { oms: "", aantal: 1, prijs: null }));
+    var ta = regelEls().pop().querySelector(".of-oms");
+    groei(ta);
+    offerteVuil = true;
+    offerteRekenen();
+    return ta;
+  }
+  $("oAddRegel").addEventListener("click", function () { nieuweRegel(null).focus(); });
+  $("oPakketten").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-pakket]");
+    if (!b) return;
+    for (var i = 0; i < PAKKETTEN.length; i++) {
+      if (PAKKETTEN[i].id === b.getAttribute("data-pakket")) nieuweRegel({ oms: PAKKETTEN[i].oms, aantal: 1, prijs: PAKKETTEN[i].prijs });
+    }
+  });
+  $("oRegels").addEventListener("click", function (e) {
+    var b = e.target.closest(".of-weg");
+    if (!b) return;
+    var row = b.closest(".of-regel");
+    row.parentNode.removeChild(row);
+    if (!regelEls().length) nieuweRegel(null);
+    offerteVuil = true;
+    offerteRekenen();
+  });
+  $("oRegels").addEventListener("input", function (e) {
+    if (e.target.classList.contains("of-oms")) groei(e.target);
+    offerteRekenen();
+  });
+  $("oRegels").addEventListener("change", function (e) {
+    // bij het verlaten netjes schrijven: 1950 → 1.950,00
+    var lab = e.target.closest(".of-prijs");
+    if (!lab) return;
+    var n = parseBedrag(e.target.value);
+    if (n != null && !isNaN(n)) e.target.value = bedragTekst(n);
+  });
+  $("oBtw").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-btw]");
+    if (!b) return;
+    setBtwKeuze(b.getAttribute("data-btw"));
+    offerteVuil = true;
+    offerteRekenen();
+  });
+  $("ofOverlay").addEventListener("input", function () { offerteVuil = true; });
+  $("oVulIn").addEventListener("click", function () {
+    var l = findLead(editingOfferte);
+    if (!l) return;
+    $("oAan").value = offerteAan(l);
+    $("oBetreft").value = offerteBetreft(l);
+    $("oDetails").value = offerteDetails(l);
+    offerteVuil = true;
+  });
+  $("oClose").addEventListener("click", sluitOfferte);
+  $("oSave").addEventListener("click", function () {
+    if (bewaarOfferte()) { $("ofOverlay").hidden = true; editingOfferte = null; toast("Offerte opgeslagen."); }
+  });
+  $("oPdf").addEventListener("click", function () {
+    var r = bewaarOfferte();
+    if (r) pdfDownloaden(r.l, r.of);
+  });
+  $("oShare").addEventListener("click", deelOfferte);
+  $("oDelete").addEventListener("click", verwijderOfferte);
+
   $("lStart").addEventListener("change", function () {
     var s = $("lStart").value, en = $("lEnd").value;
     if (s && !en) $("lEnd").value = toTime(Math.min(1439, toMin(s) + 9 * 60));
@@ -5419,7 +6770,9 @@ button { cursor: pointer; }
   var ovs = document.querySelectorAll(".overlay");
   for (var oi = 0; oi < ovs.length; oi++) {
     ovs[oi].addEventListener("mousedown", function (e) {
-      if (e.target === e.currentTarget) closeOverlays();
+      if (e.target !== e.currentTarget) return;
+      // naast de offerte klikken sluit alleen de offerte (en bewaart hem)
+      if (e.currentTarget.id === "ofOverlay") sluitOfferte(); else closeOverlays();
     });
   }
 
@@ -5460,7 +6813,11 @@ button { cursor: pointer; }
 
   // sneltoetsen
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { closeOverlays(); $("menu").hidden = true; return; }
+    if (e.key === "Escape") {
+      if (!$("ofOverlay").hidden) { sluitOfferte(); return; }
+      closeOverlays(); $("menu").hidden = true; return;
+    }
+    if (!$("ofOverlay").hidden) return;   // geen sneltoetsen boven de offerte
     var tag = (e.target.tagName || "").toLowerCase();
     if (tag === "input" || tag === "textarea" || tag === "select") {
       if (e.key === "Enter" && tag !== "textarea") {
@@ -5505,13 +6862,13 @@ button { cursor: pointer; }
   }
 
   /* ==========================================================
-     12. Opslag koppelen (db) — de pagina werkt ook zonder
+     12. Opslag koppelen (db of server) — de pagina werkt ook zonder
      ========================================================== */
 
-  function setSync(on) {
+  function setSync(on, label) {
     var el = $("syncDot");
     el.className = "syncdot" + (on ? " on" : "");
-    el.textContent = on ? "opgeslagen bij deze pagina" : "alleen op dit apparaat";
+    el.textContent = label || (on ? "opgeslagen bij deze pagina" : "alleen op dit apparaat");
   }
 
   function docsToList(snap) {
@@ -5528,90 +6885,349 @@ button { cursor: pointer; }
   }
 
   function connectDb() {
-    if (!window.claude || typeof window.claude.use !== "function") {
-      setSync(false); seedLocallyIfNeeded(); return;
-    }
+    // Buiten claude.ai (Vercel, npm start) is er geen db-capability: dan de server.
+    if (!window.claude || typeof window.claude.use !== "function") { connectServer(); return; }
     window.claude.use("db").then(function (handle) {
       if (!handle) { setSync(false); seedLocallyIfNeeded(); return; }
-      db = handle;
+      attachDb(handle, "opgeslagen bij deze pagina");
+    })["catch"](function () { setSync(false); seedLocallyIfNeeded(); });
+  }
 
-      var first = { events: true, tasks: true };
-      // vóór markSynced() vastleggen: anders lijkt elke eerste koppeling al gesynct
-      var wasSynced = everSynced();
+  /** Koppelt een opslag (de db van het artifact, of serverDb) aan de app. */
+  function attachDb(handle, label) {
+    db = handle;
 
-      function subscribe(coll) {
-        db.collection(coll).onSnapshot(function (snap) {
-          var remote = docsToList(snap);
+    var first = { events: true, tasks: true, leads: true };
+    // vóór markSynced() vastleggen: anders lijkt elke eerste koppeling al gesynct
+    var wasSynced = everSynced();
+    if (!wasSynced) backupLocal();
 
-          if (first[coll]) {
-            first[coll] = false;
-            var remoteIds = {};
-            for (var i = 0; i < remote.length; i++) remoteIds[remote[i].id] = true;
+    function subscribe(coll) {
+      db.collection(coll).onSnapshot(function (snap) {
+        var remote = docsToList(snap);
 
-            // Eerste keer ooit: neem lokaal werk mee. Daarna alleen wat
-            // tijdens deze sessie offline is gemaakt, zodat elders
-            // verwijderde items niet terugkomen.
-            var toPush = wasSynced
-              ? state[coll].filter(function (x) { return pendingIds[coll][x.id] && !remoteIds[x.id]; })
-              : state[coll].filter(function (x) { return !remoteIds[x.id]; });
+        if (first[coll]) {
+          first[coll] = false;
+          var remoteIdx = {};
+          for (var i = 0; i < remote.length; i++) remoteIdx[remote[i].id] = i;
+          var known = function (id) { return Object.prototype.hasOwnProperty.call(remoteIdx, id); };
 
-            for (var p = 0; p < toPush.length; p++) {
-              var body = {};
-              for (var key in toPush[p]) if (key !== "id") body[key] = toPush[p][key];
-              db.doc(coll + "/" + toPush[p].id).set(body).catch(dbTrouble);
-              remote.push(toPush[p]);
-            }
-            for (var q in pendingDeletes[coll]) {
-              db.doc(coll + "/" + q)["delete"]().catch(function () {});
-            }
-            pendingIds[coll] = {};
-            pendingDeletes[coll] = {};
+          // Eerste keer ooit: neem al het lokale werk mee dat de opslag nog
+          // niet kent. Daarna alleen wat offline is gemaakt of gewijzigd
+          // (dat wint), zodat elders verwijderde items niet terugkomen.
+          var toPush = wasSynced
+            ? state[coll].filter(function (x) { return pendingIds[coll][x.id]; })
+            : state[coll].filter(function (x) { return !known(x.id); });
+
+          for (var p = 0; p < toPush.length; p++) {
+            var body = {};
+            for (var key in toPush[p]) if (key !== "id") body[key] = toPush[p][key];
+            db.doc(coll + "/" + toPush[p].id).set(body).catch(dbTrouble);
+            if (known(toPush[p].id)) remote[remoteIdx[toPush[p].id]] = toPush[p];
+            else remote.push(toPush[p]);
           }
-
-          state[coll] = remote;
-          saveLocal();
-          render();
-        }, function (err) {
-          if (err && (err.code === "revoked" || err.code === "not_granted")) {
-            setSync(false); db = null; dbReady = false;
+          var gone = pendingDeletes[coll];
+          for (var q in gone) {
+            db.doc(coll + "/" + q)["delete"]().catch(function () {});
           }
-        });
-      }
+          remote = remote.filter(function (x) { return !gone[x.id]; });
+          pendingIds[coll] = {};
+          pendingDeletes[coll] = {};
+          savePending();
+        }
 
-      db.doc("meta/settings").onSnapshot(function (snap) {
-        if (!snap.exists) return;
-        var s = snap.data() || {};
-        if (typeof s.weekend === "boolean") state.settings.weekend = s.weekend;
-        if (typeof s.dayStart === "number") state.settings.dayStart = s.dayStart;
-        if (typeof s.dayEnd === "number") state.settings.dayEnd = s.dayEnd;
-        $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
+        state[coll] = remote;
         saveLocal();
         render();
-      }, function () {});
-
-      // eerst kijken of de startlijst al eens is ingeladen, dan pas abonneren
-      db.doc("meta/seeded").get().then(function (snap) {
-        var alreadySeeded = snap && snap.exists;
-        subscribe("events");
-        subscribe("tasks");
-        subscribe("leads");
-        dbReady = true;
-        markSynced();
-        setSync(true);
-        if (!alreadySeeded) {
-          seedLeads();
-          db.doc("meta/seeded").set({ leads: 1, at: new Date().toISOString() })["catch"](function () {});
-          try { localStorage.setItem(LS_SEEDED, "1"); } catch (e) {}
+      }, function (err) {
+        if (err && (err.code === "revoked" || err.code === "not_granted")) {
+          setSync(false); db = null; dbReady = false;
         }
-      })["catch"](function () {
-        subscribe("events");
-        subscribe("tasks");
-        subscribe("leads");
-        dbReady = true;
-        markSynced();
-        setSync(true);
       });
-    })["catch"](function () { setSync(false); seedLocallyIfNeeded(); });
+    }
+
+    db.doc("meta/settings").onSnapshot(function (snap) {
+      if (!snap.exists) {
+        // nog niets bewaard: neem de instellingen van deze browser mee
+        if (!wasSynced && db) db.doc("meta/settings").set({
+          weekend: state.settings.weekend, dayStart: state.settings.dayStart, dayEnd: state.settings.dayEnd
+        })["catch"](function () {});
+        return;
+      }
+      var s = snap.data() || {};
+      if (typeof s.weekend === "boolean") state.settings.weekend = s.weekend;
+      if (typeof s.dayStart === "number") state.settings.dayStart = s.dayStart;
+      if (typeof s.dayEnd === "number") state.settings.dayEnd = s.dayEnd;
+      $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
+      saveLocal();
+      render();
+    }, function () {});
+
+    // bedrijfsgegevens en standaardtekst van de offerte: de laatste wijziging wint
+    db.doc("meta/offerte").onSnapshot(function (snap) {
+      var d = snap.exists ? (snap.data() || {}) : null, m = state.offerteMeta;
+      if (!d || (m.at || 0) > (d.at || 0)) {
+        if (m.at && db) db.doc("meta/offerte").set({ bedrijf: m.bedrijf, tekst: m.tekst, btw: m.btw, at: m.at })["catch"](function () {});
+        return;
+      }
+      neemOfferteMeta(d);
+      saveLocal();
+    }, function () {});
+
+    // eerst kijken of de startlijst al eens is ingeladen, dan pas abonneren
+    db.doc("meta/seeded").get().then(function (snap) {
+      var alreadySeeded = snap && snap.exists;
+      subscribe("events");
+      subscribe("tasks");
+      subscribe("leads");
+      dbReady = true;
+      markSynced();
+      setSync(true, label);
+      if (!alreadySeeded) {
+        // Heeft deze browser de startlijst al eens gehad, dan niet opnieuw:
+        // dat zou bijgewerkte of verwijderde klanten terugzetten.
+        if (!localSeeded()) seedLeads();
+        db.doc("meta/seeded").set({ leads: 1, at: new Date().toISOString() })["catch"](function () {});
+        try { localStorage.setItem(LS_SEEDED, "1"); } catch (e) {}
+      }
+    })["catch"](function () {
+      subscribe("events");
+      subscribe("tasks");
+      subscribe("leads");
+      dbReady = true;
+      markSynced();
+      setSync(true, label);
+    });
+  }
+
+  /* --- de server als opslag (Vercel, npm start) --------------
+
+     Buiten claude.ai bewaart api/planning alles in Redis, zodat de planning
+     op elk apparaat en in elke browser dezelfde is. serverDb() doet zich voor
+     als de db-handle van het artifact (doc, collection, onSnapshot), zodat
+     attachDb() het verschil niet merkt. Wijzigingen gaan via een wachtrij in
+     localStorage: valt de verbinding weg, dan gaan ze alsnog mee zodra hij
+     terug is, ook na herladen. Wat op een ander apparaat verandert, verschijnt
+     binnen een halve minuut, en meteen als je het tabblad weer opent. */
+
+  var PLANNING_URL = "api/planning";
+  var SYNC_SERVER = "online opgeslagen";
+  var SERVER_COLLS = ["events", "tasks", "leads", "meta"];
+  var POLL_MS = 30000;
+  var BATCH = 200;              // wijzigingen per verzoek…
+  var BATCH_BYTES = 1000000;    // …en hoogstens zo groot (Vercel neemt tot 4,5 MB aan)
+  var serverRetry = null, serverWarned = false;
+
+  function connectServer() {
+    clearTimeout(serverRetry);
+    api("GET", "", null, PLANNING_URL).then(function (r) {
+      if (r.ok && typeof r.data.versie === "number") { attachDb(serverDb(r.data), SYNC_SERVER); return; }
+      serverDown(r);
+    }, function () { serverDown(null); });
+  }
+
+  /** Geen server-opslag: werk lokaal, en probeer het straks opnieuw als het een storing was. */
+  function serverDown(r) {
+    var status = r ? r.status : 0;
+    if (status === 401) {
+      setSync(false, "uitgelogd — alleen op dit apparaat");
+      if (!serverWarned) toast("Je bent niet meer ingelogd: wijzigingen blijven op dit apparaat. Laad de pagina opnieuw en log in.");
+      serverWarned = true;
+    } else {
+      setSync(false);
+      // geen opslag gekoppeld, of geen wachtwoord: zeg waarom
+      if ((status === 503 || status === 403) && r.data.melding) toast("Alleen op dit apparaat opgeslagen. " + r.data.melding);
+    }
+    seedLocallyIfNeeded();
+    // geen verbinding of een storing: straks nog eens. Geen api (404) of geen opslag (503): niet.
+    if (!status || status === 401 || (status >= 500 && status !== 503)) serverRetry = setTimeout(connectServer, POLL_MS);
+  }
+
+  function loadQueue() {
+    try {
+      var q = JSON.parse(localStorage.getItem(LS_QUEUE) || "{}"), out = {};
+      for (var k in q) {
+        var op = q[k];
+        if (op && SERVER_COLLS.indexOf(op.c) >= 0 && typeof op.id === "string") out[k] = op;
+      }
+      return out;
+    } catch (e) { return {}; }
+  }
+  function saveQueue(q) {
+    try {
+      if (Object.keys(q).length) localStorage.setItem(LS_QUEUE, JSON.stringify(q));
+      else localStorage.removeItem(LS_QUEUE);
+    } catch (e) {}
+  }
+
+  function serverDb(firstData) {
+    var remote = {}, versie = 0;
+    var queue = loadQueue();       // "c/id" → { c, id, doc } of { c, id, weg: true }
+    var subs = [];                 // { c, id (null = hele verzameling), cb, last }
+    var sending = false, polling = false, gen = 0;
+    var flushTimer = null, retryMs = 0, warned = false, lastLabel = SYNC_SERVER;
+
+    function take(data) {
+      for (var i = 0; i < SERVER_COLLS.length; i++) {
+        var c = SERVER_COLLS[i], src = data[c];
+        remote[c] = src && typeof src === "object" ? src : {};
+      }
+      versie = data.versie || 0;
+    }
+    take(firstData);
+
+    /** Wat de server heeft, plus wat nog onderweg is. */
+    function view(c) {
+      var out = {}, k;
+      for (k in remote[c]) out[k] = remote[c][k];
+      for (k in queue) {
+        var op = queue[k];
+        if (op.c !== c) continue;
+        if (op.weg) delete out[op.id]; else out[op.id] = op.doc;
+      }
+      return out;
+    }
+
+    function docSnap(id, body) {
+      return { id: id, exists: !!body, data: function () { return body || null; } };
+    }
+
+    function keyOf(sub, v) { return JSON.stringify(sub.id ? (v[sub.id] || null) : v); }
+
+    function emit(sub) {
+      var v = view(sub.c), key = keyOf(sub, v);
+      if (key === sub.last) return;   // niets veranderd: niet opnieuw tekenen
+      sub.last = key;
+      if (sub.id) { sub.cb(docSnap(sub.id, v[sub.id])); return; }
+      var docs = [];
+      for (var k in v) docs.push(docSnap(k, v[k]));
+      sub.cb({ docs: docs });
+    }
+
+    function subscribe(c, id, cb) {
+      var sub = { c: c, id: id, cb: cb, last: undefined };
+      subs.push(sub);
+      setTimeout(function () { emit(sub); }, 0);
+      return function () { subs = subs.filter(function (s) { return s !== sub; }); };
+    }
+
+    function status(on, label) {
+      if (label === lastLabel) return;
+      lastLabel = label;
+      setSync(on, label);
+    }
+
+    function write(c, id, op) {
+      op.c = c; op.id = id;
+      queue[c + "/" + id] = op;
+      saveQueue(queue);
+      // De app heeft deze wijziging zelf al verwerkt. Zonder dit zou een
+      // ander apparaat dat precies dit terugdraait als "niets veranderd" gelden.
+      for (var i = 0; i < subs.length; i++) {
+        if (subs[i].c === c && subs[i].last !== undefined) subs[i].last = keyOf(subs[i], view(c));
+      }
+      if (!retryMs) { clearTimeout(flushTimer); flushTimer = setTimeout(flush, 300); }
+      return Promise.resolve();
+    }
+
+    function flush(keepalive) {
+      clearTimeout(flushTimer); flushTimer = null;
+      if (sending) return;
+      var keys = [], ops = [], size = 0, all = Object.keys(queue);
+      for (var n = 0; n < all.length && ops.length < BATCH; n++) {
+        var len = JSON.stringify(queue[all[n]]).length;
+        if (ops.length && size + len > BATCH_BYTES) break;
+        keys.push(all[n]); ops.push(queue[all[n]]); size += len;
+      }
+      if (!keys.length) return;
+      sending = true;
+      api("POST", "", { ops: ops }, PLANNING_URL, keepalive).then(function (r) {
+        sending = false;
+        if (r.ok) {
+          gen++;
+          for (var i = 0; i < keys.length; i++) {
+            var op = ops[i];
+            if (op.weg) delete remote[op.c][op.id]; else remote[op.c][op.id] = op.doc;
+            if (queue[keys[i]] === op) delete queue[keys[i]];   // intussen opnieuw gewijzigd? dan blijft die staan
+          }
+          saveQueue(queue);
+          retryMs = 0; warned = false;
+          status(true, SYNC_SERVER);
+          if (Object.keys(queue).length) flush();
+          return;
+        }
+        var bad = r.status === 400 && typeof r.data.op === "number" ? keys[r.data.op] : null;
+        if (bad && queue[bad] === ops[r.data.op]) {
+          // een wijziging die de server nooit aanneemt (bijv. te groot): niet eindeloos blijven proberen
+          delete queue[bad];
+          saveQueue(queue);
+          toast("Eén wijziging kon niet online worden opgeslagen (" + (r.data.melding || "fout") + "). Op dit apparaat staat hij wel.");
+          flush();
+          return;
+        }
+        failed(r);
+      }, function () { sending = false; failed(null); });
+    }
+
+    function failed(r) {
+      if (r && r.status === 401) {
+        status(false, "uitgelogd — nog niet online");
+        if (!warned) toast("Je bent niet meer ingelogd. Log opnieuw in, dan gaan je wijzigingen alsnog online.");
+        warned = true;
+      } else {
+        status(false, "nog niet online opgeslagen");
+      }
+      retryMs = Math.min(retryMs ? retryMs * 2 : 5000, 60000);
+      clearTimeout(flushTimer);
+      flushTimer = setTimeout(flush, retryMs);
+    }
+
+    function poll() {
+      if (polling) return;
+      polling = true;
+      var g = gen;
+      api("GET", "?sinds=" + versie, null, PLANNING_URL).then(function (r) {
+        polling = false;
+        if (!r.ok) { if (r.status === 401) status(false, "uitgelogd — nog niet online"); return; }
+        // Kwam er intussen iets van ons aan, dan kan dit antwoord ouder zijn: zo meteen opnieuw.
+        if (gen !== g) { setTimeout(poll, 1000); return; }
+        if (!Object.keys(queue).length) status(true, SYNC_SERVER);
+        if (r.data.ongewijzigd) return;
+        take(r.data);
+        for (var i = 0; i < subs.length; i++) emit(subs[i]);
+      }, function () { polling = false; });
+    }
+
+    function wake() {
+      if (document.hidden) {
+        // tabblad gaat dicht of naar de achtergrond: wat nog wacht meteen versturen
+        if (Object.keys(queue).length) flush(true);
+        return;
+      }
+      poll();
+      if (Object.keys(queue).length && !sending) { retryMs = 0; flush(); }
+    }
+    setInterval(function () { if (!document.hidden) poll(); }, POLL_MS);
+    document.addEventListener("visibilitychange", wake);
+    window.addEventListener("focus", wake);
+    window.addEventListener("online", wake);
+    window.addEventListener("pagehide", function () { if (Object.keys(queue).length) flush(true); });
+    if (Object.keys(queue).length) flushTimer = setTimeout(flush, 0);   // over van de vorige keer
+
+    return {
+      doc: function (path) {
+        var i = path.indexOf("/"), c = path.slice(0, i), id = path.slice(i + 1);
+        return {
+          set: function (body) { return write(c, id, { doc: body }); },
+          "delete": function () { return write(c, id, { weg: true }); },
+          get: function () { return Promise.resolve(docSnap(id, view(c)[id])); },
+          onSnapshot: function (cb) { return subscribe(c, id, cb); }
+        };
+      },
+      collection: function (c) {
+        return { onSnapshot: function (cb) { return subscribe(c, null, cb); } };
+      }
+    };
   }
 
   function connectDownloads() {
@@ -5651,6 +7267,7 @@ button { cursor: pointer; }
   }
 
   loadLocal();
+  loadPending();
   $("weekendState").textContent = state.settings.weekend ? "aan" : "uit";
   setView(state.view);
   tick();

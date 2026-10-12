@@ -516,6 +516,46 @@ setTimeout(async () => {
     ok('klus staat op tijd, niet als hele dag', klus && !klus.closest('.allday, .ad, [data-allday]') && /10:00/.test(klus.getAttribute('title') || klus.textContent || ''),
       klus && (klus.getAttribute('title') || klus.textContent));
 
+    // ---- telefoon: tab Overzicht, menu als lade, kalendertje, vegen ----
+    // (jsdom kent geen opmaak; dit test het gedrag, de schermafdrukken de vorm)
+    ok('kalendertje toont de dag van vandaag', $('todayNum').textContent === '1', $('todayNum').textContent);
+    click(q('.viewswitch [data-pane="overzicht"]'));
+    ok('overzicht: zijkolom-tab aan', q('.app').classList.contains('pane-rail'));
+    ok('overzicht: alleen die tab ingedrukt', q('.viewswitch [aria-pressed="true"]') === q('.viewswitch [data-pane="overzicht"]'));
+    click(q('.viewswitch [data-view="dag"]'));
+    ok('weergave kiezen sluit het overzicht', !q('.app').classList.contains('pane-rail'));
+    ok('en drukt die weergave in', q('.viewswitch [data-view="dag"]').getAttribute('aria-pressed') === 'true' &&
+      q('.viewswitch [data-pane="overzicht"]').getAttribute('aria-pressed') === 'false');
+
+    click($('menuBtn'));
+    ok('menu open', !$('menu').hidden && $('menuBtn').getAttribute('aria-expanded') === 'true');
+    click($('menuClose'));
+    ok('sluitknop sluit het menu', $('menu').hidden && $('menuBtn').getAttribute('aria-expanded') === 'false');
+    click($('menuBtn'));
+    click(q('.menu-scrim'));
+    ok('tikken naast de lade sluit het menu', $('menu').hidden);
+
+    function swipe(dx, dy) {
+      const at = (x, y) => [{ clientX: x, clientY: y }];
+      const ts = new w.Event('touchstart', { bubbles: true }); ts.touches = at(200, 300);
+      const te = new w.Event('touchend', { bubbles: true }); te.changedTouches = at(200 + dx, 300 + (dy || 0));
+      $('canvas').dispatchEvent(ts); $('canvas').dispatchEvent(te);
+    }
+    const dagVoor = $('periodWeek').textContent;
+    swipe(-120);
+    const dagNa = $('periodWeek').textContent;
+    ok('vegen naar links: volgende dag', dagNa !== dagVoor, dagVoor + ' → ' + dagNa);
+    swipe(120);
+    ok('vegen naar rechts: terug', $('periodWeek').textContent === dagVoor, $('periodWeek').textContent);
+    swipe(-40);
+    ok('kort vegen doet niets', $('periodWeek').textContent === dagVoor);
+    swipe(-120, 150);
+    ok('schuin omlaag scrollen bladert niet', $('periodWeek').textContent === dagVoor);
+    click(q('.viewswitch [data-view="week"]'));
+    const weekVoor = $('periodWeek').textContent;
+    swipe(-120);
+    ok('in de weekweergave vegen bladert niet', $('periodWeek').textContent === weekVoor);
+
     ok('nog steeds geen scriptfouten', errors.length === 0, errors.join(' | '));
   } catch (e) {
     fail++; console.log('EXCEPTIE:', e.stack);

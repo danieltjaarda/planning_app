@@ -1,5 +1,5 @@
-// Lokale server: serveert public/ én de api-functies (formulier, draaiboek,
-// muziek), zodat je de klantlinks ook op je eigen computer kunt proberen. Zonder Redis-instellingen bewaart
+// Lokale server: serveert public/ én de api-functies (planning, formulier,
+// draaiboek, muziek), zodat je de klantlinks ook op je eigen computer kunt proberen. Zonder Redis-instellingen bewaart
 // hij de formulieren in het geheugen (weg na herstart); mét KV_REST_API_URL
 // en KV_REST_API_TOKEN praat hij tegen dezelfde Redis als de Vercel-deploy.
 //
@@ -29,6 +29,8 @@ const require = createRequire(import.meta.url);
 const formulier = require("./api/formulier.js");
 const draaiboek = require("./api/draaiboek.js");
 const muziek = require("./api/muziek.js");
+const planning = require("./api/planning.js");
+const opslag = require("./api/_opslag.js");
 const bestanden = require("./api/_bestanden.js");
 const inloggen = require("./api/inloggen.js");
 const { previewHtml, isCrawler } = await import("./middleware.js");
@@ -103,6 +105,15 @@ createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname === "/api/planning") {
+    req.query = Object.fromEntries(url.searchParams);
+    req.body = req.method === "POST" ? await readBody(req, 5 * 1024 * 1024) : undefined;
+    // lokaal geen wachtwoord vereist: deze server is alleen vanaf deze computer bereikbaar
+    try { await planning.handle(req, res, memory || opslag.store(), { eisWachtwoord: false }); }
+    catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: "opslag", melding: String(e) })); }
+    return;
+  }
+
   if (url.pathname === "/api/draaiboek") {
     req.query = Object.fromEntries(url.searchParams);
     req.body = req.method === "POST" ? await readBody(req, 6 * 1024 * 1024) : undefined;
@@ -122,5 +133,5 @@ createServer(async (req, res) => {
     res.end("niet gevonden");
   }
 }).listen(PORT, "127.0.0.1", () => {
-  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"}, wachtwoord: ${sessie.beveiligd() ? "aan" : "uit — zet WEEKZICHT_WACHTWOORD in .env"})`);
+  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (planning en formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"}, wachtwoord: ${sessie.beveiligd() ? "aan" : "uit — zet WEEKZICHT_WACHTWOORD in .env"})`);
 });
