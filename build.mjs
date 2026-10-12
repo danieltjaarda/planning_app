@@ -24,8 +24,8 @@ const HEAD = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Weekzicht</title>
-<meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#161922" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#181C24" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Weekzicht">
@@ -41,7 +41,7 @@ const HEAD = `<!doctype html>
 <meta name="twitter:card" content="summary_large_image">
 <style>
   :root { color-scheme: light; }
-  body { margin: 0; font: 14px system-ui, -apple-system, sans-serif; background: #faf9f7; }
+  body { margin: 0; font: 14px system-ui, -apple-system, sans-serif; background: #F6F8FA; }
   img { max-width: 100%; }
   [hidden] { display: none !important; }
 </style>
