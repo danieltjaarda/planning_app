@@ -14,11 +14,18 @@
 //   POST /api/offerte { t, actie: "tekenen", versie, naam, handtekening }   → { ok, akkoord }
 //   POST /api/offerte { t, actie: "intrekken" }                 (alleen ingelogd)
 //   POST /api/offerte { t, actie: "verwijderen" }               (alleen ingelogd)
+//   POST /api/offerte { t, actie: "mailen", aan, onderwerp, tekst, pdf }   (alleen ingelogd) → { ok, aan, op }
+//   GET  /api/offerte?mail=1                                    → { mail, van } staat mailen aan, en vanaf welk adres (zie _mail.js)
+//
+// Staat mailen aan, dan stuurt "tekenen" meteen een melding (met de getekende
+// pdf) naar jou, en een bevestiging naar de klant als die een e-mailadres gaf.
 //
 // handtekening: lijnen als [[x, y, x, y, …], …] in een vlak van PAD_W × PAD_H.
 
 const opslag = require("./_opslag.js");
 const sessie = require("./_sessie.js");
+const mail = require("./_mail.js");
+const offertePdf = require("./_offertepdf.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
 const PAD_W = 1000, PAD_H = 500;    // zelfde vlak als SIG_W/SIG_H in de app
@@ -28,6 +35,8 @@ const MAX_REGELS = 100;
 const MAX_OFFERTE = 120 * 1024;     // de offerte als JSON
 const BTW = ["incl", "excl", "geen"];
 const BEDRIJF_VELDEN = ["naam", "juridisch", "adres", "telefoon", "email", "web", "kvk", "btw", "iban"];
+const SITE = "https://planning-app-three.vercel.app";
+const MAX_MAILS = 20;               // logboek per offerte
 
 function clean(v, max) {
   return String(v == null ? "" : v).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "").slice(0, max || 200).trim();
@@ -119,6 +128,62 @@ function tokenOf(req, body) {
   return TOKEN_RE.test(t) ? t : null;
 }
 
+/** Het adres van deze deploy, voor de link en het logo in de mail. */
+function basis(req) {
+  const h = (req && req.headers) || {};
+  const host = String(h["x-forwarded-host"] || h.host || "").split(",")[0].trim();
+  if (!/^[a-z0-9.-]+(:\d+)?$/i.test(host)) return SITE;
+  const proto = String(h["x-forwarded-proto"] || "").split(",")[0].trim() || (/^(127\.0\.0\.1|localhost)(:|$)/.test(host) ? "http" : "https");
+  return (proto === "http" ? "http" : "https") + "://" + host;
+}
+
+/** Eén mail versturen; geeft een regel voor het logboek, gooit nooit. */
+async function probeer(verzender, soort, m) {
+  const op = new Date().toISOString();
+  try {
+    await verzender.verstuur(m);
+    return { soort, aan: m.aan, op, ok: true };
+  } catch (e) {
+    return { soort, aan: m.aan, op, ok: false, fout: String((e && e.message) || e).slice(0, 300) };
+  }
+}
+
+function logboek(old, regels) {
+  return (Array.isArray(old) ? old : []).concat(regels).slice(-MAX_MAILS);
+}
+
+/** Na het tekenen: melding aan de planner en bevestiging aan de klant, met de getekende pdf. */
+async function mailsNaTekenen(verzender, rec, akkoord, link, logo) {
+  const L = offertePdf.lib(), of = rec.offerte || {}, b = rec.bedrijf || {};
+  const bijlage = { naam: offertePdf.pdfNaam(of, b, true), base64: offertePdf.pdfBase64(of, b, akkoord), type: "application/pdf" };
+  const totaal = L.euro(L.offerteTotalen(of).totaal / 100), wanneer = L.tijdVol(akkoord.op), bedrijf = b.naam || "Mediaspot";
+  const taken = [];
+  const meldingen = verzender.meldingen && verzender.meldingen();
+  if (meldingen) {
+    const tekst = akkoord.naam + " heeft offerte " + of.nummer + " van " + totaal + " getekend op " + wanneer + "." +
+      (of.betreft ? "\n\n" + of.betreft : "") + (akkoord.email ? "\n\nE-mail van de klant: " + akkoord.email : "") +
+      "\n\nDe getekende offerte zit als pdf in de bijlage. In Weekzicht gaat de klant op Akkoord zodra de app het akkoord ophaalt." +
+      "\n\n" + link;
+    taken.push(probeer(verzender, "melding", {
+      aan: meldingen, onderwerp: "Getekend: offerte " + of.nummer + (rec.naam ? " (" + rec.naam + ")" : ""), tekst,
+      html: mail.mailHtml({ tekst, knop: { tekst: "Bekijk de getekende offerte", url: link }, bedrijf: b, logo }),
+      bijlagen: [bijlage], antwoordAan: akkoord.email || ""
+    }));
+  }
+  if (akkoord.email) {
+    const tekst = "Hoi " + akkoord.naam + ",\n\nBedankt voor je akkoord op offerte " + of.nummer + " van " + totaal + "." +
+      " In de bijlage vind je de getekende offerte. Je kunt hem ook altijd terugzien via deze link:\n\n" + link +
+      "\n\nIk neem snel contact met jullie op om alles verder af te stemmen. Vragen? Beantwoord gerust deze mail" +
+      (b.telefoon ? " of bel " + b.telefoon : "") + ".\n\nGroet,\n" + bedrijf;
+    taken.push(probeer(verzender, "bevestiging", {
+      aan: akkoord.email, onderwerp: "Bevestiging: offerte " + of.nummer + " van " + bedrijf, tekst,
+      html: mail.mailHtml({ tekst, knop: { tekst: "Bekijk de getekende offerte", url: link }, bedrijf: b, logo }),
+      bijlagen: [bijlage]
+    }));
+  }
+  return Promise.all(taken);
+}
+
 function publiek(rec) {
   return {
     naam: rec.naam || "",
@@ -132,9 +197,14 @@ function publiek(rec) {
 
 async function handle(req, res, db, opts) {
   const nu = (opts && opts.nu) || (() => new Date());
+  const verzender = (opts && opts.mail) || mail.forwardEmail();
+  const method = (req.method || "GET").toUpperCase();
+  // staat mailen aan? (de app kiest dan tussen versturen en je mailprogramma)
+  if (method === "GET" && req.query && req.query.mail != null && !req.query.t) {
+    return send(res, 200, { mail: verzender.aan(), van: verzender.aan() && verzender.van ? verzender.van() : "" });
+  }
   if (!db) return send(res, 503, { error: "geen_opslag", melding: "Er is nog geen opslag gekoppeld (KV_REST_API_URL / KV_REST_API_TOKEN)." });
 
-  const method = (req.method || "GET").toUpperCase();
   if (method !== "GET" && method !== "POST") return send(res, 405, { error: "methode" });
 
   const body = method === "POST" ? parseBody(req) : {};
@@ -147,7 +217,7 @@ async function handle(req, res, db, opts) {
   if (method === "GET") {
     const rec = await db.get(key);
     if (!rec) return send(res, 404, { error: "onbekend" });
-    return send(res, 200, publiek(rec));
+    return send(res, 200, Object.assign(publiek(rec), { mail: verzender.aan() }));
   }
 
   const actie = clean(body.actie, 20);
@@ -177,6 +247,7 @@ async function handle(req, res, db, opts) {
       aangemaakt: old && old.aangemaakt ? old.aangemaakt : nu().toISOString(),
       akkoord: null
     };
+    if (old && old.mails) rec.mails = old.mails;
     await db.set(key, rec);
     return send(res, 200, { ok: true, versie: rec.versie, gedeeld: rec.gedeeld });
   }
@@ -195,9 +266,42 @@ async function handle(req, res, db, opts) {
     if (naam.length < 2 || !/\p{L}/u.test(naam)) return send(res, 400, { error: "naam", melding: "Vul je naam in." });
     const handtekening = cleanHandtekening(body.handtekening);
     if (!handtekening) return send(res, 400, { error: "handtekening", melding: "Zet je handtekening in het vak." });
+    const email = clean(body.email, 200);
+    if (email && !mail.geldig(email)) return send(res, 400, { error: "email", melding: "Dat e-mailadres klopt niet helemaal." });
     const akkoord = { naam, handtekening, op: nu().toISOString(), versie: old.versie };
-    await db.set(key, Object.assign({}, old, { akkoord }));
-    return send(res, 200, { ok: true, akkoord });
+    if (email) akkoord.email = email;
+    const rec = Object.assign({}, old, { akkoord });
+    await db.set(key, rec);
+    // eerst vastleggen, dan pas mailen: een mail die mislukt maakt het akkoord niet ongedaan
+    let bevestiging = false;
+    if (verzender.aan()) {
+      const b = basis(req);
+      const log = await mailsNaTekenen(verzender, rec, akkoord, b + "/?o=" + t, b + "/mail-logo.png");
+      if (log.length) await db.set(key, Object.assign({}, rec, { mails: logboek(rec.mails, log) }));
+      bevestiging = log.some((x) => x.soort === "bevestiging" && x.ok);
+    }
+    return send(res, 200, { ok: true, akkoord, bevestiging });
+  }
+
+  if (actie === "mailen") {
+    if (!verzender.aan()) return send(res, 503, { error: "geen_mail", melding: "Mailen staat nog niet aan: zet MAIL_VAN en MAIL_WACHTWOORD in Vercel." });
+    const old = await db.get(key);
+    if (!old) return send(res, 404, { error: "onbekend", melding: "Deze offerte staat nog niet klaar bij de link." });
+    const aan = clean(body.aan, 200), onderwerp = clean(body.onderwerp, 200), tekst = clean(body.tekst, 10000);
+    if (!mail.geldig(aan)) return send(res, 400, { error: "email", melding: "Vul een geldig e-mailadres in." });
+    if (!onderwerp || !tekst) return send(res, 400, { error: "leeg", melding: "Onderwerp en bericht mogen niet leeg zijn." });
+    const b = basis(req), link = b + "/?o=" + t, bedrijf = old.bedrijf || {};
+    const m = {
+      aan, onderwerp, tekst,
+      html: mail.mailHtml({ tekst, knop: { tekst: old.akkoord ? "Bekijk de getekende offerte" : "Bekijk en teken de offerte", url: link }, bedrijf, logo: b + "/mail-logo.png" })
+    };
+    if (body.pdf === true) {
+      m.bijlagen = [{ naam: offertePdf.pdfNaam(old.offerte, bedrijf, !!old.akkoord), base64: offertePdf.pdfBase64(old.offerte, bedrijf, old.akkoord), type: "application/pdf" }];
+    }
+    const regel = await probeer(verzender, "offerte", m);
+    await db.set(key, Object.assign({}, old, { mails: logboek(old.mails, [regel]) }));
+    if (!regel.ok) return send(res, 502, { error: "mail", melding: "Versturen lukte niet: " + regel.fout });
+    return send(res, 200, { ok: true, aan, op: regel.op });
   }
 
   if (actie === "intrekken") {
@@ -224,6 +328,7 @@ module.exports = async function (req, res) {
   }
 };
 module.exports.handle = handle;
+module.exports.basis = basis;
 module.exports.memoryStore = opslag.memoryStore;
 module.exports.cleanOfferte = cleanOfferte;
 module.exports.cleanHandtekening = cleanHandtekening;

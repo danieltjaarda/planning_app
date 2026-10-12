@@ -108,6 +108,14 @@ lijnen, de naam en het tijdstip. Wil je toch nog iets veranderen, dan haalt
 *Toch wijzigen* (twee keer klikken) de handtekening weg en tekent de klant
 opnieuw via dezelfde link. Offerte of klant verwijderen wist ook de link.
 
+**Mailen** — staat Forward Email ingesteld (zie hieronder), dan verstuurt *Mail
+naar klant* de mail meteen vanuit de app, vanaf daniel@mediaspot.nl: je ziet hem
+eerst in een venstertje (aan, onderwerp, tekst, pdf mee of niet) en kunt hem
+aanpassen. Tekent de klant, dan krijg jij een melding met de getekende pdf, en
+de klant een bevestiging met dezelfde pdf als hij zijn e-mailadres invult
+(dat staat er al in als het in *Aan* stond). Zonder Forward Email opent *Mail
+naar klant* gewoon je eigen mailprogramma.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
 **Op de telefoon** (tot 720 px breed, of een telefoon die dwars ligt) wordt het
@@ -265,6 +273,31 @@ intrekt. Een handtekening is een lijst lijnen `[x, y, x, y, …]` in een vlak va
 1000 × 500, gehele getallen; de server knipt af op dat vlak en weigert een tik
 of streepje. "Verlopen" rekent met de datum in Nederland.
 
+### Mailen: Forward Email
+
+`api/_mail.js` verstuurt via de API van Forward Email
+(`POST https://api.forwardemail.net/v1/emails`), ingelogd met de alias zelf:
+het wachtwoord werkt alleen voor die ene alias, niet voor je hele account.
+Forward Email stuurt ook alle mail aan @mediaspot.nl door naar je inbox, dus
+antwoorden van klanten komen gewoon aan. Eenmalig:
+
+1. In Forward Email: domein mediaspot.nl met de DNS-regels uit *Instellen* en
+   *Verifiëren SMTP* (MX, SPF, DKIM, Return-Path, DMARC; bij TransIP gezet op
+   12 oktober 2026), en een alias `daniel@mediaspot.nl` (doorsturen naar je
+   eigen inbox).
+2. Bij die alias: *Wachtwoord genereren*.
+3. In Vercel (Settings → Environment Variables): `MAIL_VAN` =
+   `Mediaspot <daniel@mediaspot.nl>` (staat er al) en `MAIL_WACHTWOORD` = dat
+   wachtwoord, als *Secret*.
+   Optioneel `MAIL_MELDINGEN`: waar de melding "getekend" heen gaat (anders naar
+   de afzender zelf, die Forward Email doorstuurt). Opnieuw deployen.
+
+De bijlage is dezelfde pdf als in de app: `api/_offertepdf.js` knipt de
+pdf-schrijver uit `src/weekzicht.html` (zelfde stukken als
+`tests/build-lib.mjs`); `vercel.json` neemt dat bestand mee in de functie. Een
+mail die mislukt maakt een handtekening nooit ongedaan; elke poging staat in
+het logboek van de offerte (`mails`).
+
 ## Structuur
 
 ```
@@ -277,15 +310,18 @@ api/_sessie.js       cookie ondertekenen en controleren
 src/inloggen.html    de inlogpagina → public/inloggen.html
 api/formulier.js     Vercel-functie: formulier aanmaken, invullen, ophalen
 api/muziek.js        Vercel-functie: muzieklink aanmaken, YouTube-link opzoeken, keuze bewaren en ophalen
-api/offerte.js       Vercel-functie: offerte delen met de klant, akkoord met handtekening bewaren
+api/offerte.js       Vercel-functie: offerte delen met de klant, akkoord met handtekening bewaren, mailen
+api/_mail.js         mail versturen via Forward Email, en de mail in de huisstijl
+api/_offertepdf.js   de pdf-schrijver uit de app, voor de bijlage
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
 api/_opslag.js       Redis-opslag (Upstash REST) of geheugen lokaal, gedeeld door de functies
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
 src/og-*.png         kaartjes voor WhatsApp e.d. bij formulier-, muziek- en offertelinks
+src/mail-logo.png    het logo in de mails (Gmail toont geen svg)
 dev.mjs              lokale server voor public/ + de api-functies
 vercel.json          buildCommand + outputDirectory voor Vercel
 public/              gegenereerd, niet in git
-tests/               ~770 controles, zie hieronder
+tests/               ~830 controles, zie hieronder
 ```
 
 `src/weekzicht.html` is de enige bron. `public/index.html` niet met de hand
@@ -340,6 +376,12 @@ npm test
   de keten: akkoordlink maken → mail → klant tekent op een eigen pagina
   (terwijl jij nog iets aanpast) → akkoord terug, status Akkoord, offerte op
   slot → toch wijzigen → verlopen → verwijderen
+- **mail** — `api/_mail.js` tegen een nep-Forward Email (adres, inloggen met de
+  alias, bijlage als base64, foutmeldingen), de mail in html (veilig, links,
+  knop, voet), mailen vanuit de offerte (alleen ingelogd, adres controleren,
+  pdf mee, logboek), melding en bevestiging na het tekenen met de getekende
+  pdf (ook als mailen mislukt blijft het akkoord staan), en de knoppen in de
+  app en het e-mailveld op de klantpagina, met en zonder mailen
 - **draaiboek** — `api/draaiboek.js` met een nep-OpenRouter: bestandstypen,
   groottes, de opbouw van de aanroep (foto, PDF, tekst), opschonen van het
   antwoord, fouten van het model, limiet per link

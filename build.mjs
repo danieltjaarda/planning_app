@@ -55,4 +55,5 @@ writeFileSync(join(OUT_DIR, "inloggen.html"), readFileSync(join(ROOT, "src", "in
 writeFileSync(join(OUT_DIR, "og-formulier.png"), readFileSync(join(ROOT, "src", "og-formulier.png")));
 writeFileSync(join(OUT_DIR, "og-muziek.png"), readFileSync(join(ROOT, "src", "og-muziek.png")));
 writeFileSync(join(OUT_DIR, "og-offerte.png"), readFileSync(join(ROOT, "src", "og-offerte.png")));
+writeFileSync(join(OUT_DIR, "mail-logo.png"), readFileSync(join(ROOT, "src", "mail-logo.png")));
 console.log(`public/index.html gebouwd (${statSync(OUT).size} bytes)`);

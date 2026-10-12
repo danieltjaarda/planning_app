@@ -7,9 +7,21 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Referrer-Policy", "value": "no-referrer" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/offerte.js": {
+      "includeFiles": "src/weekzicht.html",
+      "maxDuration": 30
+    }
+  }
 }

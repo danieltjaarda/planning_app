@@ -1441,6 +1441,9 @@ button { cursor: pointer; }
 .of-bedrijf .field textarea { min-height: 0; }
 .formbox a.btn-line { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
 .of-akkoord .of-let { color: var(--now); }
+.of-mailform .field textarea { min-height: 170px; background: var(--surface); }
+.of-mailform .field input[type="email"], .of-mailform .field input[type="text"] { background: var(--surface); }
+#omVan:empty { display: none; }
 .of-getekend { display: flex; align-items: center; gap: 14px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 2px; }
 .of-getekend .of-sig { width: 150px; height: 60px; flex: none; color: var(--ink); }
 .of-getekend div { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12.5px; }
@@ -2275,6 +2278,10 @@ button { cursor: pointer; }
               <label for="opNaam">Je naam</label>
               <input type="text" id="opNaam" autocomplete="name" placeholder="Voor- en achternaam" maxlength="120">
             </div>
+            <div class="ms-field" id="opMailVeld" hidden>
+              <label for="opMail">Je e-mailadres <span class="opt">(voor de bevestiging met de getekende offerte)</span></label>
+              <input type="email" id="opMail" autocomplete="email" inputmode="email" placeholder="naam@voorbeeld.nl" maxlength="200">
+            </div>
             <div class="ms-field">
               <span class="ms-lab" id="opPadLab">Je handtekening</span>
               <div class="op-pad">
@@ -2470,6 +2477,15 @@ button { cursor: pointer; }
         <textarea id="oTekst" rows="3" placeholder="Voorwaarden, aanbetaling, hoe ze akkoord geven…"></textarea>
       </div>
       <div class="field formbox of-akkoord" id="oAkkoordBox"></div>
+      <div class="field formbox of-mailform" id="oMailForm" hidden>
+        <span class="label">Mail naar de klant</span>
+        <div class="field"><label class="label" for="omAan">Aan</label><input type="email" id="omAan" autocomplete="off" placeholder="naam@voorbeeld.nl"></div>
+        <div class="field"><label class="label" for="omOnderwerp">Onderwerp</label><input type="text" id="omOnderwerp" autocomplete="off"></div>
+        <div class="field"><label class="label" for="omTekst">Bericht</label><textarea id="omTekst" rows="9"></textarea></div>
+        <label class="check"><input type="checkbox" id="omPdf" checked> Offerte als pdf meesturen</label>
+        <p id="omVan"></p>
+        <div class="of-knoppen"><button type="button" class="btn-primary" id="omVerstuur">Versturen</button><button type="button" class="btn-line" id="omAnnuleer">Annuleren</button></div>
+      </div>
       <details class="of-bedrijf">
         <summary>Jouw bedrijfsgegevens <span>— staan op elke offerte</span></summary>
         <div class="of-bedrijf-in">
@@ -5990,6 +6006,7 @@ button { cursor: pointer; }
       '<div class="of-kort"><b>' + esc(of.nummer) + '</b><span>' + esc(datumVol(of.datum)) + '</span>' +
       '<span class="of-kort-bedrag">' + esc(euro(t.totaal / 100)) + '</span></div>' +
       (a ? '<span class="fstate on">Getekend door ' + esc(a.naam) + ' op ' + esc(fmtStamp(a.op)) + '</span>'
+        : l.offerteGemaild ? '<span class="fstate">Gemaild naar ' + esc(l.offerteGemaild.aan) + ' · nog niet getekend</span>'
         : l.offerteToken ? '<span class="fstate">Akkoordlink gestuurd · nog niet getekend</span>' : '') +
       '<div class="of-knoppen"><button type="button" class="btn-line" id="lEditOfferte">Bewerken</button>' +
       '<button type="button" class="btn-line" id="lPdfOfferte">Download pdf</button></div>';
@@ -6077,6 +6094,7 @@ button { cursor: pointer; }
     $("oDelete").hidden = !l.offerte;
     resetOfferteWeg();
     offerteRekenen();
+    $("oMailForm").hidden = true;
     renderOfferteAkkoord(l);
   }
 
@@ -6095,6 +6113,10 @@ button { cursor: pointer; }
     offerteVuil = false;
     $("oShare").hidden = !kanDelen();
     $("ofOverlay").hidden = false;
+    if (mailServer === null) vraagMailStatus().then(function (aan) {
+      var nu = findLead(obj.id);
+      if (aan && nu && editingOfferte === obj.id && !$("ofOverlay").hidden) renderOfferteAkkoord(nu);
+    });
     var tas = $("oRegels").querySelectorAll("textarea");
     for (var i = 0; i < tas.length; i++) groei(tas[i]);
     if (!obj.offerte) setTimeout(function () { var t = $("oRegels").querySelector("textarea"); if (t) t.focus(); }, 0);
@@ -6258,8 +6280,23 @@ button { cursor: pointer; }
   // hij vast, ook hier in het venster, tot je "Toch wijzigen" kiest.
 
   var OFFERTE_URL = "api/offerte";
-  var OFFERTE_VELDEN = ["offerte", "offerteToken", "offerteVersie", "offerteGedeeld", "offerteAkkoord"];
+  var OFFERTE_VELDEN = ["offerte", "offerteToken", "offerteVersie", "offerteGedeeld", "offerteAkkoord", "offerteGemaild"];
   var EMAIL_RE = /[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[a-z]{2,}/i;
+  var MAIL_RE = /^[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[a-z]{2,}$/i;   // precies één adres
+
+  // Kan de server zelf mailen (Forward Email, zie api/_mail.js)? Dan verstuurt
+  // "Mail naar klant" de mail meteen; anders opent hij je mailprogramma.
+  var mailServer = null, mailVan = "", mailVraag = null;
+  function vraagMailStatus() {
+    if (!mailVraag) {
+      mailVraag = api("GET", "?mail=1", null, OFFERTE_URL).then(function (r) {
+        mailServer = !!(r.ok && r.data.mail);
+        mailVan = (r.ok && r.data.van) || "";
+        return mailServer;
+      }, function () { mailServer = false; mailVraag = null; return false; });
+    }
+    return mailVraag;
+  }
 
   function offerteLink(l) { return location.origin + location.pathname + "?o=" + l.offerteToken; }
   function offerteVerlopen(of) { return !!(of && of.geldig && of.geldig < amsNow().date); }
@@ -6280,15 +6317,18 @@ button { cursor: pointer; }
       html += '<div class="of-getekend">' + sigSvg(a.handtekening, "of-sig") +
         '<div><b>' + esc(a.naam) + '</b><span>Getekend op ' + esc(tijdVol(a.op)) + '</span></div></div>' +
         '<span class="fstate on">Getekend · deze versie ligt vast, de pdf heeft de handtekening</span>' +
-        '<div class="of-knoppen"><button type="button" class="btn-line" id="oIntrekken" ' +
+        '<div class="of-knoppen">' + (mailServer ? '<button type="button" class="btn-line" id="oMailNu">Mail getekende offerte</button>' : '') +
+        '<button type="button" class="btn-line" id="oIntrekken" ' +
         'title="Haalt de handtekening weg zodat je de offerte kunt aanpassen; de klant tekent daarna opnieuw">Toch wijzigen</button></div>';
     } else if (l && l.offerteToken) {
       html += '<div class="linkrow"><input type="text" id="oLink" readonly value="' + esc(offerteLink(l)) + '" aria-label="Akkoordlink">' +
         '<button type="button" class="btn-line" id="oCopyLink">Kopieer</button></div>' +
-        '<div class="of-knoppen"><a class="btn-line" id="oMail" href="#">Mail naar klant</a>' +
+        '<div class="of-knoppen">' + (mailServer ? '<button type="button" class="btn-line" id="oMailNu">Mail naar klant</button>'
+          : '<a class="btn-line" id="oMail" href="#">Mail naar klant</a>') +
         '<button type="button" class="btn-line" id="oCheck" title="Kijk of de klant al getekend heeft">Ververs</button></div>' +
         '<span class="fstate">Nog niet getekend' +
-        (l.offerteGedeeld ? ' · bijgewerkt op ' + esc(fmtStamp(l.offerteGedeeld)) : '') + '</span>' +
+        (l.offerteGemaild ? ' · gemaild naar ' + esc(l.offerteGemaild.aan) + ' op ' + esc(fmtStamp(l.offerteGemaild.op))
+          : l.offerteGedeeld ? ' · bijgewerkt op ' + esc(fmtStamp(l.offerteGedeeld)) : '') + '</span>' +
         (offerteVerlopen(l.offerte) ? '<p class="of-let">Verlopen op ' + esc(datumVol(l.offerte.geldig)) +
           ': zo kan de klant niet tekenen. Schuif "Geldig tot" op en sla op.</p>' :
           '<p>De klant ziet steeds de laatst opgeslagen versie.</p>');
@@ -6305,7 +6345,7 @@ button { cursor: pointer; }
   /** Getekend = vast: alle velden op slot, behalve het akkoordvak. */
   function zetOfferteSlot(dicht) {
     var box = $("oAkkoordBox"), els = $("ofOverlay").querySelectorAll(".mbody input, .mbody textarea, .mbody button");
-    for (var i = 0; i < els.length; i++) if (!box.contains(els[i])) els[i].disabled = dicht;
+    for (var i = 0; i < els.length; i++) if (!box.contains(els[i]) && !$("oMailForm").contains(els[i])) els[i].disabled = dicht;
     $("ofOverlay").querySelector(".of-modal").classList.toggle("of-dicht", dicht);
     $("oSave").textContent = dicht ? "Sluiten" : "Opslaan";
   }
@@ -6377,20 +6417,80 @@ button { cursor: pointer; }
     });
   }
 
-  /** Een mailtje aan de klant met de link, klaar in je mailprogramma. */
-  function offerteMail(l) {
+  /** Aan, onderwerp en tekst van het mailtje aan de klant, met de link. */
+  function offerteMailDelen(l) {
     var of = l.offerte || {}, b = bedrijf(), f = l.form || {};
     var aan = (String(of.aan || "").match(EMAIL_RE) || [])[0] || String(f.email || "").trim();
-    var wie = String(f.namen || l.name || "").trim();
-    var onderwerp = "Offerte " + (of.nummer || "") + " van " + (b.naam || "Mediaspot");
-    var tekst = (wie ? "Hoi " + wie + "," : "Hoi,") + "\n\n" +
-      "Hierbij de offerte voor jullie bruiloftsfilm" + (l.date ? " op " + datumVol(l.date) : "") + ". " +
-      "Via deze link bekijk je hem rustig en geef je meteen online akkoord, met je naam en handtekening:\n\n" +
-      offerteLink(l) + "\n\n" +
-      (of.geldig ? "De offerte is geldig tot " + datumVol(of.geldig) + ". " : "") +
-      "Vragen? Bel of app me gerust.\n\nGroet,\n" + (b.naam || "Mediaspot");
-    return "mailto:" + encodeURIComponent(aan).replace(/%40/g, "@") +
-      "?subject=" + encodeURIComponent(onderwerp) + "&body=" + encodeURIComponent(tekst);
+    var wie = String(f.namen || l.name || "").trim(), groet = "\n\nGroet,\n" + (b.naam || "Mediaspot");
+    if (l.offerteAkkoord) {
+      return { aan: l.offerteAkkoord.email || aan, onderwerp: "Getekende offerte " + (of.nummer || "") + " van " + (b.naam || "Mediaspot"),
+        tekst: (wie ? "Hoi " + wie + "," : "Hoi,") + "\n\nBedankt voor jullie akkoord! Hier is de getekende offerte; " +
+          "je kunt hem ook altijd terugzien via deze link:\n\n" + offerteLink(l) + groet };
+    }
+    return { aan: aan, onderwerp: "Offerte " + (of.nummer || "") + " van " + (b.naam || "Mediaspot"),
+      tekst: (wie ? "Hoi " + wie + "," : "Hoi,") + "\n\n" +
+        "Hierbij de offerte voor jullie bruiloftsfilm" + (l.date ? " op " + datumVol(l.date) : "") + ". " +
+        "Via deze link bekijk je hem rustig en geef je meteen online akkoord, met je naam en handtekening:\n\n" +
+        offerteLink(l) + "\n\n" +
+        (of.geldig ? "De offerte is geldig tot " + datumVol(of.geldig) + ". " : "") +
+        "Vragen? Bel of app me gerust." + groet };
+  }
+
+  /** Hetzelfde mailtje, klaar in je eigen mailprogramma. */
+  function offerteMail(l) {
+    var m = offerteMailDelen(l);
+    return "mailto:" + encodeURIComponent(m.aan).replace(/%40/g, "@") +
+      "?subject=" + encodeURIComponent(m.onderwerp) + "&body=" + encodeURIComponent(m.tekst);
+  }
+
+  /* --- mailen via de server ---------------------------------- */
+
+  function openMailForm() {
+    var r = bewaarOfferte();   // de klant ziet straks precies wat jij nu ziet
+    if (!r) return;
+    var m = offerteMailDelen(r.l);
+    $("omAan").value = m.aan;
+    $("omOnderwerp").value = m.onderwerp;
+    $("omTekst").value = m.tekst;
+    $("omPdf").checked = true;
+    $("omVan").textContent = mailVan ? "Gaat vanaf " + mailVan + "; antwoorden komen daar binnen." : "";
+    $("omVerstuur").disabled = false;
+    $("omVerstuur").textContent = "Versturen";
+    $("oMailForm").hidden = false;
+    if ($("oMailForm").scrollIntoView) $("oMailForm").scrollIntoView({ block: "nearest" });
+    (m.aan ? $("omTekst") : $("omAan")).focus();
+  }
+
+  function verstuurMail() {
+    var id = editingOfferte, l = findLead(id);
+    if (!l || !l.offerteToken) return;
+    var aan = $("omAan").value.trim(), onderwerp = $("omOnderwerp").value.trim(), tekst = $("omTekst").value.trim();
+    if (!MAIL_RE.test(aan)) { toast("Vul één geldig e-mailadres in."); $("omAan").focus(); return; }
+    if (!onderwerp || !tekst) { toast("Onderwerp en bericht mogen niet leeg zijn."); return; }
+    var btn = $("omVerstuur"), pdf = $("omPdf").checked, t = l.offerteToken;
+    btn.disabled = true;
+    btn.textContent = "Versturen…";
+    function klaar() { btn.disabled = false; btn.textContent = "Versturen"; }
+    bewaarOfferte();
+    // eerst de laatste versie bij de link, dan pas de mail
+    (l.offerteAkkoord ? Promise.resolve(true) : publiceerOfferte(id)).then(function (ok) {
+      if (!ok) return null;
+      return api("POST", "", { t: t, actie: "mailen", aan: aan, onderwerp: onderwerp, tekst: tekst, pdf: pdf }, OFFERTE_URL);
+    }).then(function (res) {
+      klaar();
+      if (!res) return;
+      if (!res.ok) { toast(offerteReden(res)); return; }
+      var nu = findLead(id);
+      if (!nu) return;
+      var upd = leadKopie(nu);
+      upd.offerteGemaild = { aan: res.data.aan, op: res.data.op };
+      put("leads", upd);
+      $("oMailForm").hidden = true;
+      if (editingOfferte === id && !$("ofOverlay").hidden) renderOfferteAkkoord(upd);
+      if (editingLead === id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+      render();
+      toast("Offerte gemaild naar " + res.data.aan + ".");
+    }, function () { klaar(); toast(apiReason(null)); });
   }
 
   /* --- akkoord ophalen ------------------------------------------ */
@@ -6601,13 +6701,14 @@ button { cursor: pointer; }
       saveFile(pdfNaam(), offertePdf(rec.offerte, b(), rec.akkoord || null), "application/pdf")["catch"](function () {});
     }
 
-    function toonGetekend(net) {
+    function toonGetekend(net, gemaild) {
       var a = rec.akkoord;
       $("opTeken").hidden = true;
       $("opDone").innerHTML = (net ? VINK : '') +
         '<h2>' + (net ? 'Bedankt, <em>' + esc(a.naam) + '</em>!' : 'Getekend, <em>dank je wel</em>') + '</h2>' +
         '<p>' + (net ? 'Je akkoord is binnen. Ik neem snel contact met jullie op om alles verder af te stemmen. ' : '') +
-        'Bewaar de getekende offerte gerust als pdf.</p>' +
+        (gemaild ? 'Je krijgt de getekende offerte ook per mail op <strong>' + esc(gemaild) + '</strong>.'
+          : 'Bewaar de getekende offerte gerust als pdf.') + '</p>' +
         '<div class="op-getekend">' + sigSvg(a.handtekening, "op-sig") +
         '<p><b>' + esc(a.naam) + '</b>Getekend op ' + esc(tijdVol(a.op)) + '</p></div>' +
         '<div class="ms-actions"><button type="button" class="ms-btn" id="opPdf2">' + PDF_ICOON + 'Download getekende offerte</button></div>';
@@ -6643,6 +6744,8 @@ button { cursor: pointer; }
       $("opSamen").textContent = "Met je handtekening ga je akkoord met offerte " + of.nummer + " van " +
         euro(tot.totaal / 100) + (tot.modus === "geen" ? "" : " incl. btw") + ".";
       $("opTeken").hidden = false;
+      $("opMailVeld").hidden = !rec.mail;
+      if (rec.mail && !$("opMail").value) $("opMail").value = (String(of.aan || "").match(EMAIL_RE) || [])[0] || "";
       if (!pad) pad = maakSigPad($("opPad"), function () { $("opPadHint").hidden = !pad.leeg(); say(""); });
     }
 
@@ -6668,14 +6771,16 @@ button { cursor: pointer; }
       var naam = $("opNaam").value.trim();
       if (naam.length < 2) { say("Vul je naam in.", "err"); $("opNaam").focus(); return; }
       if (!pad || !sigGenoeg(pad.lijnen())) { say("Zet je handtekening in het vak.", "err"); return; }
+      var email = rec.mail ? $("opMail").value.trim() : "";
+      if (email && !MAIL_RE.test(email)) { say("Dat e-mailadres klopt niet helemaal.", "err"); $("opMail").focus(); return; }
       say("Versturen…");
       $("opSend").disabled = true;
-      api("POST", "", { t: token, actie: "tekenen", versie: rec.versie, naam: naam, handtekening: pad.lijnen() }, OFFERTE_URL).then(function (r) {
+      api("POST", "", { t: token, actie: "tekenen", versie: rec.versie, naam: naam, email: email, handtekening: pad.lijnen() }, OFFERTE_URL).then(function (r) {
         $("opSend").disabled = false;
         if (r.ok) {
           rec.akkoord = r.data.akkoord;
           $("opIntro").innerHTML = "Getekend op " + esc(tijdVol(rec.akkoord.op)) + ". Dank je wel!";
-          toonGetekend(true);
+          toonGetekend(true, r.data.bevestiging ? email : "");
           if ($("opDone").scrollIntoView) $("opDone").scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
@@ -7460,7 +7565,7 @@ button { cursor: pointer; }
     offerteVuil = true;
     offerteRekenen();
   });
-  $("ofOverlay").addEventListener("input", function () { offerteVuil = true; });
+  $("ofOverlay").addEventListener("input", function (e) { if (!e.target.closest("#oMailForm")) offerteVuil = true; });
   $("oVulIn").addEventListener("click", function () {
     var l = findLead(editingOfferte);
     if (!l) return;
@@ -7479,6 +7584,8 @@ button { cursor: pointer; }
   });
   $("oShare").addEventListener("click", deelOfferte);
   $("oDelete").addEventListener("click", verwijderOfferte);
+  $("omVerstuur").addEventListener("click", verstuurMail);
+  $("omAnnuleer").addEventListener("click", function () { $("oMailForm").hidden = true; });
   $("oAkkoordBox").addEventListener("click", function (e) {
     var b = e.target.closest("button, a");
     if (!b) return;
@@ -7486,6 +7593,7 @@ button { cursor: pointer; }
     else if (b.id === "oCopyLink") copyText($("oLink").value, "Akkoordlink gekopieerd.");
     else if (b.id === "oCheck" && editingOfferte) checkOfferte(editingOfferte, true);
     else if (b.id === "oIntrekken") trekAkkoordIn();
+    else if (b.id === "oMailNu") openMailForm();
     else if (b.id === "oMail") {
       // eerst bewaren, zodat de klant precies ziet wat jij nu ziet; de mail opent daarna gewoon via de link
       var r = bewaarOfferte();

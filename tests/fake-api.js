@@ -5,7 +5,7 @@
 // Met { planning: true } beantwoordt hij ook api/planning (anders 404, en
 // bewaart de app alles lokaal). fetch.offline = true laat elk verzoek mislukken.
 // api/offerte rekent met dezelfde bevroren klok als de tests (1 september 2026),
-// tenzij { nu } iets anders geeft.
+// tenzij { nu } iets anders geeft. Met { mail } een nep-verzender (zie tests/mail.test.js).
 const handler = require('../api/formulier.js');
 const draaiboek = require('../api/draaiboek.js');
 const muziek = require('../api/muziek.js');
@@ -36,7 +36,7 @@ module.exports = function fakeApi(map, options) {
     }
     if (u.pathname === '/api/offerte') {
       fetch.offerte.push(req.method + ' ' + (req.body ? req.body.actie : u.search));
-      await offerte.handle(req, res, db, { nu: routes.nu || (() => new Date(Date.UTC(2026, 8, 1, 10, 0, 0))) });
+      await offerte.handle(req, res, db, { nu: routes.nu || (() => new Date(Date.UTC(2026, 8, 1, 10, 0, 0))), mail: routes.mail });
       return { ok: status >= 200 && status < 300, status, text: async () => out };
     }
     if (u.pathname === '/api/draaiboek') {
