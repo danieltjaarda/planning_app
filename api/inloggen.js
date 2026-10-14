@@ -3,8 +3,9 @@
 //   POST /api/inloggen  (formulier: wachtwoord=…)  → cookie + door naar /
 //   GET  /api/inloggen?uit=1                        → cookie weg, door naar /
 //
-// Het wachtwoord staat in WEEKZICHT_WACHTWOORD. Is dat leeg, dan is er niets
-// te beveiligen en sturen we gewoon door.
+// Het wachtwoord staat als hash in _sessie.js (en eventueel in
+// WEEKZICHT_WACHTWOORD). Is er lokaal geen wachtwoord actief, dan sturen we
+// gewoon door.
 
 const sessie = require("./_sessie.js");
 
@@ -49,7 +50,7 @@ async function handle(req, res) {
     await new Promise((r) => setTimeout(r, 600));
     return redirect(res, "/inloggen.html?fout=1");
   }
-  const value = sessie.maakSessie(process.env.WEEKZICHT_WACHTWOORD);
+  const value = sessie.maakSessie();
   return redirect(res, "/", sessie.setCookie(value, sessie.DAGEN * 86400));
 }
 

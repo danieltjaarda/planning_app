@@ -2,7 +2,8 @@
 // muziek- en offertelinks (?f=token, ?m=token, ?o=token) niet. Draait vóór het serveren van de statische pagina.
 //
 // Zelfde cookie-controle als api/_sessie.js, maar met Web Crypto omdat
-// middleware in de edge-runtime draait. Geen WEEKZICHT_WACHTWOORD → open.
+// middleware in de edge-runtime draait. Op Vercel altijd beveiligd; lokaal
+// (tests) alleen met WEEKZICHT_WACHTWOORD, zodat alles open blijft.
 
 export const config = { matcher: ["/", "/index.html"] };
 
@@ -94,8 +95,14 @@ async function hmacHex(secret, msg) {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** Op Vercel altijd beveiligd; lokaal alleen met WEEKZICHT_WACHTWOORD. Zelfde als api/_sessie.js. */
+export function beveiligd() { return !!(process.env.VERCEL || process.env.VERCEL_ENV || process.env.WEEKZICHT_WACHTWOORD); }
+/** Sleutel voor de cookie-handtekening; zelfde formule als api/_sessie.js. */
+export function sleutel() {
+  return (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "") + "|" + (process.env.WEEKZICHT_WACHTWOORD || "");
+}
+
 export async function sessieGeldig(cookieHeader, secret) {
-  if (!secret) return true;
   const m = new RegExp("(?:^|;\\s*)" + COOKIE + "=([^;]+)").exec(cookieHeader || "");
   if (!m) return false;
   const value = decodeURIComponent(m[1]);
@@ -127,7 +134,7 @@ export default async function middleware(request) {
     }
     return;
   }
-  const secret = process.env.WEEKZICHT_WACHTWOORD || "";
-  if (await sessieGeldig(request.headers.get("cookie"), secret)) return;
+  if (!beveiligd()) return;
+  if (await sessieGeldig(request.headers.get("cookie"), sleutel())) return;
   return Response.redirect(new URL("/inloggen.html", request.url), 302);
 }

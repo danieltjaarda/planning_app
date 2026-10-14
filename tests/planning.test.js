@@ -121,7 +121,7 @@ function focus(dev) { dev.w.dispatchEvent(new dev.w.Event('focus')); }
   ok('zonder cookie → 401', (await call(db, 'GET')).status === 401);
   ok('schrijven zonder cookie → 401', (await call(db, 'POST', {}, { ops: [{ c: 'tasks', id: 't2', doc: {} }] })).status === 401);
   const sessie = require('../api/_sessie.js');
-  const cookie = { cookie: 'wz_sessie=' + encodeURIComponent(sessie.maakSessie('geheim')) };
+  const cookie = { cookie: 'wz_sessie=' + encodeURIComponent(sessie.maakSessie()) };
   ok('met cookie → 200', (await call(db, 'GET', {}, undefined, { eisWachtwoord: true }, cookie)).status === 200);
   ok('verkeerde cookie → 401', (await call(db, 'GET', {}, undefined, {}, { cookie: 'wz_sessie=1.abc' })).status === 401);
   delete process.env.WEEKZICHT_WACHTWOORD;

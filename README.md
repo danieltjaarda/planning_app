@@ -175,8 +175,8 @@ Hoe de serveropslag werkt:
   niets kwijt, ook niet als meerdere browsers elk hun eigen klanten hadden. Een
   kopie van vóór die koppeling blijft staan in `weekzicht.v1.voor-sync`.
 - **Alleen ingelogd.** Lezen en schrijven kan alleen met de sessiecookie. Op
-  Vercel weigert de functie als `WEEKZICHT_WACHTWOORD` niet is gezet: anders kon
-  iedereen met het adres de klantenlijst ophalen.
+  Vercel staat het wachtwoord altijd aan; zonder actief wachtwoord weigert de
+  functie: anders kon iedereen met het adres de klantenlijst ophalen.
 
 Als artifact en op Vercel zijn het twee aparte opslagplekken: ander adres,
 andere opslag.
@@ -185,21 +185,30 @@ andere opslag.
 
 De planning staat achter een wachtwoord; de formulier-, muziek- en
 offertelinks (`?f=token`, `?m=token`, `?o=token`) niet.
-Zet in Vercel de omgevingsvariabele `WEEKZICHT_WACHTWOORD` (Settings →
-Environment Variables, Production en Preview) en deploy opnieuw. Daarna:
+
+Het wachtwoord staat als scrypt-hash in `api/_sessie.js` (`WACHTWOORD_HASH`),
+niet in Vercel. De repo is openbaar, dus de tekst zelf staat nergens. Een ander
+wachtwoord instellen:
+
+    node api/_sessie.js 'nieuw wachtwoord'
+
+Plak de regel die dat geeft in `WACHTWOORD_HASH` en push. Daarnaast telt
+`WEEKZICHT_WACHTWOORD` uit de omgeving, als die gezet is: op Vercel een tweede
+wachtwoord, lokaal (`node dev.mjs`) de manier om het inloggen te testen. Zonder
+die variabele staat lokaal alles open; op Vercel staat de planning altijd
+achter het wachtwoord.
 
 - `middleware.js` stuurt iedereen zonder geldige cookie van `/` naar
   `inloggen.html`; een geldige formulier-, muziek- of offertelink mag altijd door.
 - `api/inloggen.js` controleert het wachtwoord en zet een ondertekende,
-  HttpOnly-cookie die 30 dagen geldig is. Verander je het wachtwoord, dan
-  vervallen alle sessies.
+  HttpOnly-cookie die 30 dagen geldig is. De handtekening gebruikt de
+  Redis-token en `WEEKZICHT_WACHTWOORD`, niet de hash uit de code (die is
+  openbaar). Verander een van die twee, dan vervallen alle sessies.
 - Links maken, klanten verwijderen en geüploade draaiboeken bekijken kan
   alleen ingelogd. Het formulier ophalen, invullen en uploaden, muziek
   kiezen en opzoeken, en een offerte bekijken en tekenen, kan de klant met
   alleen zijn link.
 - *Uitloggen* staat in het ⋯-menu.
-
-Zonder `WEEKZICHT_WACHTWOORD` staat alles open, zoals voorheen.
 
 **Voorvertoning in WhatsApp.** Stuur je een formulierlink via WhatsApp, iMessage
 of Slack, dan haalt die app de link op voor een kaartje. `middleware.js` herkent

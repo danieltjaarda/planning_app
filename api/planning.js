@@ -13,8 +13,9 @@
 //   GET  /api/planning?sinds=VERSIE     → { versie, ongewijzigd: true } als er sindsdien niets veranderd is
 //   POST /api/planning { ops: [{ c, id, doc } | { c, id, weg: true }] }   → { ok, versie }
 //
-// Alles alleen ingelogd. Op Vercel zonder WEEKZICHT_WACHTWOORD weigert de
-// functie: dan kon iedereen met het adres de klantenlijst lezen.
+// Alles alleen ingelogd. Op Vercel staat het wachtwoord altijd aan; zonder
+// actief wachtwoord weigert de functie: dan kon iedereen met het adres de
+// klantenlijst lezen.
 
 const opslag = require("./_opslag.js");
 const sessie = require("./_sessie.js");
@@ -58,7 +59,7 @@ async function handle(req, res, db, opts) {
   if (method !== "GET" && method !== "POST") return send(res, 405, { error: "methode" });
 
   if (eisWachtwoord && !sessie.beveiligd()) {
-    return send(res, 403, { error: "geen_wachtwoord", melding: "Zet eerst WEEKZICHT_WACHTWOORD in Vercel; zonder wachtwoord bewaart de server de planning niet." });
+    return send(res, 403, { error: "geen_wachtwoord", melding: "Er is geen wachtwoord actief; zonder wachtwoord bewaart de server de planning niet." });
   }
   if (!sessie.ingelogd(req)) {
     return send(res, 401, { error: "niet_ingelogd", melding: "Je bent niet (meer) ingelogd. Laad de pagina opnieuw en log in." });

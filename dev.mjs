@@ -153,5 +153,5 @@ createServer(async (req, res) => {
     res.end("niet gevonden");
   }
 }).listen(PORT, "127.0.0.1", () => {
-  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (planning en formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"}, wachtwoord: ${sessie.beveiligd() ? "aan" : "uit — zet WEEKZICHT_WACHTWOORD in .env"})`);
+  console.log(`Weekzicht op http://127.0.0.1:${PORT}  (planning en formulieren: ${hasRedis ? "Redis" : "in het geheugen"}, draaiboek-AI: ${process.env.OPENROUTER_API_KEY ? "aan" : "uit — zet OPENROUTER_API_KEY in .env"}, bestanden: ${process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "in het geheugen"}, wachtwoord: ${sessie.beveiligd() ? "aan" : "uit, lokaal open — zet WEEKZICHT_WACHTWOORD in .env om het inloggen te testen"})`);
 });

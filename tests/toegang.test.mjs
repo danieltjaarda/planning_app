@@ -22,8 +22,10 @@ function fakeRes() {
 }
 const T = "toegangstest00000001";
 
-// ---- zonder wachtwoord: alles open ----
+// ---- lokaal zonder wachtwoord: alles open ----
 delete process.env.WEEKZICHT_WACHTWOORD;
+delete process.env.VERCEL;
+delete process.env.VERCEL_ENV;
 eq("open zonder wachtwoord", sessie.ingelogd({ headers: {} }), true);
 eq("middleware laat door zonder wachtwoord", await middleware(new Request("https://x.test/")), undefined);
 {
@@ -38,19 +40,31 @@ eq("niet ingelogd zonder cookie", sessie.ingelogd({ headers: {} }), false);
 eq("verkeerd wachtwoord", sessie.wachtwoordKlopt("geheim-124"), false);
 eq("goed wachtwoord", sessie.wachtwoordKlopt("geheim-123"), true);
 
-const cookie = sessie.maakSessie("geheim-123");
+// het vaste wachtwoord staat als scrypt-hash in de code; de tekst zelf nergens
+eq("hash heeft vorm scrypt$N$zout$hash", /^scrypt\$16384\$[0-9a-f]{32}\$[0-9a-f]{64}$/.test(sessie.WACHTWOORD_HASH), true);
+const th = sessie.maakHash("test-456");
+eq("hash: goed wachtwoord", sessie.hashKlopt("test-456", th), true);
+eq("hash: fout wachtwoord", sessie.hashKlopt("test-457", th), false);
+eq("hash: kapotte hash", [sessie.hashKlopt("test-456", "onzin"), sessie.hashKlopt("test-456", "scrypt$16384$zz$zz"), sessie.hashKlopt("test-456", "")], [false, false, false]);
+eq("hash: zelfde zout, zelfde hash", sessie.maakHash("test-456", Buffer.from(th.split("$")[2], "hex")), th);
+eq("vast wachtwoord: niet het testwachtwoord", sessie.wachtwoordKlopt("test-456"), false);
+
+// de cookie is ondertekend met de Redis-token + het omgevingswachtwoord, niet met de hash
+const S = sessie.sleutel();
+eq("sleutel bevat het omgevingswachtwoord", /\|geheim-123$/.test(S), true);
+const cookie = sessie.maakSessie();
 eq("cookie heeft vorm exp.hmac", /^\d+\.[0-9a-f]{64}$/.test(cookie), true);
-eq("cookie geldig (node)", sessie.controleer(cookie, "geheim-123"), true);
+eq("cookie geldig (node)", sessie.controleer(cookie, S), true);
 eq("cookie ongeldig met ander wachtwoord", sessie.controleer(cookie, "anders"), false);
-eq("cookie geknoeid", sessie.controleer(cookie.slice(0, -1) + (cookie.endsWith("0") ? "1" : "0"), "geheim-123"), false);
-const verlopen = (Date.now() - 1000) + "." + sessie.sign(Date.now() - 1000, "geheim-123");
-eq("verlopen cookie", sessie.controleer(verlopen, "geheim-123"), false);
+eq("cookie geknoeid", sessie.controleer(cookie.slice(0, -1) + (cookie.endsWith("0") ? "1" : "0"), S), false);
+const verlopen = (Date.now() - 1000) + "." + sessie.sign(Date.now() - 1000, S);
+eq("verlopen cookie", sessie.controleer(verlopen, S), false);
 eq("ingelogd met cookie", sessie.ingelogd({ headers: { cookie: "a=b; wz_sessie=" + cookie + "; c=d" } }), true);
 
 // middleware (Web Crypto) rekent dezelfde handtekening uit als node
-eq("middleware: zelfde hmac", await sessieGeldig("wz_sessie=" + cookie, "geheim-123"), true);
+eq("middleware: zelfde hmac", await sessieGeldig("wz_sessie=" + cookie, S), true);
 eq("middleware: fout wachtwoord", await sessieGeldig("wz_sessie=" + cookie, "anders"), false);
-eq("middleware: geen cookie", await sessieGeldig("", "geheim-123"), false);
+eq("middleware: geen cookie", await sessieGeldig("", S), false);
 {
   const r = await middleware(new Request("https://x.test/"));
   eq("middleware: zonder cookie → inloggen", [r.status, r.headers.get("location")], [302, "https://x.test/inloggen.html"]);
@@ -68,6 +82,27 @@ eq("middleware: geen cookie", await sessieGeldig("", "geheim-123"), false);
   eq("middleware: offertelink altijd door", r7, undefined);
   const r8 = await middleware(new Request("https://x.test/?o=KORT"));
   eq("middleware: ongeldig offertetoken telt niet", r8 && r8.status, 302);
+}
+
+// op Vercel altijd beveiligd, ook zonder WEEKZICHT_WACHTWOORD; dan telt alleen het vaste wachtwoord
+{
+  delete process.env.WEEKZICHT_WACHTWOORD;
+  process.env.VERCEL = "1";
+  eq("vercel: beveiligd zonder omgevingswachtwoord", [sessie.beveiligd(), sessie.sleutel()], [true, "|"]);
+  eq("vercel: niet ingelogd zonder cookie", sessie.ingelogd({ headers: {} }), false);
+  eq("vercel: omgevingswachtwoord telt niet", sessie.wachtwoordKlopt("geheim-123"), false);
+  const c = sessie.maakSessie();
+  eq("vercel: ingelogd met cookie", sessie.ingelogd({ headers: { cookie: "wz_sessie=" + c } }), true);
+  eq("vercel: cookie van ervoor telt niet (andere sleutel)", sessie.ingelogd({ headers: { cookie: "wz_sessie=" + cookie } }), false);
+  const r = await middleware(new Request("https://x.test/"));
+  eq("vercel: middleware zonder cookie → inloggen", r && r.status, 302);
+  const r2 = await middleware(new Request("https://x.test/", { headers: { cookie: "wz_sessie=" + c } }));
+  eq("vercel: middleware met cookie door", r2, undefined);
+  const r3 = fakeRes();
+  await inloggen.handle({ method: "POST", body: "wachtwoord=geheim-123" }, r3);
+  eq("vercel: inloggen met omgevingswachtwoord → fout", r3.headers.location, "/inloggen.html?fout=1");
+  delete process.env.VERCEL;
+  process.env.WEEKZICHT_WACHTWOORD = "geheim-123";
 }
 
 // inloggen: goed en fout
