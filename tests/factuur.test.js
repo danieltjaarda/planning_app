@@ -13,8 +13,8 @@ const klant={id:'k',name:'Eva',offerte:{nummer:'2026-003',aan:'Eva\ne@x.nl',betr
 L.state.leads=[];
 const f=L.nieuweFactuur(klant);
 ok('factuur kopieert regels',f.regels.length===1&&f.regels[0].prijs===899&&f.regels!==klant.offerte.regels);
-ok('factuur: nummer, offerteNummer, 14 dagen',f.nummer==='F'+f.datum.slice(0,4)+'-001'&&f.offerteNummer==='2026-003'&&Date.parse(f.geldig)-Date.parse(f.datum)===14*86400000,JSON.stringify(f));
-ok('factuur: betaaltekst',/factuurnummer F\d{4}-001/.test(f.tekst)&&/14 dagen/.test(f.tekst),f.tekst);
+ok('factuur: nummer, offerteNummer, 14 dagen',f.nummer==='F'+f.datum.slice(0,4)+'-001'&&f.offerteNummer==='2026-003'&&Date.parse(f.geldig)-Date.parse(f.datum)===5*86400000&&f.betreft==='',JSON.stringify(f));
+ok('factuur: betaaltekst',/factuurnummer F\d{4}-001/.test(f.tekst)&&/5 dagen/.test(f.tekst),f.tekst);
 const pdf=L.offertePdf(f,L.bedrijf(),null,'factuur');
 ok('pdf factuur: titel',pdf.indexOf('(Factuur) Tj')>0&&pdf.indexOf('(Geldig tot)')<0);
 ok('pdf factuur: kopvelden',pdf.indexOf('(Factuurnummer)')>0&&pdf.indexOf('(Vervaldatum)')>0&&pdf.indexOf('(2026-003)')>0);
@@ -47,7 +47,7 @@ setTimeout(async()=>{try{
   ok('knop Maak factuur in offertevenster',!$('oFactuur').hidden&&$('oAkkoordBox').hidden===false);
   click($('oFactuur'));
   ok('venster wisselt naar factuur',/^Factuur · /.test($('ofTitle').textContent)&&$('oNummerLabel').textContent==='Factuurnummer'&&/Naar de klant/.test($('oAkkoordBox').textContent)&&!$('oBetaald').hidden);
-  ok('factuurnummer en vervaldatum',$('oNummer').value==='F2026-001'&&$('oGeldig').value==='2026-09-15',[$('oNummer').value,$('oGeldig').value].join());
+  ok('factuurnummer en vervaldatum',$('oNummer').value==='F2026-001'&&$('oGeldig').value==='2026-09-06'&&$('oBetreft').value==='',[$('oNummer').value,$('oGeldig').value].join());
   let s=stored('t-cas');
   ok('offerte én factuur bewaard',s.offerte&&s.offerte.nummer==='2026-001'&&s.factuur&&s.factuur.nummer==='F2026-001'&&s.factuur.regels[0].prijs===1250&&s.factuur.offerteNummer==='2026-001',JSON.stringify(s.factuur));
   await wait(50);

@@ -5561,7 +5561,7 @@ button { cursor: pointer; }
     { id: "geen", label: "Zonder btw" }
   ];
   var OFFERTE_TEKST = "Akkoord met deze offerte? Laat het me weten per WhatsApp of e-mail, dan leg ik jullie datum definitief vast.";
-  var FACTUUR_DAGEN = 14;          // betaaltermijn
+  var FACTUUR_DAGEN = 5;           // betaaltermijn
   // {iban}, {dagen} en {nummer} worden bij het maken van de factuur ingevuld.
   var FACTUUR_TEKST = "Graag het totaalbedrag binnen {dagen} dagen overmaken op {iban} onder vermelding van factuurnummer {nummer}. Bedankt voor jullie vertrouwen!";
   // Zoals op mediaspot.nl; aan te passen onder "Jouw bedrijfsgegevens".
@@ -5747,7 +5747,7 @@ button { cursor: pointer; }
       datum: vandaag,
       geldig: addD(vandaag, FACTUUR_DAGEN),     // vervaldatum
       aan: of && of.aan ? of.aan : offerteAan(l),
-      betreft: of && of.betreft ? of.betreft : offerteBetreft(l),
+      betreft: "",                            // op de factuur geen standaard "Bruiloftsfilm op …"; typ het zelf als je wilt
       details: of ? (of.details || "") : offerteDetails(l),
       regels: of && of.regels && of.regels.length ? JSON.parse(JSON.stringify(of.regels)) : [{ oms: "", aantal: 1, prijs: null }],
       btw: of ? (of.btw || "incl") : (state.offerteMeta.btw || "incl"),

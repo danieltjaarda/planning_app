@@ -96,8 +96,8 @@ Standaardwaarden staan in `BEDRIJF`, `PAKKETTEN` en `OFFERTE_TEKST`.
 **Factuur** — van een offerte maak je met *Maak factuur* (onder in het
 offertevenster, of in het klantvenster) in één klik een factuur: dezelfde regels
 en btw-keuze, met een eigen doorlopend nummer (F2026-001, F2026-002, …), de
-factuurdatum, een vervaldatum na 14 dagen en een betaaltekst met je IBAN en het
-factuurnummer. De offerte zelf blijft staan; de factuur bewerk je los in
+factuurdatum, een vervaldatum na 5 dagen en een betaaltekst met je IBAN en het
+factuurnummer. *Betreft* blijft op de factuur leeg. De offerte zelf blijft staan; de factuur bewerk je los in
 hetzelfde venster en download je als pdf met *Factuur* als titel en de
 offerte als verwijzing. *Betaald* zet de factuur op betaald (ook terug te
 draaien); de klantenlijst toont *factuur € … · open / betaald / vervallen*.
