@@ -46,10 +46,13 @@ setTimeout(async()=>{try{
   typ(q('#oRegels .of-oms'),'Trouwfilm');typ(q('#oRegels .of-prijs input'),'1250');
   ok('knop Maak factuur in offertevenster',!$('oFactuur').hidden&&$('oAkkoordBox').hidden===false);
   click($('oFactuur'));
-  ok('venster wisselt naar factuur',/^Factuur · /.test($('ofTitle').textContent)&&$('oNummerLabel').textContent==='Factuurnummer'&&$('oAkkoordBox').hidden&&!$('oBetaald').hidden);
+  ok('venster wisselt naar factuur',/^Factuur · /.test($('ofTitle').textContent)&&$('oNummerLabel').textContent==='Factuurnummer'&&/Naar de klant/.test($('oAkkoordBox').textContent)&&!$('oBetaald').hidden);
   ok('factuurnummer en vervaldatum',$('oNummer').value==='F2026-001'&&$('oGeldig').value==='2026-09-15',[$('oNummer').value,$('oGeldig').value].join());
   let s=stored('t-cas');
   ok('offerte én factuur bewaard',s.offerte&&s.offerte.nummer==='2026-001'&&s.factuur&&s.factuur.nummer==='F2026-001'&&s.factuur.regels[0].prijs===1250&&s.factuur.offerteNummer==='2026-001',JSON.stringify(s.factuur));
+  await wait(50);
+  ok('mailvak bij de factuur',/Naar de klant/.test($('oAkkoordBox').textContent)&&!!($('oMailNu')||$('oMail')),$('oAkkoordBox').textContent.slice(0,60));
+  if($('oMailNu')){click($('oMailNu'));ok('mailtekst klaar',/^Factuur F2026-001 van /.test($('omOnderwerp').value)&&/1\.250,00/.test($('omTekst').value)&&/F2026-001/.test($('omTekst').value),$('omTekst').value);click($('omAnnuleer'));}
   click($('oPdf'));await wait(30);
   ok('factuur-pdf',downloads.length===1&&downloads[0].name==='Factuur F2026-001 Cas en Dina.pdf',JSON.stringify(downloads.map(x=>x.name)));
   click($('oBetaald'));

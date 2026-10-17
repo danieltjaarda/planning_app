@@ -101,6 +101,10 @@ factuurnummer. De offerte zelf blijft staan; de factuur bewerk je los in
 hetzelfde venster en download je als pdf met *Factuur* als titel en de
 offerte als verwijzing. *Betaald* zet de factuur op betaald (ook terug te
 draaien); de klantenlijst toont *factuur € … · open / betaald / vervallen*.
+*Mail naar klant* in het factuurvenster stuurt de factuur als pdf met een
+kant-en-klaar bericht (bedrag, vervaldatum, IBAN) via dezelfde Forward
+Email-koppeling als de offerte (`actie: "factuur"` in `api/offerte.js`, zonder
+link of opslag); staat mailen uit, dan opent je eigen mailprogramma.
 Zonder offerte kan een losse factuur ook. De factuur staat bij de klant in
 `factuur`; standaardwaarden in `FACTUUR_DAGEN` en `FACTUUR_TEKST`.
 

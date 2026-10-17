@@ -38,15 +38,15 @@ function lib() {
   return cache;
 }
 
-/** De offerte als pdf (base64), met handtekening als er getekend is. */
-function pdfBase64(offerte, bedrijf, akkoord) {
+/** De offerte (of met soort "factuur" de factuur) als pdf (base64), met handtekening als er getekend is. */
+function pdfBase64(offerte, bedrijf, akkoord, soort) {
   const L = lib();
-  return Buffer.from(L.offertePdf(offerte, bedrijf || L.BEDRIJF, akkoord || null), "latin1").toString("base64");
+  return Buffer.from(L.offertePdf(offerte, bedrijf || L.BEDRIJF, akkoord || null, soort), "latin1").toString("base64");
 }
 
-/** "Offerte 2026-001 Mediaspot (getekend).pdf" */
-function pdfNaam(offerte, bedrijf, getekend) {
-  return ("Offerte " + ((offerte && offerte.nummer) || "") + " " + ((bedrijf && bedrijf.naam) || "Mediaspot") + (getekend ? " (getekend)" : ""))
+/** "Offerte 2026-001 Mediaspot (getekend).pdf" of "Factuur F2026-001 Mediaspot.pdf" */
+function pdfNaam(offerte, bedrijf, getekend, soort) {
+  return ((soort === "factuur" ? "Factuur " : "Offerte ") + ((offerte && offerte.nummer) || "") + " " + ((bedrijf && bedrijf.naam) || "Mediaspot") + (getekend ? " (getekend)" : ""))
     .replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, " ").trim() + ".pdf";
 }
 

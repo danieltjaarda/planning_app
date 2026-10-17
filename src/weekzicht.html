@@ -1498,7 +1498,7 @@ button { cursor: pointer; }
 .of-knoppen { display: flex; flex-wrap: wrap; gap: 6px; }
 .of-kort .of-betaald { color: var(--cat-focus); font-weight: 600; }
 .of-kort .of-open { color: var(--now); font-weight: 600; }
-.of-factuur .of-akkoord, .of-factuur #oPakketten { display: none; }
+.of-factuur #oPakketten { display: none; }
 
 .of-modal { width: min(800px, 100%); }
 .of-modal > footer { flex-wrap: wrap; }
@@ -6262,7 +6262,8 @@ button { cursor: pointer; }
         : offerteVerlopen(f) ? '<span class="of-open">Vervallen op ' + esc(datumVol(f.geldig)) + '</span>'
         : '<span>Vervalt ' + esc(datumVol(f.geldig)) + '</span>') +
       '<span class="of-kort-bedrag">' + esc(euro(t.totaal / 100)) + '</span></div>' +
-      (f.offerteNummer ? '<span class="fstate">Van offerte ' + esc(f.offerteNummer) + '</span>' : '') +
+      (f.gemaild ? '<span class="fstate on">Gemaild naar ' + esc(f.gemaild.aan) + ' op ' + esc(fmtStamp(f.gemaild.op)) + '</span>'
+        : f.offerteNummer ? '<span class="fstate">Van offerte ' + esc(f.offerteNummer) + '</span>' : '') +
       '<div class="of-knoppen"><button type="button" class="btn-line" id="lEditFactuur">Bewerken</button>' +
       '<button type="button" class="btn-line" id="lPdfFactuur">Download pdf</button>' +
       '<button type="button" class="btn-line" id="lBetaaldFactuur">' + (f.betaald ? 'Toch niet betaald' : 'Betaald') + '</button></div>';
@@ -6377,7 +6378,7 @@ button { cursor: pointer; }
     $("oNummerLabel").textContent = f ? "Factuurnummer" : "Offertenummer";
     $("oGeldigLabel").textContent = f ? "Vervaldatum" : "Geldig tot";
     $("ofOverlay").querySelector(".of-modal").classList.toggle("of-factuur", f);
-    $("oAkkoordBox").hidden = f;
+    $("omPdf").nextSibling.textContent = f ? " Factuur als pdf meesturen" : " Offerte als pdf meesturen";
     $("oFactuur").hidden = f;
     $("oFactuur").textContent = l.factuur ? "Naar factuur" : "Maak factuur";
     $("oBetaald").hidden = !f;
@@ -6397,7 +6398,18 @@ button { cursor: pointer; }
     resetOfferteWeg();
     offerteRekenen();
     $("oMailForm").hidden = true;
-    if (f) zetOfferteSlot(false); else renderOfferteAkkoord(l);
+    if (f) { zetOfferteSlot(false); renderFactuurMailBox(l); } else renderOfferteAkkoord(l);
+  }
+
+  /** Bij de factuur staat op de plek van het akkoord: mailen naar de klant. */
+  function renderFactuurMailBox(l) {
+    var box = $("oAkkoordBox"), g = l && l.factuur && l.factuur.gemaild;
+    box.innerHTML = '<span class="label">Naar de klant</span>' +
+      '<p>Mail de factuur als pdf naar de klant, met een kant-en-klaar bericht dat je nog kunt aanpassen.</p>' +
+      '<div class="of-knoppen">' + (mailServer ? '<button type="button" class="btn-line" id="oMailNu">Mail naar klant</button>'
+        : '<a class="btn-line" id="oMail" href="#" title="Opent je mailprogramma; voeg de gedownloade pdf zelf toe">Mail naar klant</a>') + '</div>' +
+      (g ? '<span class="fstate on">Gemaild naar ' + esc(g.aan) + ' op ' + esc(fmtStamp(g.op)) + '</span>'
+        : mailServer === false ? '<span class="fstate">Mailen via de server staat uit; dit opent je eigen mailprogramma.</span>' : '');
   }
 
   /** Vanuit het klantvenster: eerst de klant bewaren, zoals bij de formulierlink. */
@@ -6422,9 +6434,10 @@ button { cursor: pointer; }
     offerteVuil = isFactuur() && !obj.factuur;
     $("oShare").hidden = !kanDelen();
     $("ofOverlay").hidden = false;
-    if (!isFactuur() && mailServer === null) vraagMailStatus().then(function (aan) {
+    if (mailServer === null) vraagMailStatus().then(function () {
       var nu = findLead(obj.id);
-      if (aan && nu && editingOfferte === obj.id && !isFactuur() && !$("ofOverlay").hidden) renderOfferteAkkoord(nu);
+      if (!nu || editingOfferte !== obj.id || $("ofOverlay").hidden) return;
+      if (isFactuur()) renderFactuurMailBox(nu); else if (mailServer) renderOfferteAkkoord(nu);
     });
     var tas = $("oRegels").querySelectorAll("textarea");
     for (var i = 0; i < tas.length; i++) groei(tas[i]);
@@ -6460,6 +6473,7 @@ button { cursor: pointer; }
     if (isFactuur()) {
       of.offerteNummer = oud.offerteNummer || (l && l.offerte ? l.offerte.nummer : "");
       of.betaald = oud.betaald || null;
+      if (oud.gemaild) of.gemaild = oud.gemaild;
     }
     return of;
   }
@@ -6766,9 +6780,24 @@ button { cursor: pointer; }
         "Vragen? Bel of app me gerust." + groet };
   }
 
+  /** Aan, onderwerp en tekst van de factuurmail: bedrag, vervaldatum en hoe te betalen. */
+  function factuurMailDelen(l) {
+    var f = l.factuur || {}, b = bedrijf(), form = l.form || {}, tot = offerteTotalen(f);
+    var aan = (String(f.aan || "").match(EMAIL_RE) || [])[0] || String(form.email || "").trim();
+    var wie = String(form.namen || l.name || "").trim();
+    return { aan: aan, onderwerp: "Factuur " + (f.nummer || "") + " van " + (b.naam || "Mediaspot"),
+      tekst: (wie ? "Hoi " + wie + "," : "Hoi,") + "\n\n" +
+        "Hierbij de factuur voor jullie bruiloftsfilm" + (l.date ? " op " + datumVol(l.date) : "") + ", als pdf in de bijlage. " +
+        "Het gaat om " + euro(tot.totaal / 100) + (f.geldig ? ", graag voor " + datumVol(f.geldig) : "") +
+        (b.iban ? " over te maken op " + b.iban + (b.juridisch || b.naam ? " t.n.v. " + (b.juridisch || b.naam) : "") : "") +
+        " onder vermelding van " + (f.nummer || "het factuurnummer") + "." +
+        "\n\nBedankt voor jullie vertrouwen; vragen over de factuur? Beantwoord gerust deze mail." +
+        "\n\nGroet,\n" + (b.naam || "Mediaspot") };
+  }
+
   /** Hetzelfde mailtje, klaar in je eigen mailprogramma. */
   function offerteMail(l) {
-    var m = offerteMailDelen(l);
+    var m = isFactuur() ? factuurMailDelen(l) : offerteMailDelen(l);
     return "mailto:" + encodeURIComponent(m.aan).replace(/%40/g, "@") +
       "?subject=" + encodeURIComponent(m.onderwerp) + "&body=" + encodeURIComponent(m.tekst);
   }
@@ -6778,7 +6807,7 @@ button { cursor: pointer; }
   function openMailForm() {
     var r = bewaarOfferte();   // de klant ziet straks precies wat jij nu ziet
     if (!r) return;
-    var m = offerteMailDelen(r.l);
+    var m = isFactuur() ? factuurMailDelen(r.l) : offerteMailDelen(r.l);
     $("omAan").value = m.aan;
     $("omOnderwerp").value = m.onderwerp;
     $("omTekst").value = m.tekst;
@@ -6792,6 +6821,7 @@ button { cursor: pointer; }
   }
 
   function verstuurMail() {
+    if (isFactuur()) return verstuurFactuurMail();
     var id = editingOfferte, l = findLead(id);
     if (!l || !l.offerteToken) return;
     var aan = $("omAan").value.trim(), onderwerp = $("omOnderwerp").value.trim(), tekst = $("omTekst").value.trim();
@@ -6821,6 +6851,37 @@ button { cursor: pointer; }
       render();
       toast("Offerte gemaild naar " + res.data.aan + ".");
     }, function () { klaar(); toast(apiReason(null)); });
+  }
+
+  /** De factuur als pdf naar de klant; de server maakt de pdf en bewaart niets. */
+  function verstuurFactuurMail() {
+    var id = editingOfferte, r = bewaarOfferte();
+    if (!r || !r.l.factuur) return;
+    var aan = $("omAan").value.trim(), onderwerp = $("omOnderwerp").value.trim(), tekst = $("omTekst").value.trim();
+    if (!MAIL_RE.test(aan)) { toast("Vul één geldig e-mailadres in."); $("omAan").focus(); return; }
+    if (!onderwerp || !tekst) { toast("Onderwerp en bericht mogen niet leeg zijn."); return; }
+    if (!r.of.regels.length) { toast("Zet eerst minstens één regel in de factuur."); return; }
+    var btn = $("omVerstuur");
+    btn.disabled = true;
+    btn.textContent = "Versturen…";
+    function klaar() { btn.disabled = false; btn.textContent = "Versturen"; }
+    api("POST", "", { actie: "factuur", aan: aan, onderwerp: onderwerp, tekst: tekst, pdf: $("omPdf").checked, factuur: r.of, bedrijf: bedrijf() }, OFFERTE_URL)
+      .then(function (res) {
+        klaar();
+        if (!res.ok) { toast(offerteReden(res)); return; }
+        var nu = findLead(id);
+        if (!nu || !nu.factuur) return;
+        var upd = leadKopie(nu), f = {};
+        for (var k in nu.factuur) f[k] = nu.factuur[k];
+        f.gemaild = { aan: res.data.aan, op: res.data.op };
+        upd.factuur = f;
+        put("leads", upd);
+        $("oMailForm").hidden = true;
+        if (editingOfferte === id && isFactuur() && !$("ofOverlay").hidden) renderFactuurMailBox(upd);
+        if (editingLead === id && !$("ldOverlay").hidden) renderLeadFactuurBox(upd);
+        render();
+        toast("Factuur gemaild naar " + res.data.aan + ".");
+      }, function () { klaar(); toast(apiReason(null)); });
   }
 
   /* --- akkoord ophalen ------------------------------------------ */

@@ -122,6 +122,28 @@ function nepVerzender(opties) {
   ok('mailen: fout van Forward Email', r.status === 502 && /Alias does not exist/.test(r.data.melding));
   const log = (await db.get('offerte:' + T)).mails;
   ok('mailen: mislukte poging in het logboek', log.length === 3 && log[2].ok === false && /Alias/.test(log[2].fout));
+  // ---- de factuur mailen: geen link, geen token, pdf als bijlage
+  const FACT = Object.assign({}, OF, { nummer: 'F2026-003', geldig: '2026-10-26', offerteNummer: '2026-007', betaald: null, tekst: 'Graag binnen 14 dagen.' });
+  r = await call({ actie: 'factuur', aan: 'sanne@voorbeeld.nl', onderwerp: 'Factuur F2026-003', tekst: 'Hoi Sanne,\n\nhierbij de factuur.', factuur: FACT, bedrijf: { naam: 'Mediaspot', iban: 'NL00TEST0123456789' } }, null, nv,
+    { host: 'planning.voorbeeld.nl', 'x-forwarded-proto': 'https' });
+  const mf = nv.verstuurd[nv.verstuurd.length - 1];
+  ok('factuur mailen: verstuurd zonder token', r.status === 200 && r.data.aan === 'sanne@voorbeeld.nl' && mf.onderwerp === 'Factuur F2026-003', JSON.stringify(r));
+  ok('factuur mailen: geen knop, wel logo', mf.html.indexOf('mail-logo.png') > 0 && mf.html.indexOf('Bekijk') < 0);
+  ok('factuur mailen: pdf heet Factuur', mf.bijlagen.length === 1 && mf.bijlagen[0].naam === 'Factuur F2026-003 Mediaspot.pdf', mf.bijlagen && mf.bijlagen[0].naam);
+  const fp = pdfVan(mf.bijlagen[0].base64);
+  ok('factuur mailen: pdf is een factuur met offerteverwijzing en IBAN', fp.startsWith('%PDF-1.4') && fp.indexOf('(Factuur) Tj') > 0 && fp.indexOf('(Vervaldatum)') > 0 && fp.indexOf('(2026-007)') > 0 && fp.indexOf('IBAN NL00TEST0123456789') > 0);
+  r = await call({ actie: 'factuur', aan: 'sanne@voorbeeld.nl', onderwerp: 'x', tekst: 'x', factuur: FACT, pdf: false }, null, nv);
+  ok('factuur mailen: zonder pdf', r.status === 200 && !nv.verstuurd[nv.verstuurd.length - 1].bijlagen);
+  r = await call({ actie: 'factuur', aan: 'sanne@voorbeeld.nl', onderwerp: 'x', tekst: 'x', factuur: { regels: [] } }, null, nv);
+  ok('factuur mailen: lege factuur', r.status === 400 && r.data.error === 'leeg');
+  r = await call({ actie: 'factuur', aan: 'sanne@voorbeeld.nl', onderwerp: 'x', tekst: 'x', factuur: FACT }, null, nepVerzender({ aan: false }));
+  ok('factuur mailen: mailen uit → 503', r.status === 503);
+  ok('factuur mailen: komt niet in de opslag', !(await db.get('offerte:' + T)).mails.some(m => m.soort === 'factuur'));
+  process.env.WEEKZICHT_WACHTWOORD = 'geheim-123';
+  r = await call({ actie: 'factuur', aan: 'sanne@voorbeeld.nl', onderwerp: 'x', tekst: 'x', factuur: FACT }, null, nv);
+  ok('factuur mailen: alleen ingelogd', r.status === 401);
+  delete process.env.WEEKZICHT_WACHTWOORD;
+
   process.env.WEEKZICHT_WACHTWOORD = 'geheim-123';
   r = await call({ t: T, actie: 'mailen', aan: 'sanne@voorbeeld.nl', onderwerp: 'x', tekst: 'x' }, null, nv);
   ok('mailen: alleen ingelogd', r.status === 401);

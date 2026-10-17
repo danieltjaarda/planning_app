@@ -15,6 +15,8 @@
 //   POST /api/offerte { t, actie: "intrekken" }                 (alleen ingelogd)
 //   POST /api/offerte { t, actie: "verwijderen" }               (alleen ingelogd)
 //   POST /api/offerte { t, actie: "mailen", aan, onderwerp, tekst, pdf }   (alleen ingelogd) → { ok, aan, op }
+//   POST /api/offerte { actie: "factuur", aan, onderwerp, tekst, pdf, factuur, bedrijf }   (alleen ingelogd) → { ok, aan, op }
+//        de factuur gaat als pdf mee en wordt nergens bewaard: er is geen link en geen token
 //   GET  /api/offerte?mail=1                                    → { mail, van } staat mailen aan, en vanaf welk adres (zie _mail.js)
 //
 // Staat mailen aan, dan stuurt "tekenen" meteen een melding (met de getekende
@@ -69,6 +71,16 @@ function cleanOfferte(of) {
     tarief: tarief == null ? 21 : tarief,
     tekst: clean(of.tekst, 4000)
   };
+}
+
+/** Een factuur is een offerte met een verwijzing en een betaaldatum. */
+function cleanFactuur(f) {
+  const of = cleanOfferte(f);
+  if (!of) return null;
+  of.offerteNummer = clean(f.offerteNummer, 40);
+  const b = clean(f.betaald, 40);
+  of.betaald = /^\d{4}-\d{2}-\d{2}/.test(b) ? b : null;
+  return of;
 }
 
 function cleanBedrijf(b) {
@@ -210,6 +222,30 @@ async function handle(req, res, db, opts) {
   const body = method === "POST" ? parseBody(req) : {};
   if (body === null) return send(res, 400, { error: "ongeldige_json" });
 
+  // de factuur mailen hoort bij geen link: geen token, geen opslag
+  if (method === "POST" && clean(body.actie, 20) === "factuur") {
+    if (!sessie.ingelogd(req)) return send(res, 401, { error: "niet_ingelogd", melding: "Je bent niet (meer) ingelogd. Laad de pagina opnieuw en log in." });
+    if (!verzender.aan()) return send(res, 503, { error: "geen_mail", melding: "Mailen staat nog niet aan: zet MAIL_VAN en MAIL_WACHTWOORD in Vercel." });
+    const factuur = cleanFactuur(body.factuur);
+    if (!factuur) return send(res, 400, { error: "leeg", melding: "Zet eerst minstens één regel in de factuur." });
+    if (JSON.stringify(factuur).length > MAX_OFFERTE) return send(res, 413, { error: "te_groot", melding: "De factuur is te lang om te mailen." });
+    const aan = clean(body.aan, 200), onderwerp = clean(body.onderwerp, 200), tekst = clean(body.tekst, 10000);
+    if (!mail.geldig(aan)) return send(res, 400, { error: "email", melding: "Vul een geldig e-mailadres in." });
+    if (!onderwerp || !tekst) return send(res, 400, { error: "leeg", melding: "Onderwerp en bericht mogen niet leeg zijn." });
+    const bedrijf = cleanBedrijf(body.bedrijf);
+    const m = { aan, onderwerp, tekst, html: mail.mailHtml({ tekst, bedrijf, logo: basis(req) + "/mail-logo.png" }) };
+    if (body.pdf !== false) {
+      try {
+        m.bijlagen = [{ naam: offertePdf.pdfNaam(factuur, bedrijf, false, "factuur"), base64: offertePdf.pdfBase64(factuur, bedrijf, null, "factuur"), type: "application/pdf" }];
+      } catch (e) {
+        return send(res, 500, { error: "pdf", melding: "De pdf voor de bijlage kon niet gemaakt worden. Stuur de mail zonder pdf, of probeer het later nog eens." });
+      }
+    }
+    const regel = await probeer(verzender, "factuur", m);
+    if (!regel.ok) return send(res, 502, { error: "mail", melding: "Versturen lukte niet: " + regel.fout });
+    return send(res, 200, { ok: true, aan, op: regel.op });
+  }
+
   const t = tokenOf(req, body);
   if (!t) return send(res, 400, { error: "ongeldig_token" });
   const key = "offerte:" + t;
@@ -339,6 +375,7 @@ module.exports.handle = handle;
 module.exports.basis = basis;
 module.exports.memoryStore = opslag.memoryStore;
 module.exports.cleanOfferte = cleanOfferte;
+module.exports.cleanFactuur = cleanFactuur;
 module.exports.cleanHandtekening = cleanHandtekening;
 module.exports.vandaag = vandaag;
 module.exports.PAD_W = PAD_W;
