@@ -93,6 +93,17 @@ bibliotheek: Helvetica zit in elke pdf-lezer en alleen het logo gaat er als
 plaatje in (`LOGO_PDF`, gemaakt van `mediaspot-logo-dark.svg` van de site).
 Standaardwaarden staan in `BEDRIJF`, `PAKKETTEN` en `OFFERTE_TEKST`.
 
+**Factuur** — van een offerte maak je met *Maak factuur* (onder in het
+offertevenster, of in het klantvenster) in één klik een factuur: dezelfde regels
+en btw-keuze, met een eigen doorlopend nummer (F2026-001, F2026-002, …), de
+factuurdatum, een vervaldatum na 14 dagen en een betaaltekst met je IBAN en het
+factuurnummer. De offerte zelf blijft staan; de factuur bewerk je los in
+hetzelfde venster en download je als pdf met *Factuur* als titel en de
+offerte als verwijzing. *Betaald* zet de factuur op betaald (ook terug te
+draaien); de klantenlijst toont *factuur € … · open / betaald / vervallen*.
+Zonder offerte kan een losse factuur ook. De factuur staat bij de klant in
+`factuur`; standaardwaarden in `FACTUUR_DAGEN` en `FACTUUR_TEKST`.
+
 **Online akkoord** — onder in het offertevenster maakt *Maak akkoordlink* een
 link (`?o=token`) en kopieert hem; *Mail naar klant* opent je mailprogramma
 met een kant-en-klaar mailtje (aan het e-mailadres uit *Aan* of het

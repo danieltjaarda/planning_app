@@ -1496,6 +1496,9 @@ button { cursor: pointer; }
 .of-kort span { color: var(--ink-2); }
 .of-kort .of-kort-bedrag { margin-left: auto; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .of-knoppen { display: flex; flex-wrap: wrap; gap: 6px; }
+.of-kort .of-betaald { color: var(--cat-focus); font-weight: 600; }
+.of-kort .of-open { color: var(--now); font-weight: 600; }
+.of-factuur .of-akkoord, .of-factuur #oPakketten { display: none; }
 
 .of-modal { width: min(800px, 100%); }
 .of-modal > footer { flex-wrap: wrap; }
@@ -2566,6 +2569,7 @@ button { cursor: pointer; }
         <textarea id="lNote" placeholder="Waar staat het gesprek, wat is afgesproken…"></textarea>
       </div>
       <div class="field formbox" id="lOfferteBox"></div>
+      <div class="field formbox" id="lFactuurBox"></div>
       <div class="field formbox" id="lFormBox"></div>
       <div class="field formbox" id="lMuziekBox"></div>
     </div>
@@ -2587,7 +2591,7 @@ button { cursor: pointer; }
     <div class="mbody">
       <div class="row3 of-kop">
         <div class="field">
-          <label class="label" for="oNummer">Offertenummer</label>
+          <label class="label" for="oNummer" id="oNummerLabel">Offertenummer</label>
           <input type="text" id="oNummer" autocomplete="off">
         </div>
         <div class="field">
@@ -2595,7 +2599,7 @@ button { cursor: pointer; }
           <input type="date" id="oDatum">
         </div>
         <div class="field">
-          <label class="label" for="oGeldig">Geldig tot</label>
+          <label class="label" for="oGeldig" id="oGeldigLabel">Geldig tot</label>
           <input type="date" id="oGeldig">
         </div>
       </div>
@@ -2667,6 +2671,8 @@ button { cursor: pointer; }
     <footer>
       <button class="btn-line danger" id="oDelete" hidden>Verwijderen</button>
       <span class="spacer"></span>
+      <button class="btn-line" id="oBetaald" hidden>Betaald</button>
+      <button class="btn-line" id="oFactuur" hidden>Maak factuur</button>
       <button class="btn-line" id="oShare" hidden>Delen</button>
       <button class="btn-line" id="oPdf">Download pdf</button>
       <button class="btn-primary" id="oSave">Opslaan</button>
@@ -3743,6 +3749,9 @@ button { cursor: pointer; }
       var offerteChip = l.offerte
         ? '<span class="k-when">offerte ' + esc(euro(offerteTotalen(l.offerte).totaal / 100)) +
           (l.offerteAkkoord ? ' · getekend' : l.offerteToken ? ' · gestuurd' : '') + '</span>' : "";
+      var factuurChip = l.factuur
+        ? '<span class="k-when">factuur ' + esc(euro(offerteTotalen(l.factuur).totaal / 100)) +
+          (l.factuur.betaald ? ' · betaald' : offerteVerlopen(l.factuur) ? ' · vervallen' : ' · open') + '</span>' : "";
 
       html += '<div class="klant' + (gone ? " gone" : "") + '" style="--st:' + stVar(l.status) + '">' +
         '<button class="k-main" data-lead="' + esc(l.id) + '">' +
@@ -3751,7 +3760,7 @@ button { cursor: pointer; }
             '<span class="k-name' + (l.name && l.name.trim() ? "" : " anon") + '">' + esc(leadName(l)) + '</span>' +
             '<span class="k-tags">' + statusPill(l.status) +
               (l.calledAt ? '<span class="k-when">gebeld op ' + esc(fmtShort(l.calledAt)) + '</span>' : '') +
-              (gone ? '<span class="label">datum geweest</span>' : '') + timeChip + formChip + muziekChip + offerteChip + callChip + '</span>' +
+              (gone ? '<span class="label">datum geweest</span>' : '') + timeChip + formChip + muziekChip + offerteChip + factuurChip + callChip + '</span>' +
             (l.note ? '<span class="k-note">' + esc(l.note) + '</span>' : '') +
           '</span>' +
         '</button>' +
@@ -4168,6 +4177,7 @@ button { cursor: pointer; }
     setStatusPick(l ? l.status : "wacht");
     $("lDelete").hidden = !l;
     renderLeadOfferteBox(l);
+    renderLeadFactuurBox(l);
     renderLeadFormBox(l);
     renderLeadMuziekBox(l);
     $("ldOverlay").hidden = false;
@@ -4218,6 +4228,7 @@ button { cursor: pointer; }
       if (old.muziek) obj.muziek = old.muziek;
       if (old.muziekAt) obj.muziekAt = old.muziekAt;
       if (old.muziekOpmerking) obj.muziekOpmerking = old.muziekOpmerking;
+      if (old.factuur) obj.factuur = old.factuur;
       for (var ov = 0; ov < OFFERTE_VELDEN.length; ov++) {
         if (old[OFFERTE_VELDEN[ov]] != null) obj[OFFERTE_VELDEN[ov]] = old[OFFERTE_VELDEN[ov]];
       }
@@ -5550,6 +5561,9 @@ button { cursor: pointer; }
     { id: "geen", label: "Zonder btw" }
   ];
   var OFFERTE_TEKST = "Akkoord met deze offerte? Laat het me weten per WhatsApp of e-mail, dan leg ik jullie datum definitief vast.";
+  var FACTUUR_DAGEN = 14;          // betaaltermijn
+  // {iban}, {dagen} en {nummer} worden bij het maken van de factuur ingevuld.
+  var FACTUUR_TEKST = "Graag het totaalbedrag binnen {dagen} dagen overmaken op {iban} onder vermelding van factuurnummer {nummer}. Bedankt voor jullie vertrouwen!";
   // Zoals op mediaspot.nl; aan te passen onder "Jouw bedrijfsgegevens".
   var BEDRIJF = {
     naam: "Mediaspot", juridisch: "Tjaarda Holding B.V.", adres: "Brandemeer 6\nJoure",
@@ -5626,18 +5640,21 @@ button { cursor: pointer; }
 
   /* --- een nieuwe offerte, ingevuld vanuit de klant ---------- */
 
-  /** Volgend nummer in het jaar van de offerte: 2026-001, 2026-002, … */
-  function volgendNummer(datum, eigenId) {
+  /** Volgend nummer in het jaar van de offerte: 2026-001, 2026-002, … Facturen
+   *  hebben een eigen, doorlopende reeks: F2026-001, F2026-002, … */
+  function volgendNummer(datum, eigenId, soort) {
     var jaar = String(datum || amsNow().date).slice(0, 4), max = 0;
+    var veld = soort === "factuur" ? "factuur" : "offerte", pre = soort === "factuur" ? "F" : "";
+    var re = new RegExp("^" + pre + "(\\d{4})-(\\d+)$");
     for (var i = 0; i < state.leads.length; i++) {
       var l = state.leads[i];
-      if (l.id === eigenId || !l.offerte) continue;
-      var m = /^(\d{4})-(\d+)$/.exec(l.offerte.nummer || "");
+      if (l.id === eigenId || !l[veld]) continue;
+      var m = re.exec(l[veld].nummer || "");
       if (m && m[1] === jaar) max = Math.max(max, parseInt(m[2], 10));
     }
     var n = String(max + 1);
     while (n.length < 3) n = "0" + n;
-    return jaar + "-" + n;
+    return pre + jaar + "-" + n;
   }
 
   function datumVol(s) {
@@ -5706,9 +5723,39 @@ button { cursor: pointer; }
     };
   }
 
-  function offerteNaam(of, l, getekend) {
-    return ("Offerte " + of.nummer + " " + leadName(l) + (getekend ? " (getekend)" : "")).replace(/[\\\/:*?"<>|]+/g, "")
-      .replace(/\s+/g, " ").trim() + ".pdf";
+  function offerteNaam(of, l, getekend, soort) {
+    return ((soort === "factuur" ? "Factuur " : "Offerte ") + of.nummer + " " + leadName(l) + (getekend ? " (getekend)" : ""))
+      .replace(/[\\\/:*?"<>|]+/g, "").replace(/\s+/g, " ").trim() + ".pdf";
+  }
+
+  /* --- een factuur, gemaakt van de offerte ------------------- */
+
+  // De factuur is een kopie van de offerte op het moment van factureren:
+  // dezelfde regels, dezelfde btw-keuze, met een eigen nummer, een
+  // vervaldatum en een betaaltekst. Later aanpassen kan altijd; de
+  // offerte zelf blijft zoals hij was. Zonder offerte begint hij leeg.
+  function factuurTekst(nummer) {
+    var b = bedrijf();
+    return FACTUUR_TEKST.replace("{dagen}", FACTUUR_DAGEN).replace("{nummer}", nummer)
+      .replace("{iban}", b.iban ? b.iban + (b.juridisch || b.naam ? " t.n.v. " + (b.juridisch || b.naam) : "") : "de rekening hieronder");
+  }
+
+  function nieuweFactuur(l) {
+    var vandaag = amsNow().date, of = l.offerte, nummer = volgendNummer(vandaag, l.id, "factuur");
+    return {
+      nummer: nummer,
+      datum: vandaag,
+      geldig: addD(vandaag, FACTUUR_DAGEN),     // vervaldatum
+      aan: of && of.aan ? of.aan : offerteAan(l),
+      betreft: of && of.betreft ? of.betreft : offerteBetreft(l),
+      details: of ? (of.details || "") : offerteDetails(l),
+      regels: of && of.regels && of.regels.length ? JSON.parse(JSON.stringify(of.regels)) : [{ oms: "", aantal: 1, prijs: null }],
+      btw: of ? (of.btw || "incl") : (state.offerteMeta.btw || "incl"),
+      tarief: of && of.tarief ? of.tarief : BTW_TARIEF,
+      tekst: factuurTekst(nummer),
+      offerteNummer: of ? of.nummer : "",
+      betaald: null
+    };
   }
 
   /* --- pdf: tekens, breedtes, afbreken ------------------------ */
@@ -5988,7 +6035,8 @@ button { cursor: pointer; }
   var PDF_INKT = "#1d1d1f", PDF_GRIJS = "#6e6e73", PDF_TEKST = "#3a3a3c", PDF_LIJN = "#e2e2e7", PDF_ORANJE = "#fc6a2f";
 
   /** De offerte als pdf, als tekst (alleen ASCII). Met akkoord: ook de naam en handtekening van de klant. */
-  function offertePdf(of, b, akkoord) {
+  function offertePdf(of, b, akkoord, soort) {
+    var factuur = soort === "factuur", TITEL = factuur ? "Factuur" : "Offerte";
     var M = 56, R = A4.w - M, BREED = R - M, ONDER = A4.h - 72;
     var doc = pdfDoc(), y = 0, tot = offerteTotalen(of);
     var regels = of.regels || [];
@@ -6002,7 +6050,7 @@ button { cursor: pointer; }
     function vervolg() {
       doc.pagina();
       doc.logo(M, 44, 96);
-      doc.tekst(R, 56, "Offerte " + of.nummer + " (vervolg)", { size: 8.5, kleur: PDF_GRIJS, align: "r" });
+      doc.tekst(R, 56, TITEL + " " + of.nummer + " (vervolg)", { size: 8.5, kleur: PDF_GRIJS, align: "r" });
       y = 104;
     }
     function tabelKop() {
@@ -6026,7 +6074,7 @@ button { cursor: pointer; }
     });
 
     y = Math.max(by + 40, 168);
-    var tw = doc.tekst(M, y, "Offerte", { size: 28, vet: true });
+    var tw = doc.tekst(M, y, TITEL, { size: 28, vet: true });
     doc.tekst(M + tw + 0.5, y, ".", { size: 28, vet: true, kleur: PDF_ORANJE });
     y += 36;
 
@@ -6039,7 +6087,10 @@ button { cursor: pointer; }
       ly += 14;
     });
     ry += 17;
-    [["Nummer", of.nummer], ["Datum", datumVol(of.datum)], ["Geldig tot", datumVol(of.geldig)]].forEach(function (p) {
+    var kopRijen = factuur
+      ? [["Factuurnummer", of.nummer], ["Factuurdatum", datumVol(of.datum)], ["Vervaldatum", datumVol(of.geldig)], ["Offerte", of.offerteNummer]]
+      : [["Nummer", of.nummer], ["Datum", datumVol(of.datum)], ["Geldig tot", datumVol(of.geldig)]];
+    kopRijen.forEach(function (p) {
       if (!p[1]) return;
       doc.tekst(KX, ry, p[0], { size: 9, kleur: PDF_GRIJS });
       doc.tekst(R, ry, p[1], { size: 9.5, align: "r" });
@@ -6109,6 +6160,11 @@ button { cursor: pointer; }
       doc.tekst(TX, y, "Waarvan " + tot.tarief + "% btw", { size: 8.5, kleur: PDF_GRIJS });
       doc.tekst(R, y, euro(tot.btw / 100), { size: 8.5, kleur: PDF_GRIJS, align: "r" });
     }
+    if (factuur) {
+      y += 15;
+      doc.tekst(TX, y, of.betaald ? "Betaald op " + datumVol(String(of.betaald).slice(0, 10)) : "Te betalen voor " + datumVol(of.geldig),
+        { size: 8.5, vet: true, kleur: of.betaald ? PDF_GRIJS : PDF_ORANJE });
+    }
 
     // --- akkoord van de klant: naam, handtekening en wanneer
     if (getekend) {
@@ -6142,7 +6198,7 @@ button { cursor: pointer; }
       if (voet) doc.tekst(M, A4.h - 38, voet, { size: 7.5, kleur: PDF_GRIJS });
       if (n > 1) doc.tekst(R, A4.h - 38, p + " / " + n, { size: 7.5, kleur: PDF_GRIJS, align: "r" });
     }
-    return doc.bouw("Offerte " + of.nummer, b.naam || "Mediaspot");
+    return doc.bouw(TITEL + " " + of.nummer, b.naam || "Mediaspot");
   }
 
   /* --- de offerte als webpagina, voor de klant (?o=token) ------ */
@@ -6186,6 +6242,47 @@ button { cursor: pointer; }
   var editingOfferte = null;     // id van de klant
   var offerteVuil = false;       // iets veranderd sinds openen of bewaren
   var btwKeuze = "incl";
+  var ofSoort = "offerte";       // hetzelfde venster doet ook de factuur
+  function isFactuur() { return ofSoort === "factuur"; }
+
+  function renderLeadFactuurBox(l) {
+    var box = $("lFactuurBox");
+    if (!l || !l.factuur) {
+      box.innerHTML = '<span class="label">Factuur</span>' +
+        (l && l.offerte
+          ? '<p>Zet de offerte in één klik om in een factuur: dezelfde regels en btw, met een factuurnummer, vervaldatum en betaaltekst.</p>'
+          : '<p>Maak eerst een offerte, dan wordt die met één klik een factuur. Een losse factuur kan ook.</p>') +
+        '<div><button type="button" class="btn-line" id="lMakeFactuur">' + (l && l.offerte ? 'Maak factuur van offerte' : 'Maak factuur') + '</button></div>';
+      return;
+    }
+    var f = l.factuur, t = offerteTotalen(f);
+    box.innerHTML = '<span class="label">Factuur</span>' +
+      '<div class="of-kort"><b>' + esc(f.nummer) + '</b><span>' + esc(datumVol(f.datum)) + '</span>' +
+      (f.betaald ? '<span class="of-betaald">Betaald op ' + esc(datumVol(String(f.betaald).slice(0, 10))) + '</span>'
+        : offerteVerlopen(f) ? '<span class="of-open">Vervallen op ' + esc(datumVol(f.geldig)) + '</span>'
+        : '<span>Vervalt ' + esc(datumVol(f.geldig)) + '</span>') +
+      '<span class="of-kort-bedrag">' + esc(euro(t.totaal / 100)) + '</span></div>' +
+      (f.offerteNummer ? '<span class="fstate">Van offerte ' + esc(f.offerteNummer) + '</span>' : '') +
+      '<div class="of-knoppen"><button type="button" class="btn-line" id="lEditFactuur">Bewerken</button>' +
+      '<button type="button" class="btn-line" id="lPdfFactuur">Download pdf</button>' +
+      '<button type="button" class="btn-line" id="lBetaaldFactuur">' + (f.betaald ? 'Toch niet betaald' : 'Betaald') + '</button></div>';
+  }
+
+  /** Betaald aan- of uitzetten; geeft de bijgewerkte klant. */
+  function zetBetaald(id, betaald) {
+    var l = findLead(id);
+    if (!l || !l.factuur) return null;
+    var upd = leadKopie(l), f = {};
+    for (var k in l.factuur) f[k] = l.factuur[k];
+    f.betaald = betaald ? new Date().toISOString() : null;
+    f.gewijzigd = Date.now();
+    upd.factuur = f;
+    put("leads", upd);
+    if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadFactuurBox(upd);
+    render();
+    toast(betaald ? "Factuur " + f.nummer + " staat op betaald." : "Factuur " + f.nummer + " staat weer open.");
+    return upd;
+  }
 
   function renderLeadOfferteBox(l) {
     var box = $("lOfferteBox");
@@ -6204,7 +6301,8 @@ button { cursor: pointer; }
         : l.offerteGemaild ? '<span class="fstate">Gemaild naar ' + esc(l.offerteGemaild.aan) + ' · nog niet getekend</span>'
         : l.offerteToken ? '<span class="fstate">Akkoordlink gestuurd · nog niet getekend</span>' : '') +
       '<div class="of-knoppen"><button type="button" class="btn-line" id="lEditOfferte">Bewerken</button>' +
-      '<button type="button" class="btn-line" id="lPdfOfferte">Download pdf</button></div>';
+      '<button type="button" class="btn-line" id="lPdfOfferte">Download pdf</button>' +
+      (l.factuur ? '' : '<button type="button" class="btn-line" id="lFactureerOfferte">Maak factuur</button>') + '</div>';
   }
 
   function regelHtml(r) {
@@ -6274,7 +6372,16 @@ button { cursor: pointer; }
   }
 
   function vulOfferte(l, of) {
-    $("ofTitle").textContent = "Offerte · " + leadName(l);
+    var f = isFactuur();
+    $("ofTitle").textContent = (f ? "Factuur · " : "Offerte · ") + leadName(l);
+    $("oNummerLabel").textContent = f ? "Factuurnummer" : "Offertenummer";
+    $("oGeldigLabel").textContent = f ? "Vervaldatum" : "Geldig tot";
+    $("ofOverlay").querySelector(".of-modal").classList.toggle("of-factuur", f);
+    $("oAkkoordBox").hidden = f;
+    $("oFactuur").hidden = f;
+    $("oFactuur").textContent = l.factuur ? "Naar factuur" : "Maak factuur";
+    $("oBetaald").hidden = !f;
+    $("oBetaald").textContent = of.betaald ? "Toch niet betaald" : "Betaald";
     $("oNummer").value = of.nummer || "";
     $("oDatum").value = of.datum || "";
     $("oGeldig").value = of.geldig || "";
@@ -6286,15 +6393,15 @@ button { cursor: pointer; }
     $("oRegels").innerHTML = regels.map(regelHtml).join("");
     setBtwKeuze(of.btw || "incl");
     vulBedrijf(bedrijf());
-    $("oDelete").hidden = !l.offerte;
+    $("oDelete").hidden = !l[ofSoort];
     resetOfferteWeg();
     offerteRekenen();
     $("oMailForm").hidden = true;
-    renderOfferteAkkoord(l);
+    if (f) zetOfferteSlot(false); else renderOfferteAkkoord(l);
   }
 
   /** Vanuit het klantvenster: eerst de klant bewaren, zoals bij de formulierlink. */
-  function openOfferte() {
+  function openOfferte(soort) {
     var obj = collectLead();
     if (!obj) return;
     put("leads", obj);
@@ -6302,25 +6409,43 @@ button { cursor: pointer; }
     $("ldTitle").textContent = "Klant bewerken";
     $("lDelete").hidden = false;
     render();
+    toonOfferteVenster(obj, soort);
+  }
+
+  /** Het venster vullen met de offerte of de factuur van deze klant. */
+  function toonOfferteVenster(obj, soort) {
+    ofSoort = soort === "factuur" ? "factuur" : "offerte";
     editingOfferte = obj.id;
-    var of = obj.offerte ? JSON.parse(JSON.stringify(obj.offerte)) : nieuweOfferte(obj);
+    var of = obj[ofSoort] ? JSON.parse(JSON.stringify(obj[ofSoort])) : isFactuur() ? nieuweFactuur(obj) : nieuweOfferte(obj);
     vulOfferte(obj, of);
-    offerteVuil = false;
+    // een nieuwe factuur is meteen een echte: zo krijgt hij zijn nummer en staat hij bij de klant
+    offerteVuil = isFactuur() && !obj.factuur;
     $("oShare").hidden = !kanDelen();
     $("ofOverlay").hidden = false;
-    if (mailServer === null) vraagMailStatus().then(function (aan) {
+    if (!isFactuur() && mailServer === null) vraagMailStatus().then(function (aan) {
       var nu = findLead(obj.id);
-      if (aan && nu && editingOfferte === obj.id && !$("ofOverlay").hidden) renderOfferteAkkoord(nu);
+      if (aan && nu && editingOfferte === obj.id && !isFactuur() && !$("ofOverlay").hidden) renderOfferteAkkoord(nu);
     });
     var tas = $("oRegels").querySelectorAll("textarea");
     for (var i = 0; i < tas.length; i++) groei(tas[i]);
-    if (!obj.offerte) setTimeout(function () { var t = $("oRegels").querySelector("textarea"); if (t) t.focus(); }, 0);
+    if (!obj[ofSoort]) setTimeout(function () { var t = $("oRegels").querySelector("textarea"); if (t) t.focus(); }, 0);
+  }
+
+  /** In het offertevenster: offerte bewaren en in hetzelfde venster de factuur openen (of maken). */
+  function naarFactuur() {
+    var r = bewaarOfferte();
+    if (!r) return;
+    if (!r.l.factuur && !r.of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
+    var nieuw = !r.l.factuur;
+    toonOfferteVenster(r.l, "factuur");
+    if (nieuw) { bewaarOfferte(); toast("Factuur " + $("oNummer").value + " gemaakt van offerte " + r.of.nummer + "."); }
   }
 
   function leesOfferte() {
     var datum = $("oDatum").value || amsNow().date;
-    return {
-      nummer: $("oNummer").value.trim() || volgendNummer(datum, editingOfferte),
+    var l = findLead(editingOfferte), oud = (l && l[ofSoort]) || {};
+    var of = {
+      nummer: $("oNummer").value.trim() || volgendNummer(datum, editingOfferte, ofSoort),
       datum: datum,
       geldig: $("oGeldig").value || null,
       aan: $("oAan").value.trim(),
@@ -6332,30 +6457,37 @@ button { cursor: pointer; }
       tekst: $("oTekst").value.trim(),
       gewijzigd: Date.now()
     };
+    if (isFactuur()) {
+      of.offerteNummer = oud.offerteNummer || (l && l.offerte ? l.offerte.nummer : "");
+      of.betaald = oud.betaald || null;
+    }
+    return of;
   }
 
-  /** Bewaart de offerte in de klant; geeft { l, of } of null. */
+  /** Bewaart de offerte (of factuur) in de klant; geeft { l, of } of null. */
   function bewaarOfferte() {
     var l = findLead(editingOfferte);
     if (!l) return null;
-    if (l.offerteAkkoord) { offerteVuil = false; return { l: l, of: l.offerte }; }   // getekend: ligt vast
+    if (!isFactuur() && l.offerteAkkoord) { offerteVuil = false; return { l: l, of: l.offerte }; }   // getekend: ligt vast
     var of = leesOfferte();
     var upd = {};
     for (var k in l) upd[k] = l[k];
-    upd.offerte = of;
+    upd[ofSoort] = of;
     put("leads", upd);
     // gegevens, tekst en btw-keuze gelden ook voor de volgende offerte
     var meta = state.offerteMeta, b = leesBedrijf(), anders = false;
     if (JSON.stringify(b) !== JSON.stringify(bedrijf())) { meta.bedrijf = b; anders = true; }
-    if (of.tekst !== (typeof meta.tekst === "string" ? meta.tekst : OFFERTE_TEKST)) { meta.tekst = of.tekst; anders = true; }
-    if (of.btw !== (meta.btw || "incl")) { meta.btw = of.btw; anders = true; }
+    if (!isFactuur()) {
+      if (of.tekst !== (typeof meta.tekst === "string" ? meta.tekst : OFFERTE_TEKST)) { meta.tekst = of.tekst; anders = true; }
+      if (of.btw !== (meta.btw || "incl")) { meta.btw = of.btw; anders = true; }
+    }
     if (anders) bewaarOfferteMeta();
     offerteVuil = false;
     $("oDelete").hidden = false;
-    if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+    if (editingLead === upd.id && !$("ldOverlay").hidden) { renderLeadOfferteBox(upd); renderLeadFactuurBox(upd); }
     render();
     // de klant heeft al een link: die toont meteen deze versie
-    if (upd.offerteToken) publiceerOfferte(upd.id);
+    if (!isFactuur() && upd.offerteToken) publiceerOfferte(upd.id);
     return { l: upd, of: of };
   }
 
@@ -6382,17 +6514,17 @@ button { cursor: pointer; }
     resetOfferteWeg();
     var l = findLead(editingOfferte);
     if (l) {
-      if (l.offerteToken) api("POST", "", { t: l.offerteToken, actie: "verwijderen" }, OFFERTE_URL)["catch"](function () {});
-      var upd = {};
-      for (var k in l) if (OFFERTE_VELDEN.indexOf(k) < 0) upd[k] = l[k];
+      if (!isFactuur() && l.offerteToken) api("POST", "", { t: l.offerteToken, actie: "verwijderen" }, OFFERTE_URL)["catch"](function () {});
+      var upd = {}, weg = isFactuur() ? ["factuur"] : OFFERTE_VELDEN;
+      for (var k in l) if (weg.indexOf(k) < 0) upd[k] = l[k];
       put("leads", upd);
-      if (editingLead === upd.id && !$("ldOverlay").hidden) renderLeadOfferteBox(upd);
+      if (editingLead === upd.id && !$("ldOverlay").hidden) { renderLeadOfferteBox(upd); renderLeadFactuurBox(upd); }
       render();
     }
     offerteVuil = false;
     $("ofOverlay").hidden = true;
     editingOfferte = null;
-    toast("Offerte verwijderd.");
+    toast(isFactuur() ? "Factuur verwijderd." : "Offerte verwijderd.");
   }
 
   /** Bestand naar de gebruiker: via het platform als dat er is, anders als gewone download. */
@@ -6416,16 +6548,18 @@ button { cursor: pointer; }
   }
 
   /** De pdf zoals hij er nu voor staat; getekend met de gegevens en handtekening van dat moment. */
-  function offertePdfVan(l, of) {
+  function offertePdfVan(l, of, soort) {
+    if (soort === "factuur") return offertePdf(of, bedrijf(), null, "factuur");
     var a = l.offerteAkkoord || null;
     return offertePdf(of, (a && a.bedrijf) || bedrijf(), a);
   }
 
-  function pdfDownloaden(l, of) {
-    if (!of.regels || !of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
-    var naam = offerteNaam(of, l, !!l.offerteAkkoord);
-    saveFile(naam, offertePdfVan(l, of), "application/pdf")
-      .then(function () { toast("Offerte gedownload: " + naam); })
+  function pdfDownloaden(l, of, soort) {
+    var factuur = soort === "factuur";
+    if (!of.regels || !of.regels.length) { toast("Zet eerst minstens één regel in de " + (factuur ? "factuur." : "offerte.")); return; }
+    var naam = offerteNaam(of, l, !factuur && !!l.offerteAkkoord, soort);
+    saveFile(naam, offertePdfVan(l, of, soort), "application/pdf")
+      .then(function () { toast((factuur ? "Factuur" : "Offerte") + " gedownload: " + naam); })
       ["catch"](function (err) { saveFailed(err); });
   }
 
@@ -6440,9 +6574,9 @@ button { cursor: pointer; }
   function deelOfferte() {
     var r = bewaarOfferte();
     if (!r) return;
-    if (!r.of.regels.length) { toast("Zet eerst minstens één regel in de offerte."); return; }
-    var naam = offerteNaam(r.of, r.l, !!r.l.offerteAkkoord);
-    var file = new File([offertePdfVan(r.l, r.of)], naam, { type: "application/pdf" });
+    if (!r.of.regels.length) { toast("Zet eerst minstens één regel in de " + (isFactuur() ? "factuur." : "offerte.")); return; }
+    var naam = offerteNaam(r.of, r.l, !isFactuur() && !!r.l.offerteAkkoord, ofSoort);
+    var file = new File([offertePdfVan(r.l, r.of, ofSoort)], naam, { type: "application/pdf" });
     navigator.share({ files: [file], title: naam })["catch"](function (e) {
       if (!e || e.name !== "AbortError") toast("Delen lukte niet — gebruik Download pdf.");
     });
@@ -6506,6 +6640,7 @@ button { cursor: pointer; }
   /* --- in het offertevenster ----------------------------------- */
 
   function renderOfferteAkkoord(l) {
+    if (isFactuur()) return;   // het venster toont de factuur; die kent geen akkoord
     var box = $("oAkkoordBox"), a = l && l.offerteAkkoord;
     var html = '<span class="label">Akkoord van de klant</span>';
     if (a) {
@@ -6703,7 +6838,7 @@ button { cursor: pointer; }
       if (!upd.calledAt) upd.calledAt = amsNow().date;
     }
     put("leads", upd);
-    if (editingOfferte === id && !$("ofOverlay").hidden) {
+    if (editingOfferte === id && !isFactuur() && !$("ofOverlay").hidden) {
       vulOfferte(upd, upd.offerte);
       offerteVuil = false;
       var tas = $("oRegels").querySelectorAll("textarea");
@@ -7779,6 +7914,31 @@ button { cursor: pointer; }
     else if (b.id === "lPdfOfferte") {
       var l = editingLead && findLead(editingLead);
       if (l && l.offerte) pdfDownloaden(l, l.offerte);
+    } else if (b.id === "lFactureerOfferte") factureerVanuitKlant();
+  });
+  /** Vanuit het klantvenster een factuur van de offerte maken en meteen openen. */
+  function factureerVanuitKlant() {
+    var obj = collectLead();
+    if (!obj) return;
+    if (!obj.factuur && obj.offerte && !(obj.offerte.regels || []).length) { toast("Zet eerst minstens één regel in de offerte."); return; }
+    var nieuw = !obj.factuur;
+    openOfferte("factuur");
+    if (nieuw && editingOfferte) {
+      bewaarOfferte();
+      toast(obj.offerte ? "Factuur " + $("oNummer").value + " gemaakt van offerte " + obj.offerte.nummer + "." : "Factuur " + $("oNummer").value + " gemaakt.");
+    }
+  }
+  $("lFactuurBox").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "lMakeFactuur") factureerVanuitKlant();
+    else if (b.id === "lEditFactuur") openOfferte("factuur");
+    else if (b.id === "lPdfFactuur") {
+      var l = editingLead && findLead(editingLead);
+      if (l && l.factuur) pdfDownloaden(l, l.factuur, "factuur");
+    } else if (b.id === "lBetaaldFactuur") {
+      var k = editingLead && findLead(editingLead);
+      if (k && k.factuur) zetBetaald(k.id, !k.factuur.betaald);
     }
   });
 
@@ -7849,11 +8009,19 @@ button { cursor: pointer; }
   });
   $("oClose").addEventListener("click", sluitOfferte);
   $("oSave").addEventListener("click", function () {
-    if (bewaarOfferte()) { $("ofOverlay").hidden = true; editingOfferte = null; toast("Offerte opgeslagen."); }
+    var factuur = isFactuur();
+    if (bewaarOfferte()) { $("ofOverlay").hidden = true; editingOfferte = null; toast(factuur ? "Factuur opgeslagen." : "Offerte opgeslagen."); }
   });
   $("oPdf").addEventListener("click", function () {
     var r = bewaarOfferte();
-    if (r) pdfDownloaden(r.l, r.of);
+    if (r) pdfDownloaden(r.l, r.of, ofSoort);
+  });
+  $("oFactuur").addEventListener("click", naarFactuur);
+  $("oBetaald").addEventListener("click", function () {
+    var r = bewaarOfferte();
+    if (!r || !isFactuur()) return;
+    var upd = zetBetaald(r.l.id, !r.of.betaald);
+    if (upd) { $("oBetaald").textContent = upd.factuur.betaald ? "Toch niet betaald" : "Betaald"; }
   });
   $("oShare").addEventListener("click", deelOfferte);
   $("oDelete").addEventListener("click", verwijderOfferte);

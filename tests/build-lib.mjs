@@ -72,7 +72,7 @@ writeFileSync(join(HERE, "_offerte-lib.js"),
   + cut("  /** Begin- en eindtijd van de klus", "  /** De klus van een klant als agenda-item")
   + cut("  var OFFERTE_DAGEN", "  /* --- offertevenster")
   + "\nmodule.exports={state,parseBedrag,bedragTekst,euro,getal,offerteTotalen,volgendNummer,datumVol,"
-  + "offerteAan,offerteBetreft,offerteDetails,bedrijf,nieuweOfferte,offerteNaam,winAnsi,pdfBreedte,"
+  + "offerteAan,offerteBetreft,offerteDetails,bedrijf,nieuweOfferte,nieuweFactuur,factuurTekst,offerteNaam,winAnsi,pdfBreedte,"
   + "pdfAfbreken,pdfStr,ascii85,offertePdf,PAKKETTEN,BEDRIJF,LOGO_PDF,"
   + "SIG_W,SIG_H,sigStukken,sigKader,sigGenoeg,sigD,sigSvg,tijdVol,offerteHtml};\n",
   "utf8");
