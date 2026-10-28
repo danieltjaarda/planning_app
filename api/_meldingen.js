@@ -27,11 +27,33 @@ async function leesInstellingen(db) {
 }
 
 /**
+ * Pushmelding naar Daniels iPhone via Seintje (eigen app). SEINTJE_URL is de
+ * volledige webhook-URL inclusief sleutel; zonder die env gebeurt er niets.
+ * Gooit nooit en wacht hooguit 4 seconden. m: { onderwerp, tekst }
+ */
+async function seintje(m) {
+  const url = String(process.env.SEINTJE_URL || "").trim();
+  if (!url) return false;
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bron: "Weekzicht", titel: m.onderwerp, tekst: String(m.tekst || "").slice(0, 900), url: APP_URL }),
+      signal: AbortSignal.timeout(4000)
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Een melding dat een klant iets gedaan heeft. Gooit nooit: wat de klant
  * instuurde is dan al bewaard, en een mail die mislukt mag dat niet raken.
  * m: { onderwerp, tekst }
  */
 async function klantMelding(db, verzender, m) {
+  await seintje(m); // los van de mailinstellingen
   try {
     if (!verzender || !verzender.aan()) return false;
     const inst = await leesInstellingen(db);
@@ -98,4 +120,4 @@ function muziekMelding(rec, aangepast) {
   };
 }
 
-module.exports = { STANDAARD, VOORAF, APP_URL, instellingen, leesInstellingen, klantMelding, formulierMelding, muziekMelding, datumNl };
+module.exports = { STANDAARD, VOORAF, APP_URL, instellingen, leesInstellingen, seintje, klantMelding, formulierMelding, muziekMelding, datumNl };

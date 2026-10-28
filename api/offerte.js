@@ -27,6 +27,7 @@
 const opslag = require("./_opslag.js");
 const sessie = require("./_sessie.js");
 const mail = require("./_mail.js");
+const meldingen = require("./_meldingen.js");
 const offertePdf = require("./_offertepdf.js");
 const TOKEN_RE = /^[a-z0-9]{12,40}$/;
 const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -309,6 +310,10 @@ async function handle(req, res, db, opts) {
     const rec = Object.assign({}, old, { akkoord });
     await db.set(key, rec);
     // eerst vastleggen, dan pas mailen: een mail die mislukt maakt het akkoord niet ongedaan
+    await meldingen.seintje({
+      onderwerp: "Offerte getekend: " + naam,
+      tekst: naam + " heeft offerte " + ((old.offerte && old.offerte.nummer) || "") + " getekend." + (email ? "\n" + email : "")
+    });
     let bevestiging = false;
     if (verzender.aan()) {
       const b = basis(req);
