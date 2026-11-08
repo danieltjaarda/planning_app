@@ -31,6 +31,7 @@ const muziek = require("./api/muziek.js");
 const offerte = require("./api/offerte.js");
 const herinneringen = require("./api/herinneringen.js");
 const planning = require("./api/planning.js");
+const aiPlanning = require("./api/ai-planning.js");
 const opslag = require("./api/_opslag.js");
 const bestanden = require("./api/_bestanden.js");
 const inloggen = require("./api/inloggen.js");
@@ -131,6 +132,13 @@ createServer(async (req, res) => {
     // lokaal geen wachtwoord vereist: deze server is alleen vanaf deze computer bereikbaar
     try { await planning.handle(req, res, memory || opslag.store(), { eisWachtwoord: false }); }
     catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: "opslag", melding: String(e) })); }
+    return;
+  }
+
+  if (url.pathname === "/api/ai-planning") {
+    req.body = req.method === "POST" ? await readBody(req, 512 * 1024) : undefined;
+    try { await aiPlanning.handle(req, res, process.env.ANTHROPIC_API_KEY, { eisWachtwoord: false }); }
+    catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: "claude", melding: String(e) })); }
     return;
   }
 

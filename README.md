@@ -139,6 +139,19 @@ van tevoren, met telefoon, locatie en notitie), en een bericht als een klant
 het formulier invult of muziek kiest. *Stuur nu een dagoverzicht* laat meteen
 zien hoe het eruitziet. De server stuurt ze ook als de app dicht is.
 
+**Plan met AI** — de knop *✦ Plan met AI* (ook in het ⋯-menu) opent een
+venster waarin je in gewone taal zegt wat je die week gedaan wilt hebben en
+ongeveer hoe lang het duurt ("bruiloft Jan & Lisa monteren, 8 uur, af vóór
+donderdag; dinsdagmiddag sporten"). `api/ai-planning.js` stuurt dat, met wat er
+al in de week staat (afspraken, klussen, belafspraken; afgevallen klanten
+niet), naar Claude (`claude-opus-5-5`, gestructureerde JSON-uitvoer). Je krijgt
+een voorstel per dag te zien en vinkt af wat je niet wilt; pas bij *Zet in
+agenda* worden het gewone afspraken (met `ai: true`), los van je klanten. De
+server gooit blokken weg die buiten de week, in het verleden of over iets
+anders heen vallen. Het werkt op de week die je bekijkt (of deze week, als die
+al voorbij is). Zet `ANTHROPIC_API_KEY` in Vercel (Settings → Environment
+Variables, als Secret) en deploy opnieuw; lokaal in `.env`. Alleen ingelogd.
+
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
 **Op de telefoon** (tot 720 px breed, of een telefoon die dwars ligt) wordt het
@@ -362,6 +375,7 @@ api/_mail.js         mail versturen via Forward Email, en de mail in de huisstij
 api/_offertepdf.js   de pdf-schrijver uit de app, voor de bijlage
 api/herinneringen.js Vercel Cron: dagoverzicht en herinneringen vooraf per mail
 api/_meldingen.js    instellingen van de meldingen, en de mail als een klant iets doet
+api/ai-planning.js   Vercel-functie: weekplanning laten maken door Claude
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
 api/_opslag.js       Redis-opslag (Upstash REST) of geheugen lokaal, gedeeld door de functies
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)

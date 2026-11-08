@@ -22,6 +22,9 @@
     "api/offerte.js": {
       "includeFiles": "src/weekzicht.html",
       "maxDuration": 30
+    },
+    "api/ai-planning.js": {
+      "maxDuration": 120
     }
   },
   "crons": [

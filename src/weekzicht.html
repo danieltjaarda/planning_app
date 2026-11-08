@@ -1155,6 +1155,19 @@ button { cursor: pointer; }
 .dropzone.hot { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
 .dropzone strong { display: block; color: var(--ink); font-size: 14px; font-weight: 600; margin-bottom: 4px; }
 
+/* AI-weekplanner */
+.ai-voorstel { display: flex; flex-direction: column; gap: 10px; }
+.ai-dag { display: flex; flex-direction: column; gap: 4px; }
+.ai-dag > .label { margin-bottom: 2px; }
+.ai-blok { display: grid; grid-template-columns: 16px 92px 1fr; gap: 8px; align-items: start; padding: 7px 10px;
+  border-radius: var(--r); background: color-mix(in srgb, var(--cat) var(--cat-mix), var(--surface));
+  border-left: 3px solid var(--cat); font-size: 14px; cursor: pointer; }
+.ai-blok input { margin: 2px 0 0; accent-color: var(--accent); }
+.ai-blok .t { font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.ai-blok .n { display: block; font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.ai-blok.uit { opacity: .45; }
+#aiWens { min-height: 130px; }
+
 .note {
   margin: 0;
   font-size: 13px;
@@ -2301,11 +2314,13 @@ button { cursor: pointer; }
       </nav>
 
       <div class="topbar-actions">
+        <button class="btn-line" id="aiBtn" title="Laat AI je week plannen" aria-label="Plan met AI">✦ <span class="nb-word">Plan met AI</span></button>
         <button class="btn-primary" id="newBtn" title="Nieuwe afspraak (N)" aria-label="Nieuw"><span class="nb-plus" aria-hidden="true">+</span> <span class="nb-word">Nieuw</span></button>
         <div class="menuwrap">
           <button class="btn-ghost" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Menu"><span class="mb-dots" aria-hidden="true">⋯</span><svg class="mb-hamb" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
           <div class="menu" id="menu" hidden>
             <div class="menu-head"><span class="mark">WZ</span><span class="menu-title">Weekzicht</span><button id="menuClose" aria-label="Menu sluiten">✕</button></div>
+            <button id="miAi">Plan mijn week met AI…</button>
             <button id="miImport">Importeer .ics-bestand…</button>
             <button id="miWeekend"><span>Weekend tonen</span><span class="k" id="weekendState">aan</span></button>
             <button id="miMeldingen">Meldingen per mail…</button>
@@ -2676,6 +2691,30 @@ button { cursor: pointer; }
       <button class="btn-line" id="oShare" hidden>Delen</button>
       <button class="btn-line" id="oPdf">Download pdf</button>
       <button class="btn-primary" id="oSave">Opslaan</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="aiOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aiTitle">
+    <header>
+      <h2 id="aiTitle">Plan mijn week met AI</h2>
+      <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <div class="field">
+        <label class="label" for="aiWens">Wat wil je <span id="aiWeekLabel">deze week</span> gedaan hebben?</label>
+        <textarea id="aiWens" placeholder="Bijv.: bruiloft Jan &amp; Lisa monteren, ongeveer 8 uur, af vóór donderdag. Offertes nalopen 1 uur. Website bijwerken 3 uur, liefst in de ochtend. Dinsdagmiddag sporten."></textarea>
+      </div>
+      <p class="note" id="aiStatus">Claude plant het om je afspraken, klussen en belafspraken heen. Je ziet het eerst als voorstel; niets komt in je agenda tot je op <b>Zet in agenda</b> klikt.</p>
+      <div class="ai-voorstel" id="aiVoorstel" hidden></div>
+    </div>
+    <footer>
+      <button class="btn-line" id="aiOpnieuw" hidden>Opnieuw</button>
+      <span class="spacer"></span>
+      <button class="btn-line" data-close>Annuleren</button>
+      <button class="btn-primary" id="aiMaak">Maak planning</button>
+      <button class="btn-primary" id="aiZet" hidden>Zet in agenda</button>
     </footer>
   </div>
 </div>
@@ -7217,6 +7256,146 @@ button { cursor: pointer; }
     return { dagoverzicht: m.dagoverzicht, dagTijd: m.dagTijd, vooraf: m.vooraf, klant: m.klant, at: m.at };
   }
 
+  /* ==========================================================
+     6h. AI-weekplanner — wens in gewone taal → blokken in de week
+     ========================================================== */
+
+  // api/ai-planning stuurt de wens plus wat er al in de week staat naar
+  // Claude en geeft een voorstel terug. Dat voorstel komt pas in de agenda
+  // (als gewone afspraken, met ai: true) als je op "Zet in agenda" klikt.
+  var AI_URL = "api/ai-planning";
+  var aiVoorstel = [];
+  var aiWeek = null;
+
+  /** Alles wat in die week al vastligt, ook wat nu weggefilterd is. */
+  function aiBezet(weekStart) {
+    var bewaarH = state.hidden, bewaarS = state.stHidden;
+    state.hidden = {}; state.stHidden = {};
+    var out = [];
+    try {
+      for (var i = 0; i < 7; i++) {
+        var d = addD(weekStart, i);
+        var items = dayItems(d);
+        for (var k = 0; k < items.length; k++) {
+          var it = items[k];
+          if (it.kind === "lead" && it.status === "af") continue;
+          out.push({ datum: d, start: it.start, eind: it.end, heleDag: !!it.allDay, titel: it.title });
+        }
+      }
+    } finally { state.hidden = bewaarH; state.stHidden = bewaarS; }
+    return out;
+  }
+
+  function aiStand(maak) {
+    $("aiMaak").hidden = !maak;
+    $("aiZet").hidden = maak;
+    $("aiOpnieuw").hidden = maak;
+    $("aiWens").disabled = false;
+  }
+
+  function openAi() {
+    closeMenu();
+    var nu = amsNow();
+    aiWeek = mondayOf(state.anchor);
+    // een week die al voorbij is heeft geen zin; dan de huidige
+    if (addD(aiWeek, 6) < nu.date) aiWeek = mondayOf(nu.date);
+    $("aiWeekLabel").textContent = aiWeek === mondayOf(nu.date) ? "deze week (week " + isoWeek(aiWeek).week + ")"
+      : "in week " + isoWeek(aiWeek).week + " (" + fmtKort(aiWeek) + " – " + fmtKort(addD(aiWeek, 6)) + ")";
+    $("aiVoorstel").hidden = true;
+    $("aiVoorstel").innerHTML = "";
+    $("aiStatus").innerHTML = "Claude plant het om je afspraken, klussen en belafspraken heen. Je ziet het eerst als voorstel; niets komt in je agenda tot je op <b>Zet in agenda</b> klikt.";
+    aiVoorstel = [];
+    aiStand(true);
+    $("aiOverlay").hidden = false;
+    setTimeout(function () { $("aiWens").focus(); }, 0);
+  }
+
+  function fmtKort(d) {
+    var a = d.split("-");
+    return (+a[2]) + " " + MONTHS_S[+a[1] - 1];
+  }
+
+  function vraagAi() {
+    var wens = $("aiWens").value.trim();
+    if (!wens) { toast("Vertel eerst wat je gedaan wilt hebben."); $("aiWens").focus(); return; }
+    var nu = amsNow();
+    var btn = $("aiMaak");
+    btn.disabled = true;
+    btn.textContent = "Claude plant…";
+    $("aiWens").disabled = true;
+    $("aiStatus").textContent = "Even geduld, Claude puzzelt je week in elkaar (meestal 20 à 60 seconden)…";
+    api("POST", "", {
+      wens: wens, weekStart: aiWeek, vandaag: nu.date, nu: pad(nu.h) + ":" + pad(nu.m),
+      instellingen: { dayStart: state.settings.dayStart, dayEnd: state.settings.dayEnd, weekend: state.settings.weekend },
+      bestaand: aiBezet(aiWeek)
+    }, AI_URL).then(function (r) {
+      btn.disabled = false;
+      btn.textContent = "Maak planning";
+      $("aiWens").disabled = false;
+      if (!r.ok) {
+        $("aiStatus").textContent = r.data.melding ||
+          (r.status === 404 || r.status === 405 ? "De AI werkt alleen op de online versie (Vercel) of met npm start." : apiReason(r));
+        return;
+      }
+      aiVoorstel = r.data.voorstel || [];
+      for (var i = 0; i < aiVoorstel.length; i++) aiVoorstel[i].aan = true;
+      if (!aiVoorstel.length) {
+        $("aiStatus").textContent = (r.data.uitleg ? r.data.uitleg + " " : "") + "Er kwam geen blok uit dat in je week past.";
+        return;
+      }
+      $("aiStatus").textContent = r.data.uitleg || "Zo zou je week eruitzien.";
+      renderAiVoorstel();
+      aiStand(false);
+    }, function () {
+      btn.disabled = false;
+      btn.textContent = "Maak planning";
+      $("aiWens").disabled = false;
+      $("aiStatus").textContent = "Geen verbinding met de server. Probeer het nog eens.";
+    });
+  }
+
+  function renderAiVoorstel() {
+    var html = "", dag = null;
+    for (var i = 0; i < aiVoorstel.length; i++) {
+      var b = aiVoorstel[i];
+      if (b.datum !== dag) {
+        if (dag) html += "</div>";
+        dag = b.datum;
+        html += '<div class="ai-dag"><span class="label">' + esc(DAYS[dowOf(dag)] + " " + fmtKort(dag)) + "</span>";
+      }
+      html += '<label class="ai-blok' + (b.aan ? "" : " uit") + '" style="--cat:' + catVar(b.categorie) + '">' +
+        '<input type="checkbox" data-ai="' + i + '"' + (b.aan ? " checked" : "") + '>' +
+        '<span class="t">' + esc(b.start + "–" + b.eind) + "</span>" +
+        "<span>" + esc(b.titel) + ' <span class="label">' + esc(catLabel(b.categorie)) + "</span>" +
+        (b.notitie ? '<span class="n">' + esc(b.notitie) + "</span>" : "") + "</span></label>";
+    }
+    if (dag) html += "</div>";
+    $("aiVoorstel").innerHTML = html;
+    $("aiVoorstel").hidden = false;
+    var n = aiVoorstel.filter(function (x) { return x.aan; }).length;
+    $("aiZet").textContent = n ? "Zet in agenda (" + n + ")" : "Zet in agenda";
+    $("aiZet").disabled = !n;
+  }
+
+  function zetAiInAgenda() {
+    var n = 0;
+    for (var i = 0; i < aiVoorstel.length; i++) {
+      var b = aiVoorstel[i];
+      if (!b.aan) continue;
+      put("events", {
+        id: uid("e"), title: b.titel, date: b.datum, start: b.start, end: b.eind, allDay: false,
+        cat: CAT_IDS.indexOf(b.categorie) >= 0 ? b.categorie : "focus",
+        loc: "", note: b.notitie || "", ai: true, createdAt: Date.now()
+      });
+      n++;
+    }
+    $("aiOverlay").hidden = true;
+    $("aiWens").value = "";
+    state.anchor = aiWeek;
+    render();
+    toast(n + (n === 1 ? " blok" : " blokken") + " in je agenda gezet.");
+  }
+
   function openMeldingen() {
     var m = state.meldingen;
     $("mlDag").checked = m.dagoverzicht;
@@ -7733,6 +7912,7 @@ button { cursor: pointer; }
     $("impOverlay").hidden = true;
     $("ldOverlay").hidden = true;
     $("mlOverlay").hidden = true;
+    $("aiOverlay").hidden = true;
     editingId = null;
     editingLead = null;
   }
@@ -7806,6 +7986,22 @@ button { cursor: pointer; }
   $("menuClose").addEventListener("click", closeMenu);
   $("miImport").addEventListener("click", openImport);
   $("miMeldingen").addEventListener("click", openMeldingen);
+  $("miAi").addEventListener("click", function (e) { e.stopPropagation(); openAi(); });
+  $("aiBtn").addEventListener("click", function (e) { e.stopPropagation(); openAi(); });
+  $("aiMaak").addEventListener("click", vraagAi);
+  $("aiZet").addEventListener("click", zetAiInAgenda);
+  $("aiOpnieuw").addEventListener("click", function () {
+    $("aiVoorstel").hidden = true;
+    $("aiStatus").textContent = "Pas je wens aan en klik nog eens op Maak planning.";
+    aiStand(true);
+    $("aiWens").focus();
+  });
+  $("aiVoorstel").addEventListener("change", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-ai");
+    if (i == null || !aiVoorstel[+i]) return;
+    aiVoorstel[+i].aan = e.target.checked;
+    renderAiVoorstel();
+  });
   $("mlSave").addEventListener("click", bewaarMeldingen);
   $("mlTest").addEventListener("click", testMeldingen);
   $("miWeekend").addEventListener("click", function () {
