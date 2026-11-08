@@ -60,7 +60,7 @@ createServer(async (req, res) => {
   if (url.pathname === "/api/inloggen") {
     req.query = Object.fromEntries(url.searchParams);
     req.body = req.method === "POST" ? await readBody(req) : undefined;
-    await inloggen.handle(req, res);
+    await inloggen.handle(req, res, memory || opslag.store());
     return;
   }
 

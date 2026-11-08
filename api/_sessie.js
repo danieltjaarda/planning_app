@@ -17,7 +17,7 @@ const crypto = require("node:crypto");
 
 const COOKIE = "wz_sessie";
 const DAGEN = 30;
-const WACHTWOORD_HASH = "scrypt$16384$2c6788c13592a990ad8435ffc7b3498b$2652aa17ac739f7461fbff79c61263da2fec4784a8a4ddab68d6ce3f2d474ae7";
+const WACHTWOORD_HASH = "scrypt$16384$8418b08a7e489fe16c40337cd595ea41$0cc89aa4f3960ca08eb90571724b9616c499e6090d5e2f44bf5db27b5e40c5a8";
 
 function envWachtwoord() { return process.env.WEEKZICHT_WACHTWOORD || ""; }
 /** Op Vercel altijd; lokaal alleen met WEEKZICHT_WACHTWOORD. */

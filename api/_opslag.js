@@ -40,17 +40,22 @@ function store() {
       if (args.length) await cmd("HSET", key, ...args);
     },
     async hdel(key, fields) { if (fields.length) await cmd("HDEL", key, ...fields); },
-    async incr(key) { return Number(await cmd("INCR", key)); }
+    async incr(key) { return Number(await cmd("INCR", key)); },
+    // tellers met houdbaarheid, voor de blokkade bij inloggen
+    async expire(key, sec) { await cmd("EXPIRE", key, sec); },
+    async ttl(key) { return Number(await cmd("TTL", key)); }
   };
 }
 
 /** In-memory variant voor tests en lokaal proberen. */
 function memoryStore(map) {
   const m = map || new Map();
+  const exp = new Map();   // sleutel → verloopmoment (ms), voor expire/ttl
+  const vers = (k) => { if (exp.has(k) && exp.get(k) <= Date.now()) { m.delete(k); exp.delete(k); } };
   return {
-    async get(k) { return m.has(k) ? JSON.parse(m.get(k)) : null; },
+    async get(k) { vers(k); return m.has(k) ? JSON.parse(m.get(k)) : null; },
     async set(k, v) { m.set(k, JSON.stringify(v)); },
-    async del(k) { m.delete(k); },
+    async del(k) { m.delete(k); exp.delete(k); },
     async hgetall(k) { return m.has(k) ? JSON.parse(m.get(k)) : {}; },
     async hset(k, fields) {
       const h = m.has(k) ? JSON.parse(m.get(k)) : {};
@@ -63,7 +68,9 @@ function memoryStore(map) {
       for (const f of fields) delete h[f];
       m.set(k, JSON.stringify(h));
     },
-    async incr(k) { const n = (m.has(k) ? Number(JSON.parse(m.get(k))) : 0) + 1; m.set(k, String(n)); return n; }
+    async incr(k) { vers(k); const n = (m.has(k) ? Number(JSON.parse(m.get(k))) : 0) + 1; m.set(k, String(n)); return n; },
+    async expire(k, sec) { if (m.has(k)) exp.set(k, Date.now() + sec * 1000); },
+    async ttl(k) { vers(k); if (!m.has(k)) return -2; return exp.has(k) ? Math.ceil((exp.get(k) - Date.now()) / 1000) : -1; }
   };
 }
 

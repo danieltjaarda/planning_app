@@ -214,7 +214,13 @@ andere opslag.
 De planning staat achter een wachtwoord; de formulier-, muziek- en
 offertelinks (`?f=token`, `?m=token`, `?o=token`) niet.
 
-Het wachtwoord staat als scrypt-hash in `api/_sessie.js` (`WACHTWOORD_HASH`),
+Inloggen gaat met een code van 4 cijfers op een cijferpad zoals op een iPhone
+(of via *Inloggen met wachtwoord*). Na 5 foute codes vanaf één adres zit het
+15 minuten op slot, na 20 foute codes in totaal 24 uur (tellers in Redis,
+`inloggen:ip:…` en `inloggen:alles`; wis die laatste om het slot eerder op te
+heffen). Wie al ingelogd is merkt daar niets van.
+
+De code staat als scrypt-hash in `api/_sessie.js` (`WACHTWOORD_HASH`),
 niet in Vercel. De repo is openbaar, dus de tekst zelf staat nergens. Een ander
 wachtwoord instellen:
 

@@ -2,56 +2,202 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="robots" content="noindex, nofollow">
 <title>Inloggen — Weekzicht</title>
+<meta name="theme-color" content="#F6F8FA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap">
 <style>
   :root {
-    color-scheme: light;
+    color-scheme: light dark;
     --paper: #F6F8FA; --surface: #FFFFFF; --ink: #30313D; --ink-2: #687385; --ink-3: #8792A2;
     --line: #E3E8EE; --accent: #635BFF; --accent-hover: #5147E8; --now: #DF1B41; --now-soft: #FFE7F2;
+    --key: #FFFFFF; --key-down: #D9DCE3;
     --ring: 0 0 0 1px rgba(60, 66, 87, .16), 0 1px 1px 0 rgba(0, 0, 0, .06);
     --focus: 0 0 0 1px var(--accent), 0 0 0 4px rgba(99, 91, 255, .28);
     --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
-  .card { width: min(400px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 15px 35px rgba(60, 66, 87, .10), 0 5px 15px rgba(0, 0, 0, .06); }
-  header { display: flex; align-items: center; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--line); }
-  .mark { width: 36px; height: 36px; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .02em; border-radius: 9px; box-shadow: 0 1px 2px rgba(60, 66, 87, .25); }
-  h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
-  header span { display: block; font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
-  form { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
-  label { font-size: 13px; font-weight: 500; }
-  input { width: 100%; margin-top: 6px; padding: 9px 12px; background: var(--surface); border: 0; border-radius: 6px; box-shadow: var(--ring); font: 14px var(--sans); color: var(--ink); }
-  input:focus { outline: none; box-shadow: var(--focus); }
-  button { width: 100%; height: 38px; padding: 0 14px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; font: 600 14px var(--sans); cursor: pointer; box-shadow: 0 2px 5px rgba(60, 66, 87, .08), 0 1px 1px rgba(0, 0, 0, .06); }
-  button:hover { background: var(--accent-hover); }
-  .fout { display: none; padding: 10px 12px; background: var(--now-soft); border-radius: 6px; color: var(--now); font-size: 13px; font-weight: 500; }
-  .fout.on { display: block; }
-  p.note { margin: 0; padding: 0 24px 20px; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #11141A; --surface: #181C24; --ink: #E7EAF0; --ink-2: #9AA4B5; --ink-3: #7D8799; --line: #2A303B;
+      --key: #232833; --key-down: #3A4150; --now-soft: #3A1622; --now: #FF6B85; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    background: var(--paper); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none; user-select: none; }
+
+  .slot { width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; }
+  .mark { width: 48px; height: 48px; display: grid; place-items: center; background: var(--accent); color: #fff;
+    font-weight: 700; font-size: 16px; letter-spacing: .02em; border-radius: 12px; box-shadow: 0 1px 2px rgba(60, 66, 87, .25); }
+  h1 { margin: 16px 0 0; font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+
+  .dots { display: flex; gap: 20px; margin: 22px 0 10px; height: 14px; }
+  .dot { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--ink); transition: background .12s; }
+  .dot.vol { background: var(--ink); }
+  .dots.schud { animation: schud .42s cubic-bezier(.36, .07, .19, .97); }
+  .dots.fout .dot { border-color: var(--now); }
+  @keyframes schud { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-9px); } 40%, 60% { transform: translateX(9px); } }
+  @media (prefers-reduced-motion: reduce) { .dots.schud { animation: none; } }
+
+  .melding { min-height: 40px; margin: 0 0 14px; font-size: 13px; text-align: center; color: var(--ink-2); line-height: 1.45; }
+  .melding.fout { color: var(--now); font-weight: 500; }
+
+  .pad { display: grid; grid-template-columns: repeat(3, 76px); gap: 16px 24px; justify-content: center; }
+  .pad button { width: 76px; height: 76px; border-radius: 50%; border: 0; background: var(--key); color: var(--ink);
+    box-shadow: var(--ring); font: 300 32px/1 var(--sans); cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; touch-action: manipulation; transition: background .08s; }
+  .pad button small { font-size: 9.5px; font-weight: 600; letter-spacing: .18em; color: var(--ink-2); margin-top: 3px; height: 11px; }
+  .pad button:active, .pad button.in { background: var(--key-down); }
+  .pad button:focus-visible { outline: none; box-shadow: var(--focus); }
+  .pad .leeg { visibility: hidden; }
+  .pad .wis { background: transparent; box-shadow: none; font-size: 15px; font-weight: 500; color: var(--ink-2); }
+  .pad .wis:active { background: transparent; color: var(--ink); }
+  .pad[aria-disabled="true"] button { opacity: .4; pointer-events: none; }
+
+  .anders { margin-top: 26px; background: none; border: 0; color: var(--accent); font: 500 13px var(--sans); cursor: pointer; padding: 6px 10px; }
+  form.ww { display: none; width: 100%; margin-top: 4px; flex-direction: column; gap: 10px; }
+  form.ww.aan { display: flex; }
+  form.ww input { width: 100%; padding: 10px 12px; background: var(--surface); border: 0; border-radius: 8px; box-shadow: var(--ring);
+    font: 15px var(--sans); color: var(--ink); -webkit-user-select: text; user-select: text; }
+  form.ww input:focus { outline: none; box-shadow: var(--focus); }
+  form.ww button { height: 40px; background: var(--accent); color: #fff; border: 0; border-radius: 8px; font: 600 14px var(--sans); cursor: pointer; }
+  p.note { margin: 22px 0 0; font-size: 12px; color: var(--ink-3); line-height: 1.5; text-align: center; max-width: 280px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  @media (max-height: 620px) { .pad { gap: 10px 20px; grid-template-columns: repeat(3, 64px); } .pad button { width: 64px; height: 64px; font-size: 27px; } p.note { display: none; } }
 </style>
 </head>
 <body>
-<div class="card">
-  <header>
-    <div class="mark">WZ</div>
-    <div><h1>Weekzicht</h1><span>Alleen voor de planner</span></div>
-  </header>
-  <form method="post" action="/api/inloggen">
-    <div class="fout" id="fout">Dat wachtwoord klopt niet. Probeer het nog eens.</div>
-    <label for="w">Wachtwoord
-      <input type="password" id="w" name="wachtwoord" autocomplete="current-password" autofocus required>
-    </label>
-    <div><button type="submit">Inloggen</button></div>
+<main class="slot">
+  <div class="mark" aria-hidden="true">WZ</div>
+  <h1 id="titel">Voer je code in</h1>
+
+  <div class="dots" id="dots" role="img" aria-label="0 van 4 cijfers ingevoerd">
+    <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+  </div>
+  <p class="melding" id="melding" aria-live="polite"></p>
+
+  <div class="pad" id="pad" role="group" aria-labelledby="titel">
+    <button type="button" data-c="1">1<small></small></button>
+    <button type="button" data-c="2">2<small>ABC</small></button>
+    <button type="button" data-c="3">3<small>DEF</small></button>
+    <button type="button" data-c="4">4<small>GHI</small></button>
+    <button type="button" data-c="5">5<small>JKL</small></button>
+    <button type="button" data-c="6">6<small>MNO</small></button>
+    <button type="button" data-c="7">7<small>PQRS</small></button>
+    <button type="button" data-c="8">8<small>TUV</small></button>
+    <button type="button" data-c="9">9<small>WXYZ</small></button>
+    <span class="leeg"></span>
+    <button type="button" data-c="0">0<small></small></button>
+    <button type="button" class="wis" id="wis" aria-label="Wis laatste cijfer"></button>
+  </div>
+
+  <button type="button" class="anders" id="anders">Inloggen met wachtwoord</button>
+  <form class="ww" id="ww" method="post" action="/api/inloggen">
+    <label class="sr" for="w">Wachtwoord</label>
+    <input type="password" id="w" name="wachtwoord" autocomplete="current-password" placeholder="Wachtwoord">
+    <button type="submit">Inloggen</button>
   </form>
-  <p class="note">Klanten hoeven hier niet in te loggen: zij gebruiken de formulierlink die je ze stuurt.</p>
-</div>
+
+  <p class="note">Klanten hoeven hier niet in te loggen: zij gebruiken de link die je ze stuurt.</p>
+</main>
 <script>
-  if (/[?&]fout=1/.test(location.search)) document.getElementById("fout").className = "fout on";
+(function () {
+  var LENGTE = 4;
+  var code = "", bezig = false, slotTot = 0, timer = null;
+  var dots = document.getElementById("dots"), melding = document.getElementById("melding"), pad = document.getElementById("pad");
+
+  function toon() {
+    var d = dots.children;
+    for (var i = 0; i < d.length; i++) d[i].className = "dot" + (i < code.length ? " vol" : "");
+    dots.setAttribute("aria-label", code.length + " van " + LENGTE + " cijfers ingevoerd");
+    document.getElementById("wis").textContent = code.length ? "Wis" : "";
+  }
+  function zeg(tekst, fout) { melding.textContent = tekst || ""; melding.className = "melding" + (fout ? " fout" : ""); }
+
+  function schud() {
+    dots.classList.remove("schud"); void dots.offsetWidth;
+    dots.classList.add("schud", "fout");
+    if (navigator.vibrate) navigator.vibrate(180);
+    setTimeout(function () { dots.classList.remove("fout"); code = ""; toon(); }, 450);
+  }
+
+  function minuten(sec) {
+    var m = Math.ceil(sec / 60);
+    if (m >= 120) return Math.round(m / 60) + " uur";
+    return m <= 1 ? "1 minuut" : m + " minuten";
+  }
+  function blokkeer(sec) {
+    slotTot = Date.now() + sec * 1000;
+    pad.setAttribute("aria-disabled", "true");
+    clearInterval(timer);
+    function tik() {
+      var over = Math.round((slotTot - Date.now()) / 1000);
+      if (over <= 0) { clearInterval(timer); pad.removeAttribute("aria-disabled"); zeg(""); return; }
+      zeg("Te veel foute codes. Probeer het over " + minuten(over) + " opnieuw.", true);
+    }
+    tik(); timer = setInterval(tik, 15000);
+  }
+
+  function stuur() {
+    bezig = true;
+    fetch("/api/inloggen", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ wachtwoord: code })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d }; });
+    }).then(function (r) {
+      bezig = false;
+      if (r.d.ok) { zeg(""); location.replace("/"); return; }
+      schud();
+      if (r.d.fout === "geblokkeerd") { blokkeer(r.d.wacht || 900); return; }
+      zeg(r.d.over != null && r.d.over <= 2
+        ? "Verkeerde code. Nog " + r.d.over + (r.d.over === 1 ? " poging" : " pogingen") + ", daarna even op slot."
+        : "Verkeerde code.", true);
+    }, function () {
+      bezig = false; code = ""; toon();
+      zeg("Geen verbinding. Probeer het nog eens.", true);
+    });
+  }
+
+  function cijfer(c) {
+    if (bezig || Date.now() < slotTot || code.length >= LENGTE) return;
+    code += c; toon();
+    if (code.length === LENGTE) setTimeout(stuur, 120);
+  }
+  function wis() { if (bezig || !code.length) return; code = code.slice(0, -1); toon(); }
+
+  pad.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "wis") wis(); else cijfer(b.getAttribute("data-c"));
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.target && e.target.id === "w") return;
+    var b;
+    if (/^[0-9]$/.test(e.key)) { cijfer(e.key); b = pad.querySelector('[data-c="' + e.key + '"]'); }
+    else if (e.key === "Backspace") { wis(); b = document.getElementById("wis"); }
+    if (b) { b.classList.add("in"); setTimeout(function () { b.classList.remove("in"); }, 110); }
+  });
+
+  document.getElementById("anders").addEventListener("click", function () {
+    var f = document.getElementById("ww");
+    var aan = f.classList.toggle("aan");
+    this.textContent = aan ? "Inloggen met code" : "Inloggen met wachtwoord";
+    if (aan) document.getElementById("w").focus();
+  });
+
+  var q = location.search;
+  var blok = /[?&]blok=(\d+)/.exec(q);
+  if (blok) blokkeer(+blok[1] * 60);
+  else if (/[?&]fout=1/.test(q)) zeg("Dat wachtwoord klopt niet. Probeer het nog eens.", true);
+  toon();
+})();
 </script>
 </body>
 </html>
