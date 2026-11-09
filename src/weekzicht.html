@@ -1197,6 +1197,16 @@ button { cursor: pointer; }
   background: color-mix(in oklab, var(--st-akkoord) 12%, var(--surface)); color: var(--st-akkoord); }
 .ai-samen span.kort { background: color-mix(in oklab, var(--st-wacht) 14%, var(--surface)); color: var(--st-wacht); }
 
+/* AI bezig (knipperen) en een nieuw antwoord dat je nog niet zag (stip) */
+@keyframes wz-ai-puls { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.ai-bezig #aiBtn, .ai-bezig .viewswitch [data-view="ai"] .vs-ico, .ai-bezig #miAssistent > span:first-child { animation: wz-ai-puls 1.1s ease-in-out infinite; }
+.ai-nieuw { position: relative; }
+.ai-nieuw::after {
+  content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 2px var(--surface); pointer-events: none;
+}
+.menu button.ai-nieuw::after { top: 50%; right: 8px; margin-top: -4px; }
+
 /* slepen in het rooster */
 .ev, .chip-allday { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .ev.vasthouden, .chip-allday.vasthouden { transform: scale(.97); transition: transform .38s ease; }
@@ -7514,6 +7524,84 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
     return out;
   }
 
+  /* --- AI bezig / klaar ---------------------------------------------------
+
+     Terwijl de AI nadenkt knippert ✦ (en het tabblad zegt het). Is hij klaar
+     terwijl je niet kijkt, dan een melding: in de browser een systeemmelding
+     (macOS-berichtgeving), in de iOS-app een melding van de app zelf, en
+     binnen de app een balkje plus een stip bij AI tot je gaat kijken. */
+  var aiLopend = 0, aiTitel = null, aiPlannerBezig = false;
+
+  function iosBrug() {
+    try { return window.webkit.messageHandlers.aiMelding || null; } catch (e) { return null; }
+  }
+
+  /** Bij het versturen, in de klik zelf: alleen dan mag de browser om toestemming vragen. */
+  function aiStart() {
+    aiLopend++;
+    document.documentElement.classList.add("ai-bezig");
+    if (aiTitel === null) aiTitel = document.title;
+    document.title = "✦ AI denkt na… · " + aiTitel;
+    var brug = iosBrug();
+    if (brug) { try { brug.postMessage({ bezig: true }); } catch (e) {} }
+    else if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      try { Notification.requestPermission(); } catch (e) {}
+    }
+  }
+
+  /** Klaar. kijkt = staat het antwoord nu voor je neus? Zo niet: melding en stip. */
+  function aiKlaar(kijkt, titel, tekst, waar) {
+    aiLopend = Math.max(0, aiLopend - 1);
+    var ziet = kijkt && !document.hidden;
+    if (!aiLopend) {
+      document.documentElement.classList.remove("ai-bezig");
+      // "Klaar" in het tabblad alleen als je in een ander tabblad of programma zit
+      if (aiTitel !== null) document.title = (document.hidden && !ziet ? "✦ Klaar · " : "") + aiTitel;
+    }
+    var brug = iosBrug();
+    if (brug) {
+      try { brug.postMessage({ bezig: aiLopend > 0, titel: ziet ? null : titel, tekst: tekst, waar: waar }); } catch (e) {}
+    }
+    if (ziet) return;
+    markeerAiNieuw(waar, true);
+    if (!document.hidden) {
+      toast(titel + (waar === "planner" ? ". Klik op ✦ Plan met AI." : ". Open AI-assistent in het menu."));
+      return;
+    }
+    if (!brug && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      try {
+        var n = new Notification(titel, { body: tekst, tag: "weekzicht-ai-" + waar });
+        n.onclick = function () { window.focus(); weekzichtOpen(waar); n.close(); };
+      } catch (e) {}
+    }
+  }
+
+  function markeerAiNieuw(waar, aan) {
+    var ids = waar === "planner" ? ["aiBtn", "miAi"] : ["miAssistent"];
+    for (var i = 0; i < ids.length; i++) if ($(ids[i])) $(ids[i]).classList.toggle("ai-nieuw", aan);
+    if (waar !== "planner") {
+      var nav = document.querySelectorAll('.viewswitch [data-view="ai"]');
+      for (var k = 0; k < nav.length; k++) nav[k].classList.toggle("ai-nieuw", aan);
+    }
+    // op de telefoon zitten ze in het menu: dan een stip op het menu-knopje
+    $("menuBtn").classList.toggle("ai-nieuw", !!document.querySelector(".menu .ai-nieuw"));
+  }
+
+  /** Voor een klik op een melding (browser of iOS-app): naar het antwoord. */
+  function weekzichtOpen(waar) {
+    if (waar === "planner") openAi(); else openAssistent();
+  }
+  window.weekzichtOpen = weekzichtOpen;
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && !aiLopend && aiTitel !== null) document.title = aiTitel;
+  });
+
+  function platteTekst(t, max) {
+    var s = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    return s.length > max ? s.slice(0, max - 1) + "…" : s;
+  }
+
   // De planner gaat in stappen: wens → vragen (per taak: hoeveel uur?) →
   // overzicht → voorstel. aiTaken houdt de antwoorden bij; sluit je het venster
   // halverwege, dan ga je bij openen verder waar je was.
@@ -7550,6 +7638,8 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
 
   function openAi() {
     closeMenu();
+    markeerAiNieuw("planner", false);
+    if (aiPlannerBezig) { $("aiOverlay").hidden = false; return; }   // denkt nog na: gewoon weer laten zien
     var nu = amsNow();
     aiWeek = mondayOf(state.anchor);
     // een week die al voorbij is heeft geen zin; dan de huidige
@@ -7600,14 +7690,21 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
     btn.disabled = true;
     btn.textContent = "Even lezen…";
     $("aiWens").disabled = true;
-    aiMelding("Claude leest je lijst door en zet de vragen klaar…");
+    aiMelding("Claude leest je lijst door en zet de vragen klaar… Je mag dit venster sluiten; je krijgt een seintje als het klaar is.");
     basis.stap = "vragen";
+    aiPlannerBezig = true;
+    aiStart();
+    function klaar(titel, tekst) {
+      aiPlannerBezig = false;
+      aiKlaar(!$("aiOverlay").hidden, titel, tekst, "planner");
+    }
     api("POST", "", basis, AI_URL).then(function (r) {
-      if (!r.ok) { aiToon("wens"); aiMelding(esc(aiFout(r))); return; }
+      if (!r.ok) { aiToon("wens"); aiMelding(esc(aiFout(r))); klaar("Plan met AI lukte niet", aiFout(r)); return; }
       var taken = Array.isArray(r.data.taken) ? r.data.taken : [];
       if (!taken.length) {
         aiToon("wens");
         aiMelding("Ik kon er geen losse taken uit halen. Zet per regel wat je wilt doen, bijvoorbeeld: <i>bruiloft Jan &amp; Lisa monteren</i>.");
+        klaar("Plan met AI: geen taken gevonden", "Zet per regel wat je deze week wilt doen.");
         return;
       }
       aiTaken = taken.map(function (t) {
@@ -7618,9 +7715,11 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
       aiVraagNr = 0;
       aiToon("vragen");
       renderAiVraag();
+      klaar("✦ Plan met AI: je vragen staan klaar", aiTaken.length + (aiTaken.length === 1 ? " vraag" : " vragen") + " over je week, één voor één.");
     }, function () {
       aiToon("wens");
       aiMelding("Geen verbinding met de server. Probeer het nog eens.");
+      klaar("Plan met AI lukte niet", "Geen verbinding met de server.");
     });
   }
 
@@ -7793,26 +7892,35 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
     btn.disabled = true;
     btn.textContent = "Claude plant…";
     $("aiTerug").disabled = true;
-    aiMelding("Even geduld, Claude puzzelt je week in elkaar (meestal 20 à 60 seconden)…");
+    aiMelding("Even geduld, Claude puzzelt je week in elkaar (meestal 20 à 60 seconden). Je mag dit venster sluiten; je krijgt een seintje als het klaar is.");
+    aiPlannerBezig = true;
+    aiStart();
+    function klaar(titel, tekst) {
+      aiPlannerBezig = false;
+      aiKlaar(!$("aiOverlay").hidden, titel, tekst, "planner");
+    }
     api("POST", "", basis, AI_URL).then(function (r) {
       $("aiTerug").disabled = false;
       btn.disabled = false;
       btn.textContent = "Maak planning";
-      if (!r.ok) { aiMelding(esc(aiFout(r))); return; }
+      if (!r.ok) { aiMelding(esc(aiFout(r))); klaar("Plan met AI lukte niet", aiFout(r)); return; }
       aiVoorstel = r.data.voorstel || [];
       for (var i = 0; i < aiVoorstel.length; i++) aiVoorstel[i].aan = true;
       if (!aiVoorstel.length) {
         aiMelding(esc((r.data.uitleg ? r.data.uitleg + " " : "") + "Er kwam geen blok uit dat in je week past."));
+        klaar("Plan met AI: niets ingepland", platteTekst(r.data.uitleg || "Er kwam geen blok uit dat in je week past.", 160));
         return;
       }
       aiMelding(esc(r.data.uitleg || "Zo zou je week eruitzien."));
       aiToon("voorstel");
       renderAiVoorstel();
+      klaar("✦ Je weekplanning is klaar", platteTekst(r.data.uitleg || (aiVoorstel.length + " blokken voorgesteld."), 160));
     }, function () {
       $("aiTerug").disabled = false;
       btn.disabled = false;
       btn.textContent = "Maak planning";
       aiMelding("Geen verbinding met de server. Probeer het nog eens.");
+      klaar("Plan met AI lukte niet", "Geen verbinding met de server.");
     });
   }
 
@@ -8423,6 +8531,7 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
     if (!tekst || asBezig) return;
     chat.push({ id: uid("m"), rol: "jij", tekst: tekst, at: Date.now() });
     asBezig = true;
+    aiStart();
     bewaarChat();
     renderLog(true);
     var nu = amsNow();
@@ -8450,7 +8559,9 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
       chat.push(m);
       bewaarChat();
       if ($("asLog")) renderLog(true);
-      else toast("✦ De AI heeft geantwoord. Open AI-assistent in het menu.");
+      var n = m.acties ? m.acties.length : 0;
+      aiKlaar(!!$("asLog"), m.fout ? "De AI-assistent kon niet antwoorden" : "✦ De AI-assistent heeft geantwoord",
+        platteTekst(m.tekst, 150) + (n ? " (" + n + (n === 1 ? " wijziging" : " wijzigingen") + " klaargezet)" : ""), "ai");
     }
   }
 
@@ -9275,6 +9386,7 @@ body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-sel
   function setView(v) {
     state.view = v;
     document.querySelector(".app").setAttribute("data-view", v);
+    if (v === "ai") markeerAiNieuw("ai", false);
     var btns = document.querySelectorAll(".viewswitch button");
     for (var i = 0; i < btns.length; i++) {
       btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-view") === v ? "true" : "false");

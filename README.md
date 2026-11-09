@@ -162,6 +162,14 @@ Variables, als Secret) en deploy opnieuw; lokaal in `.env`. Alleen ingelogd.
 
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
+**AI bezig / klaar** — terwijl de AI-assistent of Plan met AI nadenkt, knippert
+✦ (de knop, het AI-icoon) en zegt het tabblad "✦ AI denkt na…". Je mag
+gewoon iets anders doen of Plan met AI sluiten. Is hij klaar terwijl je niet
+kijkt, dan: in een ander tabblad of programma een systeemmelding van de
+browser (de eerste keer vraagt de browser toestemming; klik op de melding om
+naar het antwoord te gaan), in de iOS-app een melding van de app, en binnen de
+app een balkje plus een stip bij AI tot je gaat kijken.
+
 **Slepen** — in de week- en dagweergave versleep je een afspraak naar een
 andere dag of tijd: met de muis indrukken en slepen, op de telefoon even
 vasthouden tot het blok optilt (in de iOS-app met een tikje) en dan met je
