@@ -25,6 +25,9 @@
     },
     "api/ai-planning.js": {
       "maxDuration": 120
+    },
+    "api/assistent.js": {
+      "maxDuration": 120
     }
   },
   "crons": [

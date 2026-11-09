@@ -3,13 +3,13 @@
 // functie leeft alles in localStorage van één browser.
 //
 // In Redis: één hash per verzameling (planning:events, planning:tasks,
-// planning:leads, planning:meta), veld = id, waarde = het document. Twee
+// planning:leads, planning:ideas, planning:meta), veld = id, waarde = het document. Twee
 // apparaten die tegelijk iets wijzigen overschrijven zo alleen elkaars
 // documenten, nooit de hele lijst. Plus planning:versie, een teller die bij
 // elke wijziging omhooggaat: verversen haalt alleen iets op als er echt iets
 // veranderd is. Geen houdbaarheid — dit zijn de gegevens zelf.
 //
-//   GET  /api/planning                  → { versie, events: { id: doc }, tasks, leads, meta }
+//   GET  /api/planning                  → { versie, events: { id: doc }, tasks, leads, ideas, meta }
 //   GET  /api/planning?sinds=VERSIE     → { versie, ongewijzigd: true } als er sindsdien niets veranderd is
 //   POST /api/planning { ops: [{ c, id, doc } | { c, id, weg: true }] }   → { ok, versie }
 //
@@ -22,7 +22,7 @@ const sessie = require("./_sessie.js");
 
 const PREFIX = "planning:";
 const VERSIE = PREFIX + "versie";
-const VERZAMELINGEN = ["events", "tasks", "leads", "meta"];
+const VERZAMELINGEN = ["events", "tasks", "leads", "ideas", "meta"];
 const ID_RE = /^[A-Za-z0-9_-]{1,100}$/;
 const MAX_OPS = 500;           // de app stuurt in porties van 200; een import is hoogstens 600 afspraken
 const MAX_DOC = 256 * 1024;    // een klant met formulier, draaiboek en muziek past er ruim in

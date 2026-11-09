@@ -32,6 +32,7 @@ const offerte = require("./api/offerte.js");
 const herinneringen = require("./api/herinneringen.js");
 const planning = require("./api/planning.js");
 const aiPlanning = require("./api/ai-planning.js");
+const assistent = require("./api/assistent.js");
 const opslag = require("./api/_opslag.js");
 const bestanden = require("./api/_bestanden.js");
 const inloggen = require("./api/inloggen.js");
@@ -138,6 +139,13 @@ createServer(async (req, res) => {
   if (url.pathname === "/api/ai-planning") {
     req.body = req.method === "POST" ? await readBody(req, 512 * 1024) : undefined;
     try { await aiPlanning.handle(req, res, process.env.ANTHROPIC_API_KEY, { eisWachtwoord: false }); }
+    catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: "claude", melding: String(e) })); }
+    return;
+  }
+
+  if (url.pathname === "/api/assistent") {
+    req.body = req.method === "POST" ? await readBody(req, 4 * 1024 * 1024) : undefined;
+    try { await assistent.handle(req, res, process.env.ANTHROPIC_API_KEY, { eisWachtwoord: false }); }
     catch (e) { res.statusCode = 502; res.end(JSON.stringify({ error: "claude", melding: String(e) })); }
     return;
   }

@@ -1168,6 +1168,111 @@ button { cursor: pointer; }
 .ai-blok.uit { opacity: .45; }
 #aiWens { min-height: 130px; }
 
+/* Ideeën */
+.id-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 18px 24px 40px; }
+.id-add { display: flex; gap: 8px; max-width: 760px; margin: 0 0 18px; }
+.id-add input {
+  flex: 1; min-width: 0; height: 40px; padding: 0 12px;
+  font: inherit; font-size: 14px; color: var(--ink);
+  background: var(--surface); border: 0; border-radius: var(--r); box-shadow: var(--ring);
+}
+.id-add input:focus { outline: none; box-shadow: var(--focus); }
+.id-add input::placeholder { color: var(--ink-3); }
+.id-add .btn-primary { height: 40px; }
+.filterbar .id-zoek { flex: 0 1 240px; margin-left: 6px; }
+.id-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
+.idee {
+  --st: var(--accent);
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 13px 14px 8px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--ring);
+  border-top: 3px solid var(--st);
+}
+.idee.gedaan { opacity: .62; }
+.idee .i-main {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 0; background: none; border: 0; text-align: left;
+  font: inherit; color: inherit; cursor: pointer;
+}
+.idee .i-top { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; min-height: 20px; }
+.idee .i-titel { font-size: 15px; font-weight: 600; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
+.idee.gedaan .i-titel { text-decoration: line-through; text-decoration-color: var(--ink-3); }
+.idee .i-tekst {
+  font-size: 13.5px; line-height: 1.5; color: var(--ink-2); white-space: pre-line; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.idee .i-label { font-size: 11.5px; font-weight: 500; padding: 1px 7px; border-radius: 4px; background: var(--surface-3); color: var(--ink-2); }
+.idee .i-pin { margin-left: auto; color: var(--accent); font-size: 12px; font-weight: 600; }
+.idee .i-voet { display: flex; align-items: center; gap: 2px; border-top: 1px solid var(--line); padding-top: 6px; margin-top: 2px; }
+.idee .i-datum { font-size: 12px; color: var(--ink-3); margin-right: auto; }
+.idee .i-voet button {
+  height: 28px; padding: 0 8px; background: none; border: 0; border-radius: 5px;
+  font: inherit; font-size: 12.5px; font-weight: 500; color: var(--ink-2); cursor: pointer; white-space: nowrap;
+}
+.idee .i-voet button:hover { background: var(--surface-2); color: var(--ink); }
+.idee .i-voet button.ai { color: var(--accent-text); }
+.id-leeg { padding: 26px 2px; color: var(--ink-2); font-size: 14px; max-width: 60ch; line-height: 1.55; }
+#iText { min-height: 160px; }
+#idOverlay .modal > footer { flex-wrap: wrap; }
+
+/* AI-assistent */
+.as-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.as-log { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 24px 12px; display: flex; flex-direction: column; gap: 14px; }
+.as-rij { display: flex; width: 100%; max-width: 780px; margin: 0 auto; }
+.as-rij.jij { justify-content: flex-end; }
+.as-bel { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14.5px; line-height: 1.55; overflow-wrap: anywhere; }
+.as-rij.jij .as-bel { background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 5px; white-space: pre-wrap; }
+.as-rij.ai .as-bel { background: var(--surface-2); color: var(--ink); border-bottom-left-radius: 5px; }
+.as-rij.ai .as-bel.fout { background: var(--now-soft); }
+.as-bel p { margin: 0 0 8px; }
+.as-bel p:last-child, .as-bel ul:last-child, .as-bel ol:last-child { margin-bottom: 0; }
+.as-bel ul, .as-bel ol { margin: 0 0 8px; padding-left: 20px; }
+.as-bel li { margin: 2px 0; }
+.as-acties { margin-top: 10px; padding: 10px 12px; background: var(--surface); border-radius: 10px; box-shadow: var(--ring); display: flex; flex-direction: column; gap: 7px; }
+.as-acties > .label { font-size: 12px; color: var(--ink-2); }
+.as-actie { display: grid; grid-template-columns: 16px 14px 1fr; gap: 7px; align-items: start; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+.as-actie input { margin: 3px 0 0; accent-color: var(--accent); }
+.as-actie .s { font-weight: 700; text-align: center; }
+.as-actie .s.nieuw { color: var(--cat-focus); }
+.as-actie .s.wijzig { color: var(--cat-afspraak); }
+.as-actie .s.weg { color: var(--now); }
+.as-actie.uit { opacity: .45; }
+.as-knoppen { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+.as-knoppen .btn-primary, .as-knoppen .btn-line { height: 32px; }
+.as-klaar { font-size: 13px; color: var(--ink-2); }
+.as-klaar button { background: none; border: 0; padding: 0; font: inherit; color: var(--accent-text); text-decoration: underline; cursor: pointer; }
+.as-denkt { display: inline-flex; gap: 4px; padding: 4px 0; }
+.as-denkt span { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); animation: wz-stip 1.2s infinite ease-in-out; }
+.as-denkt span:nth-child(2) { animation-delay: .15s; }
+.as-denkt span:nth-child(3) { animation-delay: .3s; }
+.as-start { margin: auto; text-align: center; max-width: 580px; padding: 20px 0; }
+.as-logo { width: 46px; height: 46px; border-radius: 13px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 23px; margin: 0 auto 12px; }
+.as-start h2 { margin: 0 0 6px; font-size: 20px; font-weight: 600; color: var(--ink); }
+.as-start p { margin: 0 0 18px; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+.as-tips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.as-tips button {
+  padding: 8px 13px; background: var(--surface); border: 0; border-radius: 999px; box-shadow: var(--ring);
+  font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; text-align: left;
+}
+.as-tips button:hover { box-shadow: var(--ring-hover); }
+.as-invoer { border-top: 1px solid var(--line); padding: 12px 24px 12px; background: var(--surface); }
+.as-veld {
+  max-width: 780px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end;
+  background: var(--surface); border-radius: 16px; box-shadow: var(--ring); padding: 6px 6px 6px 14px;
+}
+.as-veld:focus-within { box-shadow: var(--focus); }
+.as-veld textarea {
+  flex: 1; min-width: 0; min-height: 0; max-height: 180px; height: 32px; padding: 6px 0;
+  border: 0; outline: none; resize: none; background: none; box-shadow: none;
+  font: inherit; font-size: 15px; line-height: 1.4; color: var(--ink);
+}
+.as-veld textarea::placeholder { color: var(--ink-3); }
+.as-veld .btn-primary { flex: none; width: 36px; height: 36px; padding: 0; border-radius: 11px; display: grid; place-items: center; font-size: 17px; }
+.as-onder { max-width: 780px; margin: 6px auto 0; display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--ink-3); }
+.as-onder button { margin-left: auto; flex: none; background: none; border: 0; padding: 2px 4px; font: inherit; font-size: 12px; color: var(--ink-2); cursor: pointer; text-decoration: underline; }
+
 .note {
   margin: 0;
   font-size: 13px;
@@ -2270,6 +2375,22 @@ button { cursor: pointer; }
   .period-week { font-size: 14.5px; }
 }
 
+@media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
+  /* Ideeën en AI zitten op de telefoon in het menu; de tabbalk blijft rustig */
+  .viewswitch .vs-side { display: none; }
+  .app[data-view="ai"] #newBtn { display: none; }
+  .id-wrap { padding: 14px 12px 96px; }
+  .id-grid { grid-template-columns: minmax(0, 1fr); }
+  .id-add input { font-size: 16px; }
+  .filterbar .id-zoek { flex: none; width: 170px; }
+  .as-log { padding: 16px 12px 8px; }
+  .as-invoer { padding: 8px 10px 8px; }
+  .as-bel { max-width: 92%; }
+  .as-veld textarea { font-size: 16px; }   /* kleiner laat iOS inzoomen */
+  .as-onder span { display: none; }
+}
+
+@keyframes wz-stip { 0%, 80%, 100% { opacity: .25; transform: none; } 40% { opacity: 1; transform: translateY(-3px); } }
 @keyframes wz-lade { from { transform: translateX(100%); } to { transform: none; } }
 @keyframes wz-vervaag { from { opacity: 0; } to { opacity: 1; } }
 @keyframes wz-blad { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
@@ -2290,6 +2411,8 @@ button { cursor: pointer; }
       <button data-view="dag" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="14" height="12.5" rx="1.5"/><path d="M3 8.5h14M7 2.5v3M13 2.5v3"/><rect x="6" y="11" width="3.5" height="3" rx=".5" fill="currentColor" stroke="none"/></svg><span>Dag</span></button>
       <button data-view="lijst" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 5.5H17M7.5 10H17M7.5 14.5H17"/><circle cx="3.8" cy="5.5" r=".6" fill="currentColor"/><circle cx="3.8" cy="10" r=".6" fill="currentColor"/><circle cx="3.8" cy="14.5" r=".6" fill="currentColor"/></svg><span>Lijst</span></button>
       <button data-view="klanten" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="6.8" r="3.2"/><path d="M3.8 17c.8-3.2 3.3-5 6.2-5s5.4 1.8 6.2 5"/></svg><span>Klanten</span></button>
+      <button class="vs-side" data-view="ideeen" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.8 15.2h4.4M8.4 17.6h3.2"/><path d="M10 2.6a5 5 0 0 0-3 9c.6.5 1 1.2 1 2v.6h4v-.6c0-.8.4-1.5 1-2a5 5 0 0 0-3-9z"/></svg><span>Ideeën</span></button>
+      <button class="vs-side" data-view="ai" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.8l1.5 4.2 4.2 1.5-4.2 1.5L9 14.2 7.5 10 3.3 8.5 7.5 7z"/><path d="M15.2 12.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>AI-assistent</span></button>
       <button class="vs-rail" data-pane="overzicht" aria-pressed="false"><svg class="vs-ico" width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16.5V11M10 16.5V4M16 16.5V8"/></svg><span>Overzicht</span></button>
     </div>
 
@@ -2320,6 +2443,9 @@ button { cursor: pointer; }
           <button class="btn-ghost" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Menu"><span class="mb-dots" aria-hidden="true">⋯</span><svg class="mb-hamb" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
           <div class="menu" id="menu" hidden>
             <div class="menu-head"><span class="mark">WZ</span><span class="menu-title">Weekzicht</span><button id="menuClose" aria-label="Menu sluiten">✕</button></div>
+            <button id="miAssistent"><span>✦ AI-assistent</span><span class="k">vraag of pas aan</span></button>
+            <button id="miIdeeen"><span>Ideeën</span><span class="k" id="ideeTeller"></span></button>
+            <hr>
             <button id="miAi">Plan mijn week met AI…</button>
             <button id="miImport">Importeer .ics-bestand…</button>
             <button id="miWeekend"><span>Weekend tonen</span><span class="k" id="weekendState">aan</span></button>
@@ -2719,6 +2845,42 @@ button { cursor: pointer; }
   </div>
 </div>
 
+<div class="overlay" id="idOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="idTitle">
+    <header>
+      <h2 id="idTitle">Nieuw idee</h2>
+      <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
+    </header>
+    <div class="mbody">
+      <div class="field">
+        <label class="label" for="iTitle">Idee</label>
+        <input type="text" id="iTitle" placeholder="Bijv. van elke bruiloft een korte reel maken" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="label" for="iText">Uitwerking</label>
+        <textarea id="iText" placeholder="Waarom, voor wie, hoe, eerste stappen…"></textarea>
+      </div>
+      <div class="field">
+        <span class="label">Status</span>
+        <div class="catpick" id="iStatus"></div>
+      </div>
+      <div class="field">
+        <label class="label" for="iLabel">Label</label>
+        <input type="text" id="iLabel" list="iLabels" placeholder="Marketing, website, privé…" autocomplete="off">
+        <datalist id="iLabels"></datalist>
+      </div>
+      <label class="check"><input type="checkbox" id="iPin"> Bovenaan vastzetten</label>
+    </div>
+    <footer>
+      <button class="btn-line danger" id="iDelete" hidden>Verwijderen</button>
+      <span class="spacer"></span>
+      <button class="btn-line" id="iAi">✦ Uitwerken met AI</button>
+      <button class="btn-line" data-close>Annuleren</button>
+      <button class="btn-primary" id="iSave">Opslaan</button>
+    </footer>
+  </div>
+</div>
+
 <div class="overlay" id="mlOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
     <header>
@@ -2983,6 +3145,7 @@ button { cursor: pointer; }
     events: [],
     tasks: [],
     leads: [],
+    ideas: [],           // ideeën, zie 6i
     stHidden: {},        // status-id → true als weggefilterd
     settings: { weekend: true, dayStart: 7, dayEnd: 21 },
     offerteMeta: { bedrijf: null, tekst: null, btw: null, at: 0 },   // zie 6e
@@ -2993,8 +3156,8 @@ button { cursor: pointer; }
 
   var db = null;
   var dbReady = false;
-  var pendingIds = { events: {}, tasks: {}, leads: {} };
-  var pendingDeletes = { events: {}, tasks: {}, leads: {} };
+  var pendingIds = { events: {}, tasks: {}, leads: {}, ideas: {} };
+  var pendingDeletes = { events: {}, tasks: {}, leads: {}, ideas: {} };
   var downloads = null;
 
   function uid(prefix) {
@@ -3006,7 +3169,7 @@ button { cursor: pointer; }
   function saveLocal() {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({
-        events: state.events, tasks: state.tasks, leads: state.leads, settings: state.settings,
+        events: state.events, tasks: state.tasks, leads: state.leads, ideas: state.ideas, settings: state.settings,
         offerte: state.offerteMeta, meldingen: state.meldingen
       }));
     } catch (e) { /* privémodus e.d. — de app werkt door */ }
@@ -3020,6 +3183,7 @@ button { cursor: pointer; }
       if (d && Array.isArray(d.events)) state.events = d.events;
       if (d && Array.isArray(d.tasks)) state.tasks = d.tasks;
       if (d && Array.isArray(d.leads)) state.leads = d.leads;
+      if (d && Array.isArray(d.ideas)) state.ideas = d.ideas;
       if (d && d.settings) {
         state.settings.weekend = d.settings.weekend !== false;
         if (typeof d.settings.dayStart === "number") state.settings.dayStart = d.settings.dayStart;
@@ -3329,7 +3493,10 @@ button { cursor: pointer; }
     renderPeriodLabel();
     if (state.view === "lijst") renderList();
     else if (state.view === "klanten") renderKlanten();
+    else if (state.view === "ideeen") renderIdeeen();
+    else if (state.view === "ai") renderAssistent();
     else renderGrid();
+    $("ideeTeller").textContent = ideeTelling().open ? ideeTelling().open + " open" : "";
     renderNowCard();
     renderLoadCard();
     renderTaskCard();
@@ -3339,9 +3506,20 @@ button { cursor: pointer; }
 
   function renderPeriodLabel() {
     $("todayNum").textContent = dayNum(amsNow().date);   // het kalendertje op de telefoon
-    var isK = state.view === "klanten";
+    var isK = state.view === "klanten" || state.view === "ideeen" || state.view === "ai";
     $("prevBtn").disabled = isK;
     $("nextBtn").disabled = isK;
+    if (state.view === "ideeen") {
+      var it = ideeTelling();
+      $("periodWeek").textContent = "Ideeën";
+      $("periodRange").textContent = it.alles + (it.alles === 1 ? " idee" : " ideeën") + " · " + it.open + " open";
+      return;
+    }
+    if (state.view === "ai") {
+      $("periodWeek").textContent = "AI-assistent";
+      $("periodRange").textContent = "Vraag iets of laat iets aanpassen";
+      return;
+    }
     if (isK) {
       var c = statusCounts();
       $("periodWeek").textContent = "Klanten";
@@ -7396,6 +7574,696 @@ button { cursor: pointer; }
     toast(n + (n === 1 ? " blok" : " blokken") + " in je agenda gezet.");
   }
 
+  /* ==========================================================
+     6i. Ideeën — losse ideeën opschrijven, uitwerken en afvinken
+     ========================================================== */
+
+  // Een idee: { id, title, text, status: nieuw|bezig|gedaan, label, pinned,
+  // createdAt, updatedAt }. Ze staan in de verzameling "ideas", net als
+  // afspraken en klanten online, dus op elk apparaat dezelfde.
+  var IDEE_STATUSSEN = [
+    { id: "nieuw",  label: "Nieuw",     kleur: "var(--accent)" },
+    { id: "bezig",  label: "Mee bezig", kleur: "var(--cat-reizen)" },
+    { id: "gedaan", label: "Gedaan",    kleur: "var(--st-akkoord)" }
+  ];
+  var IDEE_FILTERS = [
+    { id: "open", label: "Open" }, { id: "nieuw", label: "Nieuw" }, { id: "bezig", label: "Mee bezig" },
+    { id: "gedaan", label: "Gedaan" }, { id: "alles", label: "Alles" }
+  ];
+  var ideeFilter = "open", ideeZoek = "", editingIdee = null;
+
+  function ideeStatus(id) {
+    for (var i = 0; i < IDEE_STATUSSEN.length; i++) if (IDEE_STATUSSEN[i].id === id) return IDEE_STATUSSEN[i];
+    return IDEE_STATUSSEN[0];
+  }
+  function findIdee(id) {
+    for (var i = 0; i < state.ideas.length; i++) if (state.ideas[i].id === id) return state.ideas[i];
+    return null;
+  }
+  function ideeTelling() {
+    var c = { nieuw: 0, bezig: 0, gedaan: 0 };
+    for (var i = 0; i < state.ideas.length; i++) c[ideeStatus(state.ideas[i].status).id]++;
+    return { nieuw: c.nieuw, bezig: c.bezig, gedaan: c.gedaan, open: c.nieuw + c.bezig, alles: state.ideas.length };
+  }
+
+  function zichtbareIdeeen() {
+    var q = ideeZoek.trim().toLowerCase();
+    var volgorde = { bezig: 0, nieuw: 1, gedaan: 2 };
+    return state.ideas.filter(function (i) {
+      var st = ideeStatus(i.status).id;
+      if (ideeFilter === "open" && st === "gedaan") return false;
+      if (ideeFilter !== "open" && ideeFilter !== "alles" && st !== ideeFilter) return false;
+      if (!q) return true;
+      return ((i.title || "") + " " + (i.text || "") + " " + (i.label || "")).toLowerCase().indexOf(q) >= 0;
+    }).sort(function (a, b) {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      var d = volgorde[ideeStatus(a.status).id] - volgorde[ideeStatus(b.status).id];
+      if (d) return d;
+      return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    });
+  }
+
+  function ideeDatum(ms) {
+    if (!ms) return "";
+    var d = new Date(ms).toLocaleDateString("sv-SE", { timeZone: AMS });   // JJJJ-MM-DD
+    var nu = amsNow().date;
+    if (d === nu) return "vandaag";
+    if (d === addD(nu, -1)) return "gisteren";
+    return fmtShort(d) + (d.slice(0, 4) !== nu.slice(0, 4) ? " " + d.slice(0, 4) : "");
+  }
+
+  function ideeKaart(i) {
+    var st = ideeStatus(i.status);
+    var klaar = st.id === "gedaan";
+    return '<article class="idee' + (klaar ? " gedaan" : "") + '" style="--st:' + st.kleur + '">' +
+      '<button class="i-main" data-idee="' + esc(i.id) + '">' +
+        '<span class="i-top"><span class="stat-pill" style="--st:' + st.kleur + '">' + esc(st.label) + '</span>' +
+          (i.label ? '<span class="i-label">' + esc(i.label) + '</span>' : '') +
+          (i.pinned ? '<span class="i-pin" title="Vastgezet">● vast</span>' : '') + '</span>' +
+        '<span class="i-titel">' + esc(i.title || "Naamloos idee") + '</span>' +
+        (i.text ? '<span class="i-tekst">' + esc(i.text) + '</span>' : '') +
+      '</button>' +
+      '<div class="i-voet">' +
+        '<span class="i-datum">' + esc(ideeDatum(i.updatedAt || i.createdAt)) + '</span>' +
+        '<button class="ai" data-idee-ai="' + esc(i.id) + '" title="Laat de AI dit idee uitwerken">✦ Uitwerken</button>' +
+        '<button data-idee-taak="' + esc(i.id) + '" title="Zet dit idee als taak op je lijst">+ Taak</button>' +
+        '<button data-idee-klaar="' + esc(i.id) + '">' + (klaar ? "Heropen" : "✓ Gedaan") + '</button>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function ideeLijstHtml() {
+    var lijst = zichtbareIdeeen();
+    if (!state.ideas.length) {
+      return '<p class="id-leeg">Nog geen ideeën. Schrijf hierboven je eerste idee op en druk op Enter. ' +
+        'Klik daarna op een idee om het uit te werken, of laat de AI meedenken met <b>✦ Uitwerken</b>.</p>';
+    }
+    if (!lijst.length) {
+      return '<p class="id-leeg">' + (ideeZoek.trim() ? "Niets gevonden voor &bdquo;" + esc(ideeZoek.trim()) + "&rdquo;."
+        : "Geen ideeën in dit filter. Kies <b>Alles</b> om alles te zien.") + '</p>';
+    }
+    var html = '<div class="id-grid">';
+    for (var k = 0; k < lijst.length; k++) html += ideeKaart(lijst[k]);
+    return html + '</div>';
+  }
+
+  function renderIdeeen() {
+    // wat je aan het typen bent niet kwijtraken bij een hertekening (bijv. een sync)
+    var snel = $("idSnel"), zoek = $("idZoek");
+    var snelTekst = snel ? snel.value : "", snelFocus = snel && document.activeElement === snel;
+    var zoekFocus = zoek && document.activeElement === zoek;
+    var c = ideeTelling();
+    var chips = "";
+    for (var i = 0; i < IDEE_FILTERS.length; i++) {
+      var f = IDEE_FILTERS[i];
+      var n = f.id === "open" ? c.open : f.id === "alles" ? c.alles : c[f.id];
+      var kleur = f.id === "open" || f.id === "alles" ? "var(--accent)" : ideeStatus(f.id).kleur;
+      chips += '<button class="fchip" data-idf="' + f.id + '" aria-pressed="' + (ideeFilter === f.id ? "true" : "false") +
+        '" style="--st:' + kleur + '">' + esc(f.label) + '<span class="n">' + n + '</span></button>';
+    }
+    canvas.innerHTML =
+      '<div class="filterbar">' + chips +
+        '<input class="search id-zoek" id="idZoek" type="search" placeholder="Zoek in ideeën…" aria-label="Zoek in ideeën">' +
+        '<span class="tally"><button class="btn-primary" id="newIdeeBtn">+ Idee</button></span>' +
+      '</div>' +
+      '<div class="id-wrap">' +
+        '<div class="id-add">' +
+          '<input type="text" id="idSnel" placeholder="Schrijf een idee op en druk op Enter…" autocomplete="off" aria-label="Nieuw idee">' +
+          '<button class="btn-primary" id="idSnelKnop">Toevoegen</button>' +
+        '</div>' +
+        '<div id="idLijst">' + ideeLijstHtml() + '</div>' +
+      '</div>';
+    $("idSnel").value = snelTekst;
+    $("idZoek").value = ideeZoek;
+    if (snelFocus) $("idSnel").focus();
+    if (zoekFocus) { var z = $("idZoek"); z.focus(); try { z.setSelectionRange(z.value.length, z.value.length); } catch (e) {} }
+    $("idSnel").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); snelIdee(); } });
+    $("idSnelKnop").addEventListener("click", snelIdee);
+    $("newIdeeBtn").addEventListener("click", function () { openIdee(null); });
+    $("idZoek").addEventListener("input", function () {
+      ideeZoek = $("idZoek").value;
+      $("idLijst").innerHTML = ideeLijstHtml();
+    });
+  }
+
+  function nieuwIdee(velden) {
+    var nu = Date.now();
+    return {
+      id: uid("i"), title: velden.title || "", text: velden.text || "",
+      status: velden.status || "nieuw", label: velden.label || "", pinned: !!velden.pinned,
+      createdAt: nu, updatedAt: nu
+    };
+  }
+
+  function snelIdee() {
+    var inp = $("idSnel");
+    var t = inp.value.trim();
+    if (!t) { inp.focus(); return; }
+    put("ideas", nieuwIdee({ title: t.slice(0, 200) }));
+    inp.value = "";
+    if (ideeFilter === "gedaan") ideeFilter = "open";
+    render();
+    if ($("idSnel")) $("idSnel").focus();
+  }
+
+  function zetIdee(i, wijziging) {
+    var kopie = {};
+    for (var k in i) kopie[k] = i[k];
+    for (var w in wijziging) kopie[w] = wijziging[w];
+    kopie.updatedAt = Date.now();
+    put("ideas", kopie);
+    return kopie;
+  }
+
+  function buildIdeeStatusPicker() {
+    var html = "";
+    for (var i = 0; i < IDEE_STATUSSEN.length; i++) {
+      var s = IDEE_STATUSSEN[i];
+      html += '<button type="button" data-pickidee="' + s.id + '" style="--cat:' + s.kleur + '" aria-pressed="false">' +
+        '<span class="sw"></span>' + esc(s.label) + '</button>';
+    }
+    $("iStatus").innerHTML = html;
+    $("iStatus").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-pickidee]");
+      if (b) setIdeeStatusPick(b.getAttribute("data-pickidee"));
+    });
+  }
+  function setIdeeStatusPick(id) {
+    var btns = $("iStatus").querySelectorAll("[data-pickidee]");
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-pickidee") === id ? "true" : "false");
+  }
+  function getIdeeStatusPick() {
+    var b = $("iStatus").querySelector('[aria-pressed="true"]');
+    return b ? b.getAttribute("data-pickidee") : "nieuw";
+  }
+
+  function openIdee(id) {
+    var i = id ? findIdee(id) : null;
+    if (id && !i) return;
+    editingIdee = i ? i.id : null;
+    $("idTitle").textContent = i ? "Idee bewerken" : "Nieuw idee";
+    $("iTitle").value = i ? (i.title || "") : "";
+    $("iText").value = i ? (i.text || "") : "";
+    $("iLabel").value = i ? (i.label || "") : "";
+    $("iPin").checked = !!(i && i.pinned);
+    setIdeeStatusPick(i ? ideeStatus(i.status).id : "nieuw");
+    $("iDelete").hidden = !i;
+    // eerder gebruikte labels als suggestie
+    var labels = {};
+    for (var k = 0; k < state.ideas.length; k++) if (state.ideas[k].label) labels[state.ideas[k].label] = true;
+    $("iLabels").innerHTML = Object.keys(labels).sort().map(function (l) { return '<option value="' + esc(l) + '">'; }).join("");
+    $("idOverlay").hidden = false;
+    setTimeout(function () { $("iTitle").focus(); }, 0);
+  }
+
+  /** Slaat het venster op; geeft het idee terug, of null als er niets is ingevuld. */
+  function saveIdee() {
+    var title = $("iTitle").value.trim(), text = $("iText").value.trim();
+    if (!title && !text) { toast("Schrijf eerst je idee op."); $("iTitle").focus(); return null; }
+    var velden = {
+      title: title.slice(0, 200), text: text.slice(0, 20000), status: getIdeeStatusPick(),
+      label: $("iLabel").value.trim().slice(0, 40), pinned: $("iPin").checked
+    };
+    var oud = editingIdee ? findIdee(editingIdee) : null;
+    var obj = oud ? zetIdee(oud, velden) : nieuwIdee(velden);
+    if (!oud) put("ideas", obj);
+    $("idOverlay").hidden = true;
+    editingIdee = null;
+    render();
+    return obj;
+  }
+
+  function deleteIdee() {
+    if (!editingIdee) return;
+    drop("ideas", editingIdee);
+    $("idOverlay").hidden = true;
+    editingIdee = null;
+    render();
+    toast("Idee verwijderd.");
+  }
+
+  function ideeNaarTaak(id) {
+    var i = findIdee(id);
+    if (!i) return;
+    put("tasks", { id: uid("t"), title: (i.title || i.text || "Idee").slice(0, 200), due: null, done: false, createdAt: Date.now() });
+    if (ideeStatus(i.status).id === "nieuw") zetIdee(i, { status: "bezig" });
+    render();
+    toast("Staat als taak op je lijst.");
+  }
+
+  function ideeUitwerken(id) {
+    var i = findIdee(id);
+    if (!i) return;
+    var vraag = "Help me mijn idee “" + (i.title || "zonder titel") + "” verder uit te werken." +
+      (i.text ? "\n\nWat ik al heb:\n" + i.text.slice(0, 3000) : "") +
+      "\n\nGeef een concrete uitwerking met de eerste stappen, en stel voor om die uitwerking in het idee te zetten.";
+    openAssistent();
+    stuurAssistent(vraag);
+  }
+
+  buildIdeeStatusPicker();
+  $("iSave").addEventListener("click", saveIdee);
+  $("iDelete").addEventListener("click", deleteIdee);
+  $("iAi").addEventListener("click", function () {
+    var i = saveIdee();
+    if (i) ideeUitwerken(i.id);
+  });
+
+  canvas.addEventListener("click", function (e) {
+    var f = e.target.closest("[data-idf]");
+    if (f) { ideeFilter = f.getAttribute("data-idf"); renderIdeeen(); return; }
+    var ai = e.target.closest("[data-idee-ai]");
+    if (ai) { ideeUitwerken(ai.getAttribute("data-idee-ai")); return; }
+    var tk = e.target.closest("[data-idee-taak]");
+    if (tk) { ideeNaarTaak(tk.getAttribute("data-idee-taak")); return; }
+    var kl = e.target.closest("[data-idee-klaar]");
+    if (kl) {
+      var i = findIdee(kl.getAttribute("data-idee-klaar"));
+      if (i) { zetIdee(i, { status: ideeStatus(i.status).id === "gedaan" ? "nieuw" : "gedaan" }); render(); }
+      return;
+    }
+    var open = e.target.closest("[data-idee]");
+    if (open) openIdee(open.getAttribute("data-idee"));
+  });
+
+  /* ==========================================================
+     6j. AI-assistent — vragen stellen en dingen laten aanpassen
+     ========================================================== */
+
+  // api/assistent krijgt het gesprek plus een momentopname van agenda,
+  // taken, klanten en ideeën. Claude antwoordt, en zet wijzigingen klaar als
+  // je daarom vraagt. Die voert de app pas door als je op "Doorvoeren" klikt;
+  // daarna kun je ze (zolang de pagina open is) nog ongedaan maken.
+  // Het gesprek zelf blijft op dit apparaat (localStorage).
+  var AS_URL = "api/assistent";
+  var LS_CHAT = LS_KEY + ".assistent";
+  var AS_MAX_BEWAARD = 80;
+  var AS_TIPS = [
+    "Wat staat er deze week op de planning?",
+    "Welke klanten moet ik nog bellen?",
+    "Hoeveel vrije tijd heb ik morgen?",
+    "Welke van mijn ideeën levert het meeste op?",
+    "Maak een taak: offertes nalopen, vóór vrijdag"
+  ];
+  var chat = laadChat();
+  var asBezig = false, asConcept = "", asVersie = 0, asGetekend = -1;
+  var asTerug = {};    // bericht-id → hoe de doorgevoerde wijzigingen terug te draaien (alleen deze sessie)
+
+  function laadChat() {
+    try {
+      var d = JSON.parse(localStorage.getItem(LS_CHAT) || "null");
+      if (d && Array.isArray(d.berichten)) {
+        return d.berichten.filter(function (m) { return m && (m.rol === "jij" || m.rol === "ai") && typeof m.tekst === "string"; });
+      }
+    } catch (e) {}
+    return [];
+  }
+  function bewaarChat() {
+    asVersie++;
+    if (chat.length > AS_MAX_BEWAARD) chat = chat.slice(-AS_MAX_BEWAARD);
+    try { localStorage.setItem(LS_CHAT, JSON.stringify({ berichten: chat })); } catch (e) {}
+  }
+
+  function openAssistent() {
+    closeMenu();
+    showRail(false);
+    setView("ai");
+    setTimeout(function () { if ($("asVraag")) $("asVraag").focus(); }, 0);
+  }
+
+  function renderAssistent() {
+    if (!$("asWrap")) {
+      canvas.innerHTML =
+        '<div class="as-wrap" id="asWrap">' +
+          '<div class="as-log" id="asLog" aria-live="polite"></div>' +
+          '<div class="as-invoer">' +
+            '<div class="as-veld">' +
+              '<textarea id="asVraag" rows="1" placeholder="Vraag iets, of laat iets aanpassen…" aria-label="Bericht aan de AI"></textarea>' +
+              '<button class="btn-primary" id="asStuur" aria-label="Versturen" title="Versturen (Enter)">↑</button>' +
+            '</div>' +
+            '<div class="as-onder"><span>Claude ziet je agenda, taken, klanten en ideeën. Wijzigingen voer je zelf door.</span>' +
+              '<button id="asNieuw">Nieuw gesprek</button></div>' +
+          '</div>' +
+        '</div>';
+      asGetekend = -1;
+      var v = $("asVraag");
+      v.value = asConcept;
+      maatVraag();
+      v.addEventListener("input", function () { asConcept = v.value; maatVraag(); });
+      v.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); verstuurVraag(); }
+      });
+      $("asStuur").addEventListener("click", verstuurVraag);
+      $("asNieuw").addEventListener("click", function () {
+        if (asBezig) return;
+        chat = []; asTerug = {};
+        bewaarChat();
+        renderLog(true);
+        $("asVraag").focus();
+      });
+      $("asLog").addEventListener("click", klikInLog);
+      $("asLog").addEventListener("change", function (e) {
+        var cb = e.target.closest("[data-as-actie]");
+        if (!cb) return;
+        var p = cb.getAttribute("data-as-actie").split(":");
+        var m = vindBericht(p[0]);
+        if (m && m.acties && m.acties[+p[1]]) { m.acties[+p[1]].aan = cb.checked; bewaarChat(); renderLog(); }
+      });
+    }
+    $("asStuur").disabled = asBezig;
+    renderLog();
+  }
+
+  function maatVraag() {
+    var v = $("asVraag");
+    if (!v) return;
+    v.style.height = "auto";
+    v.style.height = Math.min(180, Math.max(32, v.scrollHeight)) + "px";
+  }
+
+  function vindBericht(id) {
+    for (var i = 0; i < chat.length; i++) if (chat[i].id === id) return chat[i];
+    return null;
+  }
+
+  /** Eenvoudige opmaak: alinea's, opsommingen met "- " of "1.", en **vet**. */
+  function opmaak(t) {
+    var regels = String(t || "").split("\n"), html = "", lijst = null, alinea = [];
+    function inline(x) { return esc(x).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"); }
+    function sluitAlinea() { if (alinea.length) { html += "<p>" + alinea.map(inline).join("<br>") + "</p>"; alinea = []; } }
+    function sluitLijst() { if (lijst) { html += "</" + lijst + ">"; lijst = null; } }
+    for (var i = 0; i < regels.length; i++) {
+      var r = regels[i], m;
+      if ((m = /^\s*[-•*]\s+(.*)$/.exec(r))) {
+        sluitAlinea();
+        if (lijst !== "ul") { sluitLijst(); html += "<ul>"; lijst = "ul"; }
+        html += "<li>" + inline(m[1]) + "</li>";
+      } else if ((m = /^\s*\d+[.)]\s+(.*)$/.exec(r))) {
+        sluitAlinea();
+        if (lijst !== "ol") { sluitLijst(); html += "<ol>"; lijst = "ol"; }
+        html += "<li>" + inline(m[1]) + "</li>";
+      } else if (!r.trim()) {
+        sluitAlinea(); sluitLijst();
+      } else {
+        sluitLijst();
+        alinea.push(r);
+      }
+    }
+    sluitAlinea(); sluitLijst();
+    return html;
+  }
+
+  var AS_SOORT = { afspraak: "events", taak: "tasks", klant: "leads", idee: "ideas" };
+  var AS_NAAM = { afspraak: "Afspraak", taak: "Taak", klant: "Klant", idee: "Idee" };
+
+  function asDoel(a) {
+    var soort = a.type.split("_")[0], lijst = state[AS_SOORT[soort]] || [];
+    for (var i = 0; i < lijst.length; i++) if (lijst[i].id === a.id) return lijst[i];
+    return null;
+  }
+
+  /** Een leesbare regel voor als Claude zelf geen omschrijving gaf. */
+  function beschrijf(a) {
+    var p = a.type.split("_"), soort = p[0], wat = p[1], v = a.velden || {};
+    var doel = asDoel(a);
+    var naam = v.title || v.name || (doel && (doel.title || doel.name)) || "";
+    var wanneer = v.date ? fmtShort(v.date) + (v.start ? " " + v.start + (v.end ? "–" + v.end : "") : "") : "";
+    if (wat === "nieuw") return "Nieuw: " + AS_NAAM[soort].toLowerCase() + " “" + naam + "”" + (wanneer ? " · " + wanneer : "");
+    if (wat === "weg") return AS_NAAM[soort] + " “" + naam + "” verwijderen";
+    return AS_NAAM[soort] + " “" + naam + "” aanpassen" + (wanneer ? " → " + wanneer : "");
+  }
+
+  function actiesHtml(m) {
+    if (!m.acties || !m.acties.length) return "";
+    var open = m.staat === "voorstel", n = 0, html = '<div class="as-acties"><span class="label">' +
+      (m.acties.length === 1 ? "Voorgestelde wijziging" : m.acties.length + " voorgestelde wijzigingen") + '</span>';
+    for (var i = 0; i < m.acties.length; i++) {
+      var a = m.acties[i], wat = a.type.split("_")[1];
+      if (a.aan !== false) n++;
+      html += '<label class="as-actie' + (a.aan === false ? " uit" : "") + '">' +
+        '<input type="checkbox" data-as-actie="' + esc(m.id) + ':' + i + '"' + (a.aan !== false ? " checked" : "") + (open ? "" : " disabled") + '>' +
+        '<span class="s ' + wat + '">' + (wat === "nieuw" ? "+" : wat === "weg" ? "−" : "✎") + '</span>' +
+        '<span>' + esc(a.omschrijving || beschrijf(a)) + '</span></label>';
+    }
+    html += '<div class="as-knoppen">';
+    if (open) {
+      html += '<button class="btn-primary" data-as-door="' + esc(m.id) + '"' + (n ? "" : " disabled") + '>Doorvoeren' + (m.acties.length > 1 ? " (" + n + ")" : "") + '</button>' +
+        '<button class="btn-line" data-as-niet="' + esc(m.id) + '">Laat maar</button>';
+    } else if (m.staat === "doorgevoerd") {
+      html += '<span class="as-klaar">✓ Doorgevoerd' +
+        (m.overgeslagen ? " (" + m.overgeslagen + " niet: het item bestaat niet meer of klopte niet)" : "") + (asTerug[m.id] ? ' · <button data-as-terug="' + esc(m.id) + '">Ongedaan maken</button>' : '') + '</span>';
+    } else if (m.staat === "ongedaan") {
+      html += '<span class="as-klaar">Ongedaan gemaakt</span>';
+    } else {
+      html += '<span class="as-klaar">' + (m.overgeslagen ? "Kon niet worden doorgevoerd: het item bestaat niet meer of klopte niet" : "Niet doorgevoerd") + '</span>';
+    }
+    return html + '</div></div>';
+  }
+
+  function renderLog(naarOnder) {
+    var log = $("asLog");
+    if (!log) return;
+    if ($("asStuur")) $("asStuur").disabled = asBezig;
+    if (asGetekend === asVersie && !naarOnder) return;   // niets veranderd: scrollpositie laten staan
+    asGetekend = asVersie;
+    var bijOnder = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
+    var html = "";
+    if (!chat.length && !asBezig) {
+      html = '<div class="as-start"><div class="as-logo" aria-hidden="true">✦</div>' +
+        '<h2>Waar kan ik mee helpen?</h2>' +
+        '<p>Vraag iets over je planning, klanten, taken of ideeën. Of laat iets aanpassen: ' +
+        '“verplaats het monteren naar vrijdagochtend”, “zet Sanne op gebeld”, “maak hier een idee van”.</p>' +
+        '<div class="as-tips">' + AS_TIPS.map(function (t) { return '<button data-as-tip="' + esc(t) + '">' + esc(t) + '</button>'; }).join("") + '</div></div>';
+    }
+    for (var i = 0; i < chat.length; i++) {
+      var m = chat[i];
+      if (m.rol === "jij") html += '<div class="as-rij jij"><div class="as-bel">' + esc(m.tekst) + '</div></div>';
+      else html += '<div class="as-rij ai"><div class="as-bel' + (m.fout ? " fout" : "") + '">' + opmaak(m.tekst) + actiesHtml(m) + '</div></div>';
+    }
+    if (asBezig) html += '<div class="as-rij ai"><div class="as-bel"><span class="as-denkt" aria-label="Claude denkt na"><span></span><span></span><span></span></span></div></div>';
+    log.innerHTML = html;
+    if (naarOnder || bijOnder) log.scrollTop = log.scrollHeight;
+  }
+
+  function klikInLog(e) {
+    var tip = e.target.closest("[data-as-tip]");
+    if (tip) { stuurAssistent(tip.getAttribute("data-as-tip")); return; }
+    var door = e.target.closest("[data-as-door]");
+    if (door) { voerAssistentUit(door.getAttribute("data-as-door")); return; }
+    var niet = e.target.closest("[data-as-niet]");
+    if (niet) {
+      var m = vindBericht(niet.getAttribute("data-as-niet"));
+      if (m) { m.staat = "afgewezen"; bewaarChat(); renderLog(); }
+      return;
+    }
+    var terug = e.target.closest("[data-as-terug]");
+    if (terug) draaiAssistentTerug(terug.getAttribute("data-as-terug"));
+  }
+
+  function verstuurVraag() {
+    var v = $("asVraag");
+    if (!v || asBezig) return;
+    var t = v.value.trim();
+    if (!t) { v.focus(); return; }
+    v.value = ""; asConcept = "";
+    maatVraag();
+    stuurAssistent(t);
+  }
+
+  /** Wat de AI over je gegevens te zien krijgt: compact, zonder formulieren en bestanden. */
+  function assistentGegevens() {
+    var vandaag = amsNow().date, van = addD(vandaag, -45), tot = addD(vandaag, 400);
+    var afspraken = state.events.filter(function (e) { return e.date >= van && e.date <= tot; })
+      .sort(function (a, b) { return Math.abs(diffD(a.date, vandaag)) - Math.abs(diffD(b.date, vandaag)); })
+      .slice(0, 800)
+      .map(function (e) {
+        return { id: e.id, titel: e.title, datum: e.date, start: e.start, eind: e.end, heleDag: !!e.allDay,
+          categorie: e.cat, locatie: e.loc || "", notitie: (e.note || "").slice(0, 300) };
+      });
+    var open = state.tasks.filter(function (t) { return !t.done; });
+    var klaar = state.tasks.filter(function (t) { return t.done; })
+      .sort(function (a, b) { return (b.doneAt || 0) - (a.doneAt || 0); }).slice(0, 30);
+    var taken = open.concat(klaar).slice(0, 400).map(function (t) {
+      return { id: t.id, titel: t.title, deadline: t.due || "", klaar: !!t.done };
+    });
+    var klanten = sortLeads(state.leads).slice(0, 500).map(function (l) {
+      var extra = [];
+      try {
+        if (l.offerte) extra.push("offerte " + euro(offerteTotalen(l.offerte).totaal / 100) + (l.offerteAkkoord ? " getekend" : l.offerteToken ? " gestuurd" : " concept"));
+        if (l.factuur) extra.push("factuur " + euro(offerteTotalen(l.factuur).totaal / 100) + (l.factuur.betaald ? " betaald" : " open"));
+      } catch (e) {}
+      if (l.form) extra.push("formulier ingevuld"); else if (l.formToken) extra.push("formulier gestuurd");
+      if (l.muziek) extra.push("muziek gekozen"); else if (l.muziekToken) extra.push("muzieklink gestuurd");
+      return { id: l.id, naam: l.name || "", telefoon: l.phone || "", status: l.status, datum: l.date || "",
+        start: l.start || "", eind: l.end || "", belDatum: l.callDate || "", belTijd: l.callTime || "",
+        notitie: (l.note || "").slice(0, 400), extra: extra.join(", ") };
+    });
+    var ideeen = state.ideas.slice(0, 400).map(function (i) {
+      return { id: i.id, titel: i.title || "", tekst: (i.text || "").slice(0, 1500), status: ideeStatus(i.status).id,
+        label: i.label || "", vast: !!i.pinned };
+    });
+    return { afspraken: afspraken, taken: taken, klanten: klanten, ideeen: ideeen };
+  }
+
+  /** Het gesprek voor de server; bij voorstellen staat erbij wat ermee gebeurd is. */
+  function gesprekVoorApi() {
+    var out = [];
+    var lijst = chat.filter(function (m) { return !m.fout; }).slice(-30);
+    for (var i = 0; i < lijst.length; i++) {
+      var m = lijst[i], t = m.tekst;
+      if (m.rol === "ai" && m.acties && m.acties.length) {
+        var wat = m.staat === "doorgevoerd" ? "doorgevoerd" : m.staat === "ongedaan" ? "doorgevoerd en daarna ongedaan gemaakt"
+          : m.staat === "afgewezen" ? "niet doorgevoerd" : "nog niet bevestigd";
+        t += "\n\n[Voorgestelde wijzigingen (" + wat + "): " +
+          m.acties.map(function (a) { return (a.aan === false ? "(uitgevinkt) " : "") + (a.omschrijving || beschrijf(a)); }).join("; ") + "]";
+      }
+      out.push({ rol: m.rol, tekst: t });
+    }
+    return out;
+  }
+
+  function stuurAssistent(tekst) {
+    tekst = String(tekst || "").trim();
+    if (!tekst || asBezig) return;
+    chat.push({ id: uid("m"), rol: "jij", tekst: tekst, at: Date.now() });
+    asBezig = true;
+    bewaarChat();
+    renderLog(true);
+    var nu = amsNow();
+    api("POST", "", {
+      berichten: gesprekVoorApi(),
+      vandaag: nu.date, nu: pad(nu.h) + ":" + pad(nu.m),
+      instellingen: { dayStart: state.settings.dayStart, dayEnd: state.settings.dayEnd, weekend: state.settings.weekend },
+      gegevens: assistentGegevens()
+    }, AS_URL).then(function (r) {
+      if (!r.ok) {
+        antwoord({ fout: true, tekst: r.data.melding ||
+          (r.status === 404 || r.status === 405 ? "De AI werkt alleen op de online versie (Vercel) of met npm start." : apiReason(r)) });
+        return;
+      }
+      var acties = Array.isArray(r.data.acties) ? r.data.acties : [];
+      for (var i = 0; i < acties.length; i++) acties[i].aan = true;
+      antwoord({ tekst: r.data.antwoord || (acties.length ? "Dit zou ik aanpassen:" : "Ik heb geen antwoord."), acties: acties, staat: acties.length ? "voorstel" : null });
+    }, function () {
+      antwoord({ fout: true, tekst: "Geen verbinding met de server. Probeer het nog eens." });
+    });
+
+    function antwoord(m) {
+      asBezig = false;
+      m.id = uid("m"); m.rol = "ai"; m.at = Date.now();
+      chat.push(m);
+      bewaarChat();
+      if ($("asLog")) renderLog(true);
+      else toast("✦ De AI heeft geantwoord. Open AI-assistent in het menu.");
+    }
+  }
+
+  /** Voegt de velden van een actie samen met het bestaande item (of een nieuw). */
+  function asNieuwObject(soort, oud, v) {
+    var o = {}, k;
+    if (oud) for (k in oud) o[k] = oud[k];
+    for (k in v) o[k] = v[k];
+    var tekstVelden = { title: 1, loc: 1, note: 1, name: 1, phone: 1, text: 1, label: 1 };
+    for (k in o) if (o[k] === null && tekstVelden[k]) o[k] = "";
+    var nu = Date.now();
+
+    if (soort === "afspraak") {
+      if (!oud) { o.id = uid("e"); o.loc = o.loc || ""; o.note = o.note || ""; o.ai = true; o.createdAt = nu; o.cat = CAT_IDS.indexOf(o.cat) >= 0 ? o.cat : "overig"; }
+      if (!o.title || !/^\d{4}-\d{2}-\d{2}$/.test(o.date || "")) return null;
+      if (v.allDay === true) { o.allDay = true; o.start = "00:00"; o.end = "23:59"; }
+      else {
+        if (v.allDay === false && oud && oud.allDay && !v.start) { o.start = "09:00"; o.end = "10:00"; }
+        o.allDay = !!o.allDay && !(v.start || v.end);
+        if (!o.allDay) {
+          if (!/^\d{2}:\d{2}$/.test(o.start || "")) return null;
+          // alleen de begintijd verschoven: de duur blijft gelijk
+          var duur = oud && !oud.allDay && oud.start && oud.end ? toMin(oud.end) - toMin(oud.start) : 60;
+          if (duur <= 0) duur = 60;
+          if (!v.end && v.start) o.end = toTime(Math.min(1439, toMin(o.start) + duur));
+          if (!/^\d{2}:\d{2}$/.test(o.end || "") || toMin(o.end) <= toMin(o.start)) o.end = toTime(Math.min(1439, toMin(o.start) + duur));
+        }
+      }
+      return o;
+    }
+    if (soort === "taak") {
+      if (!oud) { o.id = uid("t"); o.createdAt = nu; o.done = !!o.done; o.due = o.due || null; }
+      if (!o.title) return null;
+      if (v.done !== undefined) o.doneAt = v.done ? (oud && oud.done ? oud.doneAt : nu) : null;
+      return o;
+    }
+    if (soort === "klant") {
+      if (!oud) {
+        o.id = uid("l"); o.createdAt = nu; o.name = o.name || ""; o.phone = o.phone || ""; o.note = o.note || "";
+        o.status = ST_IDS.indexOf(o.status) >= 0 ? o.status : "wacht";
+        o.date = o.date || null; o.start = o.start || null; o.end = o.end || null;
+        o.callDate = o.callDate || null; o.callTime = o.callTime || null; o.calledAt = null;
+      }
+      if (!o.name && !o.phone) return null;
+      if (isCalled(o.status)) { if (!o.calledAt) o.calledAt = amsNow().date; } else o.calledAt = null;
+      if (!o.callDate) o.callTime = null;
+      return o;
+    }
+    if (soort === "idee") {
+      if (!oud) { o = nieuwIdee(o); }
+      else o.updatedAt = nu;
+      if (!o.title && !o.text) return null;
+      return o;
+    }
+    return null;
+  }
+
+  function voerAssistentUit(id) {
+    var m = vindBericht(id);
+    if (!m || m.staat !== "voorstel") return;
+    var terug = [], gedaan = 0, overgeslagen = 0;
+    for (var i = 0; i < m.acties.length; i++) {
+      var a = m.acties[i];
+      if (a.aan === false) continue;
+      var p = a.type.split("_"), soort = p[0], wat = p[1], coll = AS_SOORT[soort];
+      if (!coll) { overgeslagen++; continue; }
+      var oud = wat === "nieuw" ? null : asDoel(a);
+      if (wat !== "nieuw" && !oud) { overgeslagen++; continue; }   // intussen verwijderd
+      var kopie = null;
+      if (oud) { kopie = {}; for (var k in oud) kopie[k] = oud[k]; }
+      if (wat === "weg") {
+        if (coll === "leads") { overgeslagen++; continue; }   // klanten verwijder je zelf
+        drop(coll, oud.id);
+        terug.push({ coll: coll, id: oud.id, oud: kopie });
+        gedaan++;
+        continue;
+      }
+      var obj = asNieuwObject(soort, oud, a.velden || {});
+      if (!obj) { overgeslagen++; continue; }
+      put(coll, obj);
+      terug.push({ coll: coll, id: obj.id, oud: kopie });
+      gedaan++;
+    }
+    m.staat = gedaan ? "doorgevoerd" : "afgewezen";
+    m.overgeslagen = overgeslagen;
+    if (gedaan) asTerug[m.id] = terug;
+    bewaarChat();
+    render();
+    // de uitkomst staat bij het bericht zelf; een melding onderin zou over het invoerveld vallen
+    if (!$("asLog")) toast(gedaan ? gedaan + (gedaan === 1 ? " wijziging" : " wijzigingen") + " doorgevoerd." : "Er viel niets door te voeren.");
+  }
+
+  function draaiAssistentTerug(id) {
+    var m = vindBericht(id), terug = asTerug[id];
+    if (!m || !terug) return;
+    for (var i = terug.length - 1; i >= 0; i--) {
+      var t = terug[i];
+      if (t.oud) put(t.coll, t.oud); else drop(t.coll, t.id);
+    }
+    delete asTerug[id];
+    m.staat = "ongedaan";
+    bewaarChat();
+    render();
+  }
+
+  $("miAssistent").addEventListener("click", openAssistent);
+  $("miIdeeen").addEventListener("click", function () { closeMenu(); showRail(false); setView("ideeen"); });
+
+
   function openMeldingen() {
     var m = state.meldingen;
     $("mlDag").checked = m.dagoverzicht;
@@ -7812,7 +8680,7 @@ button { cursor: pointer; }
     var data = JSON.stringify({
       app: "weekzicht", version: 1, exportedAt: new Date().toISOString(),
       timezone: AMS, events: state.events, tasks: state.tasks, leads: state.leads,
-      settings: state.settings
+      ideas: state.ideas, settings: state.settings
     }, null, 2);
     saveFile("weekzicht-backup.json", data, "application/json")
       .then(function () { toast("Back-up opgeslagen."); })
@@ -7884,6 +8752,7 @@ button { cursor: pointer; }
 
   function setView(v) {
     state.view = v;
+    document.querySelector(".app").setAttribute("data-view", v);
     var btns = document.querySelectorAll(".viewswitch button");
     for (var i = 0; i < btns.length; i++) {
       btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-view") === v ? "true" : "false");
@@ -7892,7 +8761,7 @@ button { cursor: pointer; }
   }
 
   function shift(n) {
-    if (state.view === "klanten") return;
+    if (state.view === "klanten" || state.view === "ideeen" || state.view === "ai") return;
     if (state.view === "dag") state.anchor = addD(state.anchor, n);
     else if (state.view === "lijst") state.anchor = addD(state.anchor, n * 14);
     else state.anchor = addD(state.anchor, n * 7);
@@ -7913,8 +8782,10 @@ button { cursor: pointer; }
     $("ldOverlay").hidden = true;
     $("mlOverlay").hidden = true;
     $("aiOverlay").hidden = true;
+    $("idOverlay").hidden = true;
     editingId = null;
     editingLead = null;
+    editingIdee = null;
   }
 
   // weergaveknoppen; op de telefoon is "Overzicht" een eigen tab met de zijkolom
@@ -7964,7 +8835,9 @@ button { cursor: pointer; }
   $("nextBtn").addEventListener("click", function () { shift(1); });
   $("todayBtn").addEventListener("click", function () { state.anchor = amsNow().date; render(); });
   $("newBtn").addEventListener("click", function () {
-    if (state.view === "klanten") openLead(null); else openEvent(null);
+    if (state.view === "klanten") openLead(null);
+    else if (state.view === "ideeen") openIdee(null);
+    else openEvent(null);
   });
 
   // menu
@@ -8033,6 +8906,8 @@ button { cursor: pointer; }
     for (var i = 0; i < evs.length; i++) drop("events", evs[i].id);
     for (var j = 0; j < tks.length; j++) drop("tasks", tks[j].id);
     for (var m = 0; m < lds.length; m++) drop("leads", lds[m].id);
+    var ids = state.ideas.slice();
+    for (var n = 0; n < ids.length; n++) drop("ideas", ids[n].id);
     render();
     toast("Alles gewist.");
   });
@@ -8371,6 +9246,7 @@ button { cursor: pointer; }
       if (e.key === "Enter" && tag !== "textarea") {
         if (!$("evOverlay").hidden) saveEvent();
         else if (!$("ldOverlay").hidden) saveLead();
+        else if (!$("idOverlay").hidden && e.target.id !== "iText") saveIdee();
       }
       return;
     }
@@ -8378,7 +9254,9 @@ button { cursor: pointer; }
     if (e.key === "ArrowLeft") { shift(-1); e.preventDefault(); }
     else if (e.key === "ArrowRight") { shift(1); e.preventDefault(); }
     else if (e.key === "n" || e.key === "N") {
-      if (state.view === "klanten") openLead(null); else openEvent(null);
+      if (state.view === "klanten") openLead(null);
+      else if (state.view === "ideeen") openIdee(null);
+      else openEvent(null);
       e.preventDefault();
     }
     else if (e.key === "t" || e.key === "T") { state.anchor = amsNow().date; render(); }
@@ -8386,6 +9264,8 @@ button { cursor: pointer; }
     else if (e.key === "2") setView("dag");
     else if (e.key === "3") setView("lijst");
     else if (e.key === "4") setView("klanten");
+    else if (e.key === "5") setView("ideeen");
+    else if (e.key === "6") { setView("ai"); if ($("asVraag")) { $("asVraag").focus(); e.preventDefault(); } }
     else if (e.key === "k" || e.key === "K") { openLead(null); e.preventDefault(); }
   });
 
@@ -8402,7 +9282,7 @@ button { cursor: pointer; }
       lastMinute = n.min;
       if (n.min % 3 === 0) pollForms();
       if ($("evOverlay").hidden && $("impOverlay").hidden && $("ldOverlay").hidden) {
-        if (state.view !== "lijst" && state.view !== "klanten") renderGrid();
+        if (state.view === "week" || state.view === "dag") renderGrid();
         renderNowCard();
         renderKlantCard();
       }
@@ -8445,7 +9325,7 @@ button { cursor: pointer; }
   function attachDb(handle, label) {
     db = handle;
 
-    var first = { events: true, tasks: true, leads: true };
+    var first = { events: true, tasks: true, leads: true, ideas: true };
     // vóór markSynced() vastleggen: anders lijkt elke eerste koppeling al gesynct
     var wasSynced = everSynced();
     if (!wasSynced) backupLocal();
@@ -8539,6 +9419,7 @@ button { cursor: pointer; }
       subscribe("events");
       subscribe("tasks");
       subscribe("leads");
+      subscribe("ideas");
       dbReady = true;
       markSynced();
       setSync(true, label);
@@ -8553,6 +9434,7 @@ button { cursor: pointer; }
       subscribe("events");
       subscribe("tasks");
       subscribe("leads");
+      subscribe("ideas");
       dbReady = true;
       markSynced();
       setSync(true, label);
@@ -8571,7 +9453,7 @@ button { cursor: pointer; }
 
   var PLANNING_URL = "api/planning";
   var SYNC_SERVER = "online opgeslagen";
-  var SERVER_COLLS = ["events", "tasks", "leads", "meta"];
+  var SERVER_COLLS = ["events", "tasks", "leads", "ideas", "meta"];
   var POLL_MS = 30000;
   var BATCH = 200;              // wijzigingen per verzoek…
   var BATCH_BYTES = 1000000;    // …en hoogstens zo groot (Vercel neemt tot 4,5 MB aan)

@@ -154,10 +154,37 @@ Variables, als Secret) en deploy opnieuw; lokaal in `.env`. Alleen ingelogd.
 
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
 
+**Ideeën** — een eigen pagina (zijbalk, of ⋯-menu → *Ideeën*; sneltoets 5)
+om ideeën op te schrijven: typ er een in en druk op Enter. Klik op een idee om
+het uit te werken (tekst, status *nieuw / mee bezig / gedaan*, een label,
+bovenaan vastzetten). Per idee: *✦ Uitwerken* (de AI-assistent denkt mee),
+*+ Taak* (zet het op je takenlijst) en *✓ Gedaan*. Filteren op status en
+zoeken kan bovenin. Ideeën staan in de verzameling `ideas`, net als de rest
+online opgeslagen, dus op elk apparaat dezelfde.
+
+**AI-assistent** — een chat (zijbalk, of ⋯-menu → *✦ AI-assistent*; sneltoets 6)
+waarin je vragen stelt over je planning, klanten, taken en ideeën ("wie moet ik
+nog bellen?", "hoeveel vrije tijd heb ik morgen?") of iets laat aanpassen
+("verplaats het monteren naar vrijdagochtend", "zet Sanne op gebeld", "maak
+hier een idee van"). `api/assistent.js` stuurt het gesprek plus een compacte
+momentopname (afspraken van 45 dagen terug tot ruim een jaar vooruit, taken,
+klanten zonder formulieren of bestanden, ideeën) naar Claude
+(`claude-opus-5-5`, gestructureerde JSON). Wijzigingen komen als voorstel
+onder het antwoord, met een vinkje per wijziging; pas bij *Doorvoeren* past de
+app ze toe, en *Ongedaan maken* draait ze terug zolang de pagina open is. Kan:
+afspraken, taken en ideeën maken, wijzigen en verwijderen; klanten maken en
+wijzigen (status, datum, belafspraak, notitie). Kan niet: klanten verwijderen,
+offertes, facturen, formulieren of muziek aanpassen. De server laat
+wijzigingen met een onbekend id of een ongeldige datum/tijd weg. Het gesprek
+zelf blijft op het apparaat (*Nieuw gesprek* wist het). Zelfde sleutel als
+*Plan met AI*; alleen ingelogd.
+
+
 **Op de telefoon** (tot 720 px breed, of een telefoon die dwars ligt) wordt het
 een app-indeling: een smalle bovenbalk met de periode, bladeren, een
 kalendertje met de datum van vandaag en een hamburgermenu dat als lade van
-rechts inschuift. Onderin een tabbalk (Week, Dag, Lijst, Klanten, Overzicht).
+rechts inschuift. Onderin een tabbalk (Week, Dag, Lijst, Klanten, Overzicht); Ideeën en de
+AI-assistent zitten in het hamburgermenu.
 *Overzicht* is de zijkolom van de computer: hierna, de week in cijfers, taken,
 klanten en categorieën. Een ronde +-knop rechtsonder maakt een afspraak, of in
 de klantenweergave een klant. In de dagweergave veeg je naar links of rechts
@@ -382,6 +409,7 @@ api/_offertepdf.js   de pdf-schrijver uit de app, voor de bijlage
 api/herinneringen.js Vercel Cron: dagoverzicht en herinneringen vooraf per mail
 api/_meldingen.js    instellingen van de meldingen, en de mail als een klant iets doet
 api/ai-planning.js   Vercel-functie: weekplanning laten maken door Claude
+api/assistent.js     Vercel-functie: de AI-assistent (vragen + voorgestelde wijzigingen)
 api/draaiboek.js     Vercel-functie: draaiboek (foto/PDF/tekst) → tijdlijn via OpenRouter, en het bestand terugkijken
 api/_opslag.js       Redis-opslag (Upstash REST) of geheugen lokaal, gedeeld door de functies
 api/_bestanden.js    bestandsopslag (Vercel Blob, of geheugen lokaal)
