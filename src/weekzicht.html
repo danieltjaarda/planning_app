@@ -1167,6 +1167,52 @@ button { cursor: pointer; }
 .ai-blok .n { display: block; font-size: 12px; color: var(--ink-2); margin-top: 2px; }
 .ai-blok.uit { opacity: .45; }
 #aiWens { min-height: 130px; }
+.ai-vraag, .ai-overzicht { display: flex; flex-direction: column; gap: 14px; }
+.ai-gang { display: flex; align-items: center; gap: 12px; }
+.ai-gang .label { white-space: nowrap; color: var(--ink-2); }
+.ai-balk { flex: 1; height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; }
+.ai-balk > span { display: block; height: 100%; background: var(--accent); border-radius: 2px; transition: width .2s ease; }
+.ai-taak { font-size: 18px; font-weight: 600; line-height: 1.3; color: var(--ink); }
+.ai-vtekst { margin: -8px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--ink); }
+.ai-vraag .opt { color: var(--ink-3); font-weight: 400; }
+.ai-ander { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.ai-ander input {
+  width: 64px; height: 30px; padding: 0 8px; border: 0; border-radius: var(--r); box-shadow: var(--ring);
+  background: var(--surface); font: inherit; font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; text-align: center;
+}
+.ai-ander input:focus { outline: none; box-shadow: var(--focus); }
+.ai-overzicht ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ai-overzicht button {
+  width: 100%; display: flex; gap: 12px; justify-content: space-between; align-items: center;
+  padding: 9px 11px; border: 0; border-radius: var(--r); background: var(--surface-2);
+  font: inherit; font-size: 14px; color: var(--ink); text-align: left; cursor: pointer;
+}
+.ai-overzicht button:hover { background: var(--surface-3); }
+.ai-overzicht button b { font-weight: 600; }
+.ai-overzicht .x { display: block; font-size: 12.5px; color: var(--ink-2); margin-top: 1px; }
+.ai-overzicht .u { font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap; font-size: 13px; font-weight: 600; }
+.ai-overzicht button.uit b { text-decoration: line-through; color: var(--ink-3); }
+.ai-samen { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-samen span { font-size: 12.5px; font-weight: 500; padding: 3px 8px; border-radius: 4px;
+  background: color-mix(in oklab, var(--st-akkoord) 12%, var(--surface)); color: var(--st-akkoord); }
+.ai-samen span.kort { background: color-mix(in oklab, var(--st-wacht) 14%, var(--surface)); color: var(--st-wacht); }
+
+/* slepen in het rooster */
+.ev, .chip-allday { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.ev.vasthouden, .chip-allday.vasthouden { transform: scale(.97); transition: transform .38s ease; }
+.ev.sleept, .chip-allday.sleept { opacity: .3; }
+.sleep-doel {
+  --cat: var(--accent);
+  position: absolute; left: 1px; right: 2px; z-index: 6; pointer-events: none;
+  display: flex; flex-direction: column; gap: 1px; padding: 3px 7px; overflow: hidden;
+  border-radius: 5px; border: 1.5px solid var(--cat);
+  background: color-mix(in oklab, var(--cat) 26%, var(--surface));
+  box-shadow: var(--shadow-lg); font-size: 12px; color: var(--ink);
+}
+.sleep-doel .sd-t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sleep-doel .sd-m { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.daycol.sleep-hier, .allday-cell.sleep-hier { background-color: color-mix(in oklab, var(--accent) 9%, var(--surface)); }
+body.is-slepen, body.is-slepen * { cursor: grabbing !important; -webkit-user-select: none !important; user-select: none !important; }
 
 /* Ideeën */
 .id-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 18px 24px 40px; }
@@ -2387,6 +2433,7 @@ button { cursor: pointer; }
   .as-invoer { padding: 8px 10px 8px; }
   .as-bel { max-width: 92%; }
   .as-veld textarea { font-size: 16px; }   /* kleiner laat iOS inzoomen */
+  .ai-ander input { font-size: 16px; width: 72px; height: 34px; }
   .as-onder span { display: none; }
 }
 
@@ -2828,18 +2875,20 @@ button { cursor: pointer; }
       <button class="btn-ghost" data-close aria-label="Sluiten">✕</button>
     </header>
     <div class="mbody">
-      <div class="field">
+      <div class="field" id="aiWensVeld">
         <label class="label" for="aiWens">Wat wil je <span id="aiWeekLabel">deze week</span> gedaan hebben?</label>
         <textarea id="aiWens" placeholder="Bijv.: bruiloft Jan &amp; Lisa monteren, ongeveer 8 uur, af vóór donderdag. Offertes nalopen 1 uur. Website bijwerken 3 uur, liefst in de ochtend. Dinsdagmiddag sporten."></textarea>
       </div>
       <p class="note" id="aiStatus">Claude plant het om je afspraken, klussen en belafspraken heen. Je ziet het eerst als voorstel; niets komt in je agenda tot je op <b>Zet in agenda</b> klikt.</p>
+      <div id="aiVragen" hidden></div>
       <div class="ai-voorstel" id="aiVoorstel" hidden></div>
     </div>
     <footer>
       <button class="btn-line" id="aiOpnieuw" hidden>Opnieuw</button>
       <span class="spacer"></span>
       <button class="btn-line" data-close>Annuleren</button>
-      <button class="btn-primary" id="aiMaak">Maak planning</button>
+      <button class="btn-line" id="aiTerug" hidden>← Vorige</button>
+      <button class="btn-primary" id="aiMaak">Volgende →</button>
       <button class="btn-primary" id="aiZet" hidden>Zet in agenda</button>
     </footer>
   </div>
@@ -3548,6 +3597,7 @@ button { cursor: pointer; }
   /* --- raster (week + dag) ---------------------------------- */
 
   function renderGrid() {
+    if (sleep) { renderNaSleep = true; return; }   // niet onder je vinger vandaan hertekenen
     var dates = periodDates();
     var single = state.view === "dag";
     var now = amsNow();
@@ -3603,12 +3653,12 @@ button { cursor: pointer; }
       html += '<div class="allday-gut"><span class="label">hele dag</span></div>';
       for (i = 0; i < dates.length; i++) {
         var dd = dates[i];
-        html += '<div class="allday-cell' + (dowOf(dd) >= 5 ? " weekend" : "") + '">';
+        html += '<div class="allday-cell' + (dowOf(dd) >= 5 ? " weekend" : "") + '" data-date="' + dd + '">';
         var ad = perDay[dd].filter(function (e) { return e.allDay; });
         for (var a = 0; a < ad.length; a++) {
           var it = ad[a];
           html += '<button class="chip-allday' + (it.kind === "lead" ? " lead" : "") + '" ' +
-            itemAttr(it) + ' title="' + esc(it.title) + '" style="--cat:' + itemColor(it) + '">' +
+            itemAttr(it) + dragAttr(it) + ' title="' + esc(it.title) + '" style="--cat:' + itemColor(it) + '">' +
             itemTitleHtml(it) + '</button>';
         }
         html += '</div>';
@@ -3641,7 +3691,7 @@ button { cursor: pointer; }
       var timed = perDay[date].filter(function (e) { return !e.allDay; }).map(function (e) {
         var s = toMin(e.start), en = toMin(e.end);
         if (en <= s) en = Math.min(1440, s + 30);
-        return { kind: e.kind, refId: e.refId, title: e.title, start: e.start, end: e.end,
+        return { kind: e.kind, refId: e.refId, sub: e.sub, title: e.title, start: e.start, end: e.end,
                  loc: e.loc, cat: e.cat, status: e.status, _s: s, _e: en, _col: 0, _n: 1 };
       });
       packColumns(timed);
@@ -3656,7 +3706,7 @@ button { cursor: pointer; }
         var tight = mins < 45;
         var past = (date < now.date) || (date === now.date && ev._e <= now.min);
         html += '<button class="ev' + (tight ? " tight" : "") + (past ? " past" : "") +
-          (ev.kind === "lead" ? " lead" : "") + '" ' + itemAttr(ev) +
+          (ev.kind === "lead" ? " lead" : "") + '" ' + itemAttr(ev) + dragAttr(ev) +
           ' title="' + esc(ev.title) + '"' +
           ' style="--cat:' + itemColor(ev) + ';top:calc(' + top + ' * var(--rowh));' +
           'height:max(18px, calc(' + hgt + ' * var(--rowh) - 2px));left:calc(' + left + '% + 1px);' +
@@ -7464,10 +7514,37 @@ button { cursor: pointer; }
     return out;
   }
 
-  function aiStand(maak) {
-    $("aiMaak").hidden = !maak;
-    $("aiZet").hidden = maak;
-    $("aiOpnieuw").hidden = maak;
+  // De planner gaat in stappen: wens → vragen (per taak: hoeveel uur?) →
+  // overzicht → voorstel. aiTaken houdt de antwoorden bij; sluit je het venster
+  // halverwege, dan ga je bij openen verder waar je was.
+  var aiStap = "wens", aiTaken = [], aiVraagNr = 0, aiOpmerking = "", aiTakenWeek = null;
+  var AI_UREN = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12];
+  var AI_UITLEG_WENS = "Schrijf alles op wat je deze week gedaan wilt hebben. Daarna loop ik het met je door: " +
+    "per taak vraag ik hoeveel uur je denkt nodig te hebben. Pas daarna maak ik de planning, om je afspraken, klussen en belafspraken heen.";
+
+  function urenLabel(u) {
+    var h = Math.floor(u), r = Math.round((u - h) * 4) / 4;
+    var frac = r === 0.25 ? "¼" : r === 0.5 ? "½" : r === 0.75 ? "¾" : "";
+    return (h || !frac ? String(h) : "") + frac + " u";
+  }
+
+  function aiMelding(html) {
+    $("aiStatus").innerHTML = html || "";
+    $("aiStatus").hidden = !html;
+  }
+
+  function aiToon(stap) {
+    aiStap = stap;
+    $("aiWensVeld").hidden = stap !== "wens";
+    $("aiVragen").hidden = stap !== "vragen" && stap !== "overzicht";
+    $("aiVoorstel").hidden = stap !== "voorstel";
+    $("aiTerug").hidden = stap === "wens";
+    $("aiTerug").textContent = stap === "voorstel" ? "← Antwoorden" : "← Vorige";
+    $("aiOpnieuw").hidden = stap !== "voorstel";
+    $("aiZet").hidden = stap !== "voorstel";
+    $("aiMaak").hidden = stap === "voorstel";
+    $("aiMaak").disabled = false;
+    $("aiMaak").textContent = stap === "overzicht" ? "Maak planning" : "Volgende →";
     $("aiWens").disabled = false;
   }
 
@@ -7479,12 +7556,20 @@ button { cursor: pointer; }
     if (addD(aiWeek, 6) < nu.date) aiWeek = mondayOf(nu.date);
     $("aiWeekLabel").textContent = aiWeek === mondayOf(nu.date) ? "deze week (week " + isoWeek(aiWeek).week + ")"
       : "in week " + isoWeek(aiWeek).week + " (" + fmtKort(aiWeek) + " – " + fmtKort(addD(aiWeek, 6)) + ")";
-    $("aiVoorstel").hidden = true;
-    $("aiVoorstel").innerHTML = "";
-    $("aiStatus").innerHTML = "Claude plant het om je afspraken, klussen en belafspraken heen. Je ziet het eerst als voorstel; niets komt in je agenda tot je op <b>Zet in agenda</b> klikt.";
-    aiVoorstel = [];
-    aiStand(true);
     $("aiOverlay").hidden = false;
+    // halverwege gesloten, zelfde week: verder waar je was
+    if (aiTaken.length && aiTakenWeek === aiWeek && aiStap !== "wens") {
+      aiToon(aiStap);
+      if (aiStap === "vragen") renderAiVraag();
+      else if (aiStap === "overzicht") renderAiOverzicht();
+      else renderAiVoorstel();
+      return;
+    }
+    aiTaken = []; aiVoorstel = [];
+    $("aiVoorstel").innerHTML = "";
+    $("aiVragen").innerHTML = "";
+    aiMelding(AI_UITLEG_WENS);
+    aiToon("wens");
     setTimeout(function () { $("aiWens").focus(); }, 0);
   }
 
@@ -7493,47 +7578,258 @@ button { cursor: pointer; }
     return (+a[2]) + " " + MONTHS_S[+a[1] - 1];
   }
 
-  function vraagAi() {
-    var wens = $("aiWens").value.trim();
-    if (!wens) { toast("Vertel eerst wat je gedaan wilt hebben."); $("aiWens").focus(); return; }
+  function aiBasis() {
     var nu = amsNow();
+    return {
+      wens: $("aiWens").value.trim(), weekStart: aiWeek, vandaag: nu.date, nu: pad(nu.h) + ":" + pad(nu.m),
+      instellingen: { dayStart: state.settings.dayStart, dayEnd: state.settings.dayEnd, weekend: state.settings.weekend },
+      bestaand: aiBezet(aiWeek)
+    };
+  }
+
+  function aiFout(r) {
+    return r.data.melding ||
+      (r.status === 404 || r.status === 405 ? "De AI werkt alleen op de online versie (Vercel) of met npm start." : apiReason(r));
+  }
+
+  /** Stap 1 → 2: Claude haalt de taken uit je lijst en bedenkt per taak de vraag. */
+  function vraagAiVragen() {
+    var basis = aiBasis();
+    if (!basis.wens) { toast("Schrijf eerst op wat je gedaan wilt hebben."); $("aiWens").focus(); return; }
+    var btn = $("aiMaak");
+    btn.disabled = true;
+    btn.textContent = "Even lezen…";
+    $("aiWens").disabled = true;
+    aiMelding("Claude leest je lijst door en zet de vragen klaar…");
+    basis.stap = "vragen";
+    api("POST", "", basis, AI_URL).then(function (r) {
+      if (!r.ok) { aiToon("wens"); aiMelding(esc(aiFout(r))); return; }
+      var taken = Array.isArray(r.data.taken) ? r.data.taken : [];
+      if (!taken.length) {
+        aiToon("wens");
+        aiMelding("Ik kon er geen losse taken uit halen. Zet per regel wat je wilt doen, bijvoorbeeld: <i>bruiloft Jan &amp; Lisa monteren</i>.");
+        return;
+      }
+      aiTaken = taken.map(function (t) {
+        return { titel: t.titel, vraag: t.vraag, uren: t.uren, toelichting: t.toelichting || "", deadline: t.deadline || "", voorkeur: t.voorkeur || "", mee: true };
+      });
+      aiTakenWeek = aiWeek;
+      aiOpmerking = r.data.opmerking || "";
+      aiVraagNr = 0;
+      aiToon("vragen");
+      renderAiVraag();
+    }, function () {
+      aiToon("wens");
+      aiMelding("Geen verbinding met de server. Probeer het nog eens.");
+    });
+  }
+
+  /** De dagen waarop iets nog af kan: vanaf vandaag tot het eind van de week. */
+  function aiDagen() {
+    var nu = amsNow().date, out = [];
+    for (var i = 0; i < 7; i++) {
+      var d = addD(aiWeek, i);
+      if (d < nu) continue;
+      if (!state.settings.weekend && dowOf(d) >= 5) continue;
+      out.push(d);
+    }
+    return out;
+  }
+
+  function renderAiVraag() {
+    var t = aiTaken[aiVraagNr], n = aiTaken.length;
+    if (!t) return;
+    aiMelding(aiVraagNr === 0 && aiOpmerking ? esc(aiOpmerking) : "");
+    var chips = "";
+    for (var i = 0; i < AI_UREN.length; i++) {
+      chips += '<button type="button" data-uren="' + AI_UREN[i] + '" aria-pressed="' + (AI_UREN[i] === t.uren ? "true" : "false") + '">' + urenLabel(AI_UREN[i]) + '</button>';
+    }
+    var dagen = aiDagen();
+    if (t.deadline && dagen.indexOf(t.deadline) < 0) dagen.push(t.deadline);
+    var dl = '<button type="button" data-dl="" aria-pressed="' + (t.deadline ? "false" : "true") + '">Maakt niet uit</button>';
+    for (var k = 0; k < dagen.length; k++) {
+      dl += '<button type="button" data-dl="' + dagen[k] + '" aria-pressed="' + (t.deadline === dagen[k] ? "true" : "false") + '">' +
+        DAYS_S[dowOf(dagen[k])] + " " + dayNum(dagen[k]) + '</button>';
+    }
+    $("aiVragen").innerHTML =
+      '<div class="ai-vraag">' +
+        '<div class="ai-gang"><span class="label">Vraag ' + (aiVraagNr + 1) + ' van ' + n + '</span>' +
+          '<span class="ai-balk"><span style="width:' + Math.round((aiVraagNr + 1) / (n + 1) * 100) + '%"></span></span></div>' +
+        '<div class="ai-taak">' + esc(t.titel) + '</div>' +
+        '<p class="ai-vtekst">' + esc(t.vraag) + '</p>' +
+        '<div class="catpick ai-uren" id="aiUren" role="group" aria-label="Aantal uur">' + chips +
+          '<span class="ai-ander"><input type="text" id="aiUrenIn" inputmode="decimal" value="' + String(t.uren).replace(".", ",") +
+          '" aria-label="Aantal uur" autocomplete="off"> uur</span></div>' +
+        (t.toelichting ? '<p class="note">Mijn inschatting: ' + esc(urenLabel(t.uren).replace(" u", " uur")) + '. ' + esc(t.toelichting) + '</p>' : '') +
+        '<div class="field"><span class="label">Klaar uiterlijk</span><div class="catpick" id="aiDeadline" role="group" aria-label="Klaar uiterlijk">' + dl + '</div></div>' +
+        '<div class="field"><label class="label" for="aiVoorkeurIn">Voorkeur <span class="opt">(optioneel)</span></label>' +
+          '<input type="text" id="aiVoorkeurIn" placeholder="Bijv. ochtend, dinsdag, in één keer" autocomplete="off" value="' + esc(t.voorkeur) + '"></div>' +
+        '<label class="check"><input type="checkbox" id="aiNietIn"' + (t.mee === false ? " checked" : "") + '> Deze week niet plannen</label>' +
+      '</div>';
+    $("aiMaak").textContent = aiVraagNr === n - 1 ? "Naar overzicht →" : "Volgende →";
+    $("aiUren").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-uren]");
+      if (!b) return;
+      $("aiUrenIn").value = b.getAttribute("data-uren").replace(".", ",");
+      markeer($("aiUren"), "data-uren", b.getAttribute("data-uren"));
+    });
+    $("aiUrenIn").addEventListener("input", function () {
+      markeer($("aiUren"), "data-uren", String(parseFloat($("aiUrenIn").value.replace(",", "."))));
+    });
+    $("aiDeadline").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-dl]");
+      if (b) markeer($("aiDeadline"), "data-dl", b.getAttribute("data-dl"));
+    });
+  }
+
+  function markeer(groep, attr, waarde) {
+    var bs = groep.querySelectorAll("[" + attr + "]");
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute("aria-pressed", bs[i].getAttribute(attr) === waarde ? "true" : "false");
+  }
+
+  /** Neemt het antwoord van de huidige vraag over; false als het aantal uur niet klopt. */
+  function leesAiAntwoord(streng) {
+    var t = aiTaken[aiVraagNr];
+    if (!t || !$("aiUrenIn")) return true;
+    t.mee = !$("aiNietIn").checked;
+    t.voorkeur = $("aiVoorkeurIn").value.trim().slice(0, 120);
+    var dl = $("aiDeadline").querySelector('[aria-pressed="true"]');
+    t.deadline = dl ? dl.getAttribute("data-dl") : "";
+    var u = parseFloat($("aiUrenIn").value.replace(",", "."));
+    if (isFinite(u) && u > 0) { t.uren = Math.min(60, Math.max(0.25, Math.round(u * 4) / 4)); return true; }
+    if (streng && t.mee) { toast("Vul in hoeveel uur je denkt nodig te hebben."); $("aiUrenIn").focus(); return false; }
+    return true;
+  }
+
+  /** Ongeveer hoeveel uur er nog vrij is binnen je werktijden deze week. */
+  function aiVrijeUren() {
+    var nu = amsNow(), bezet = aiBezet(aiWeek), vrij = 0;
+    var dagen = aiDagen();
+    for (var i = 0; i < dagen.length; i++) {
+      var d = dagen[i];
+      var van = state.settings.dayStart * 60, tot = state.settings.dayEnd * 60;
+      if (d === nu.date) van = Math.max(van, Math.ceil(nu.min / 15) * 15);
+      if (tot <= van) continue;
+      var blokken = [], heel = false;
+      for (var k = 0; k < bezet.length; k++) {
+        var b = bezet[k];
+        if (b.datum !== d) continue;
+        if (b.heleDag) { heel = true; break; }
+        blokken.push([Math.max(van, toMin(b.start)), Math.min(tot, toMin(b.eind) || 1440)]);
+      }
+      if (heel) continue;
+      blokken.sort(function (x, y) { return x[0] - y[0]; });
+      var vrijDag = tot - van, tot2 = van;
+      for (var j = 0; j < blokken.length; j++) {
+        var s = Math.max(blokken[j][0], tot2), e = blokken[j][1];
+        if (e > s) { vrijDag -= e - s; tot2 = e; }
+      }
+      vrij += Math.max(0, vrijDag);
+    }
+    return Math.round(vrij / 60 * 2) / 2;
+  }
+
+  function renderAiOverzicht() {
+    var totaal = 0, rijen = "";
+    for (var i = 0; i < aiTaken.length; i++) {
+      var t = aiTaken[i];
+      if (t.mee) totaal += t.uren;
+      var extra = [];
+      if (t.deadline) extra.push("uiterlijk " + DAYS_S[dowOf(t.deadline)] + " " + dayNum(t.deadline));
+      if (t.voorkeur) extra.push(t.voorkeur);
+      rijen += '<li><button type="button" data-ai-naar="' + i + '"' + (t.mee ? "" : ' class="uit"') + '>' +
+        '<span><b>' + esc(t.titel) + '</b>' + (extra.length ? '<span class="x">' + esc(extra.join(" · ")) + '</span>' : '') + '</span>' +
+        '<span class="u">' + (t.mee ? esc(urenLabel(t.uren)) : "niet deze week") + '</span></button></li>';
+    }
+    var vrij = aiVrijeUren();
+    aiMelding("");
+    $("aiVragen").innerHTML =
+      '<div class="ai-overzicht">' +
+        '<div class="ai-gang"><span class="label">Alles op een rij</span><span class="ai-balk"><span style="width:100%"></span></span></div>' +
+        '<ul>' + rijen + '</ul>' +
+        '<p class="note">Samen <b>' + esc(urenLabel(totaal).replace(" u", " uur")) + '</b>. Vrij binnen je werktijden deze week: ongeveer <b>' +
+          esc(urenLabel(vrij).replace(" u", " uur")) + '</b>.' +
+          (totaal > vrij ? ' Dat past niet helemaal; ik plan wat het belangrijkst lijkt en zeg wat niet paste.' : '') +
+          ' Tik op een taak om je antwoord aan te passen.</p>' +
+      '</div>';
+    $("aiMaak").textContent = "Maak planning";
+  }
+
+  function aiVolgende() {
+    if (aiStap === "wens") { vraagAiVragen(); return; }
+    if (aiStap === "vragen") {
+      if (!leesAiAntwoord(true)) return;
+      aiVraagNr++;
+      if (aiVraagNr >= aiTaken.length) { aiVraagNr = aiTaken.length - 1; aiToon("overzicht"); renderAiOverzicht(); }
+      else renderAiVraag();
+      return;
+    }
+    if (aiStap === "overzicht") vraagAi();
+  }
+
+  function aiVorige() {
+    if (aiStap === "vragen") {
+      leesAiAntwoord(false);
+      if (aiVraagNr === 0) { aiToon("wens"); aiMelding(AI_UITLEG_WENS); $("aiWens").focus(); return; }
+      aiVraagNr--;
+      renderAiVraag();
+    } else if (aiStap === "overzicht") {
+      aiVraagNr = aiTaken.length - 1;
+      aiToon("vragen");
+      renderAiVraag();
+    } else if (aiStap === "voorstel") {
+      aiToon("overzicht");
+      renderAiOverzicht();
+    }
+  }
+
+  /** Stap 3 → voorstel: de taken met jouw uren naar Claude, die ze in je week legt. */
+  function vraagAi() {
+    var mee = aiTaken.filter(function (t) { return t.mee; });
+    if (!mee.length) { toast("Alles staat op “deze week niet plannen”."); return; }
+    var basis = aiBasis();
+    basis.taken = mee.map(function (t) { return { titel: t.titel, uren: t.uren, deadline: t.deadline, voorkeur: t.voorkeur }; });
     var btn = $("aiMaak");
     btn.disabled = true;
     btn.textContent = "Claude plant…";
-    $("aiWens").disabled = true;
-    $("aiStatus").textContent = "Even geduld, Claude puzzelt je week in elkaar (meestal 20 à 60 seconden)…";
-    api("POST", "", {
-      wens: wens, weekStart: aiWeek, vandaag: nu.date, nu: pad(nu.h) + ":" + pad(nu.m),
-      instellingen: { dayStart: state.settings.dayStart, dayEnd: state.settings.dayEnd, weekend: state.settings.weekend },
-      bestaand: aiBezet(aiWeek)
-    }, AI_URL).then(function (r) {
+    $("aiTerug").disabled = true;
+    aiMelding("Even geduld, Claude puzzelt je week in elkaar (meestal 20 à 60 seconden)…");
+    api("POST", "", basis, AI_URL).then(function (r) {
+      $("aiTerug").disabled = false;
       btn.disabled = false;
       btn.textContent = "Maak planning";
-      $("aiWens").disabled = false;
-      if (!r.ok) {
-        $("aiStatus").textContent = r.data.melding ||
-          (r.status === 404 || r.status === 405 ? "De AI werkt alleen op de online versie (Vercel) of met npm start." : apiReason(r));
-        return;
-      }
+      if (!r.ok) { aiMelding(esc(aiFout(r))); return; }
       aiVoorstel = r.data.voorstel || [];
       for (var i = 0; i < aiVoorstel.length; i++) aiVoorstel[i].aan = true;
       if (!aiVoorstel.length) {
-        $("aiStatus").textContent = (r.data.uitleg ? r.data.uitleg + " " : "") + "Er kwam geen blok uit dat in je week past.";
+        aiMelding(esc((r.data.uitleg ? r.data.uitleg + " " : "") + "Er kwam geen blok uit dat in je week past."));
         return;
       }
-      $("aiStatus").textContent = r.data.uitleg || "Zo zou je week eruitzien.";
+      aiMelding(esc(r.data.uitleg || "Zo zou je week eruitzien."));
+      aiToon("voorstel");
       renderAiVoorstel();
-      aiStand(false);
     }, function () {
+      $("aiTerug").disabled = false;
       btn.disabled = false;
       btn.textContent = "Maak planning";
-      $("aiWens").disabled = false;
-      $("aiStatus").textContent = "Geen verbinding met de server. Probeer het nog eens.";
+      aiMelding("Geen verbinding met de server. Probeer het nog eens.");
     });
   }
 
   function renderAiVoorstel() {
-    var html = "", dag = null;
+    // per taak: hoeveel er gepland is tegenover wat je nodig had
+    var mee = aiTaken.filter(function (t) { return t.mee; }), samen = "";
+    for (var k = 0; k < mee.length; k++) {
+      var min = 0;
+      for (var j = 0; j < aiVoorstel.length; j++) {
+        var x = aiVoorstel[j];
+        if (x.aan && x.taak === k + 1) min += toMin(x.eind) - toMin(x.start);
+      }
+      var ok = min >= mee[k].uren * 60 - 1;
+      samen += '<span class="' + (ok ? "ok" : "kort") + '">' + (ok ? "✓ " : "") + esc(mee[k].titel) + " · " +
+        esc(ok ? urenLabel(min / 60) : urenLabel(min / 60) + " van " + urenLabel(mee[k].uren)) + '</span>';
+    }
+    var html = samen ? '<div class="ai-samen">' + samen + '</div>' : "", dag = null;
     for (var i = 0; i < aiVoorstel.length; i++) {
       var b = aiVoorstel[i];
       if (b.datum !== dag) {
@@ -7549,7 +7845,6 @@ button { cursor: pointer; }
     }
     if (dag) html += "</div>";
     $("aiVoorstel").innerHTML = html;
-    $("aiVoorstel").hidden = false;
     var n = aiVoorstel.filter(function (x) { return x.aan; }).length;
     $("aiZet").textContent = n ? "Zet in agenda (" + n + ")" : "Zet in agenda";
     $("aiZet").disabled = !n;
@@ -7569,6 +7864,7 @@ button { cursor: pointer; }
     }
     $("aiOverlay").hidden = true;
     $("aiWens").value = "";
+    aiTaken = []; aiStap = "wens";
     state.anchor = aiWeek;
     render();
     toast(n + (n === 1 ? " blok" : " blokken") + " in je agenda gezet.");
@@ -8264,6 +8560,232 @@ button { cursor: pointer; }
   $("miIdeeen").addEventListener("click", function () { closeMenu(); showRail(false); setView("ideeen"); });
 
 
+  /* ==========================================================
+     6k. Slepen — afspraken verplaatsen in de week- en dagweergave
+     ========================================================== */
+
+  // Met de muis: indrukken en slepen. Met de vinger: even vasthouden (tot het
+  // blok "optilt"), dan slepen; kort tikken opent het blok zoals altijd, en
+  // vegen zonder vast te houden scrolt gewoon. Je sleept naar een andere dag
+  // (kolom) en/of tijd, op hele kwartieren; de duur blijft gelijk. Een
+  // belafspraak van een klant verschuift mee (belDatum/belTijd); de klus zelf
+  // (de trouwdag) niet: die verplaats je bewust in het klantvenster.
+  var sleep = null;            // de lopende sleep-actie
+  var sleepKlaar = 0;          // tijdstip van loslaten: de klik die daarna komt negeren
+  var sleepWacht = null;       // { el, x, y, timer, touch } tussen indrukken en optillen
+  var renderNaSleep = false;
+  var SLEEP_DREMPEL = 6, VASTHOUDEN_MS = 380;
+
+  function rowhPx() {
+    return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--rowh")) || 56;
+  }
+
+  function dragAttr(it) {
+    if (it.kind === "event") return ' data-drag="ev:' + esc(it.refId) + '"';
+    if (it.kind === "lead" && it.sub === "call") return ' data-drag="call:' + esc(it.refId) + '"';
+    return "";
+  }
+
+  function trillen() {
+    try { window.webkit.messageHandlers.trillen.postMessage("tik"); return; } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
+  }
+
+  function startSleep(el, x, y) {
+    var p = (el.getAttribute("data-drag") || "").split(":");
+    var soort = p[0], id = p.slice(1).join(":");
+    var item = null, i;
+    if (soort === "ev") { for (i = 0; i < state.events.length; i++) if (state.events[i].id === id) item = state.events[i]; }
+    else if (soort === "call") item = findLead(id);
+    if (!item) return false;
+    var heleDag = soort === "ev" && !!item.allDay;
+    if (soort === "call" && !item.callTime) heleDag = true;
+    var duur = 30;
+    if (soort === "ev" && !heleDag) { duur = toMin(item.end) - toMin(item.start); if (duur <= 0) duur = 60; }
+    var r = el.getBoundingClientRect();
+    sleep = {
+      el: el, soort: soort, id: id, item: item, heleDag: heleDag, duur: duur,
+      dy: Math.max(0, Math.min(r.height, y - r.top)), x: x, y: y, doel: null,
+      sc: $("gridScroll"), kleur: el.style.getPropertyValue("--cat") || "var(--accent)", raf: 0
+    };
+    swipe = null;   // de dagweergave mag dit niet als vegen naar een andere dag zien
+    el.classList.add("sleept");
+    document.body.classList.add("is-slepen");
+    trillen();
+    beweegSleep(x, y);
+    sleep.raf = requestAnimationFrame(sleepLus);
+    return true;
+  }
+
+  function sleepDoelEl() {
+    var d = $("sleepDoel");
+    if (!d) {
+      d = document.createElement("div");
+      d.id = "sleepDoel";
+      d.className = "sleep-doel";
+      d.innerHTML = '<span class="sd-t"></span><span class="sd-m"></span>';
+    }
+    return d;
+  }
+
+  function beweegSleep(x, y) {
+    if (!sleep) return;
+    sleep.x = x; sleep.y = y;
+    var onder = document.elementFromPoint(x, y);
+    var kolom = onder && onder.closest(".daycol");
+    var hd = onder && onder.closest(".allday-cell, .dayhead");
+    var oud = document.querySelectorAll(".daycol.sleep-hier, .allday-cell.sleep-hier");
+    for (var i = 0; i < oud.length; i++) oud[i].classList.remove("sleep-hier");
+
+    if (sleep.heleDag) {
+      var datum = (kolom || hd) ? (kolom || hd).getAttribute("data-date") : null;
+      if (!datum) return;
+      sleep.doel = { date: datum };
+      var cel = document.querySelector('.allday-cell[data-date="' + datum + '"]');
+      if (cel) cel.classList.add("sleep-hier");
+      if (kolom) kolom.classList.add("sleep-hier");
+      return;
+    }
+    if (!kolom) return;   // boven de kop of de uurgoot: laat het laatste doel staan
+    var r = kolom.getBoundingClientRect();
+    var lo = parseInt(kolom.getAttribute("data-lo"), 10) || 0;
+    var min = lo * 60 + ((y - sleep.dy - r.top) / rowhPx()) * 60;
+    min = Math.round(min / 15) * 15;
+    min = Math.max(0, Math.min(1440 - Math.max(15, sleep.duur), min));
+    var start = toTime(min), eind = toTime(Math.min(1439, min + sleep.duur));
+    sleep.doel = { date: kolom.getAttribute("data-date"), start: start, end: eind };
+
+    var d = sleepDoelEl();
+    if (d.parentNode !== kolom) kolom.appendChild(d);
+    d.style.setProperty("--cat", sleep.kleur);
+    d.style.top = "calc(" + ((min - lo * 60) / 60) + " * var(--rowh))";
+    d.style.height = "max(18px, calc(" + (sleep.duur / 60) + " * var(--rowh) - 2px))";
+    d.firstChild.textContent = sleep.soort === "call" ? "Bellen · " + leadName(sleep.item) : sleep.item.title;
+    d.lastChild.textContent = DAYS_S[dowOf(sleep.doel.date)] + " " + dayNum(sleep.doel.date) + " · " + start +
+      (sleep.soort === "call" ? "" : "–" + eind);
+  }
+
+  /** Rand van het rooster: vanzelf meescrollen, ook als je vinger stilstaat. */
+  function sleepLus() {
+    if (!sleep) return;
+    var sc = sleep.sc;
+    if (sc) {
+      var r = sc.getBoundingClientRect(), rand = 48, dx = 0, dy = 0;
+      if (sleep.y < r.top + rand + 40) dy = -Math.ceil((r.top + rand + 40 - sleep.y) / 6);
+      else if (sleep.y > r.bottom - rand) dy = Math.ceil((sleep.y - (r.bottom - rand)) / 6);
+      if (sleep.x < r.left + rand + 40 && sc.scrollLeft > 0) dx = -Math.ceil((r.left + rand + 40 - sleep.x) / 6);
+      else if (sleep.x > r.right - rand) dx = Math.ceil((sleep.x - (r.right - rand)) / 6);
+      if (dx || dy) {
+        sc.scrollTop += Math.max(-24, Math.min(24, dy));
+        sc.scrollLeft += Math.max(-24, Math.min(24, dx));
+        beweegSleep(sleep.x, sleep.y);
+      }
+    }
+    sleep.raf = requestAnimationFrame(sleepLus);
+  }
+
+  function eindSleep(annuleer) {
+    var s = sleep;
+    if (!s) return;
+    sleep = null;
+    cancelAnimationFrame(s.raf);
+    sleepKlaar = Date.now();
+    s.el.classList.remove("sleept");
+    document.body.classList.remove("is-slepen");
+    var d = $("sleepDoel");
+    if (d && d.parentNode) d.parentNode.removeChild(d);
+    var oud = document.querySelectorAll(".sleep-hier");
+    for (var i = 0; i < oud.length; i++) oud[i].classList.remove("sleep-hier");
+
+    var doel = s.doel, it = s.item, kopie = {}, k;
+    var gewijzigd = false;
+    if (!annuleer && doel) {
+      for (k in it) kopie[k] = it[k];
+      if (s.soort === "ev") {
+        gewijzigd = doel.date !== it.date || (!s.heleDag && (doel.start !== it.start || doel.end !== it.end));
+        kopie.date = doel.date;
+        if (!s.heleDag) { kopie.start = doel.start; kopie.end = doel.end; }
+        if (gewijzigd) put("events", kopie);
+      } else {
+        gewijzigd = doel.date !== it.callDate || (!s.heleDag && doel.start !== it.callTime);
+        kopie.callDate = doel.date;
+        if (!s.heleDag) kopie.callTime = doel.start;
+        if (gewijzigd) put("leads", kopie);
+      }
+    }
+    renderNaSleep = false;
+    render();
+    if (gewijzigd) {
+      toast((s.soort === "call" ? "Belafspraak" : "“" + it.title + "”") + " verplaatst naar " +
+        DAYS[dowOf(doel.date)] + " " + fmtShort(doel.date) + (doel.start ? " " + doel.start : "") + ".");
+    }
+  }
+
+  function wachtAf() {
+    if (sleepWacht) { clearTimeout(sleepWacht.timer); if (sleepWacht.el) sleepWacht.el.classList.remove("vasthouden"); }
+    sleepWacht = null;
+  }
+
+  // muis
+  canvas.addEventListener("mousedown", function (e) {
+    if (e.button !== 0 || sleep) return;
+    var el = e.target.closest("[data-drag]");
+    if (!el) return;
+    sleepWacht = { el: el, x: e.clientX, y: e.clientY, touch: false };
+  });
+  document.addEventListener("mousemove", function (e) {
+    if (sleep) { e.preventDefault(); beweegSleep(e.clientX, e.clientY); return; }
+    if (!sleepWacht || sleepWacht.touch) return;
+    if (Math.abs(e.clientX - sleepWacht.x) + Math.abs(e.clientY - sleepWacht.y) < SLEEP_DREMPEL) return;
+    var w = sleepWacht;
+    sleepWacht = null;
+    e.preventDefault();
+    startSleep(w.el, e.clientX, e.clientY);
+  });
+  document.addEventListener("mouseup", function () {
+    if (sleepWacht && !sleepWacht.touch) sleepWacht = null;
+    if (sleep) eindSleep(false);
+  });
+
+  // vinger: eerst even vasthouden
+  canvas.addEventListener("touchstart", function (e) {
+    if (sleep || e.touches.length !== 1) { wachtAf(); return; }
+    var el = e.target.closest("[data-drag]");
+    if (!el) return;
+    var t = e.touches[0];
+    wachtAf();
+    sleepWacht = { el: el, x: t.clientX, y: t.clientY, touch: true };
+    el.classList.add("vasthouden");
+    sleepWacht.timer = setTimeout(function () {
+      var w = sleepWacht;
+      if (!w) return;
+      sleepWacht = null;
+      w.el.classList.remove("vasthouden");
+      startSleep(w.el, w.x, w.y);
+    }, VASTHOUDEN_MS);
+  }, { passive: true });
+  canvas.addEventListener("touchmove", function (e) {
+    var t = e.touches[0];
+    if (sleep) { e.preventDefault(); beweegSleep(t.clientX, t.clientY); return; }
+    if (sleepWacht && Math.abs(t.clientX - sleepWacht.x) + Math.abs(t.clientY - sleepWacht.y) > 10) wachtAf();   // dat is scrollen
+  }, { passive: false });
+  canvas.addEventListener("touchend", function (e) {
+    if (sleep) { e.preventDefault(); eindSleep(false); return; }
+    wachtAf();
+  }, { passive: false });
+  canvas.addEventListener("touchcancel", function () { wachtAf(); if (sleep) eindSleep(true); });
+  // iOS: geen vergrootglas of menu bij vasthouden
+  canvas.addEventListener("contextmenu", function (e) { if (e.target.closest("[data-drag]")) e.preventDefault(); });
+
+  // de klik die op het loslaten volgt opent anders het venster van de afspraak
+  canvas.addEventListener("click", function (e) {
+    if (Date.now() - sleepKlaar < 450) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && sleep) { e.stopPropagation(); eindSleep(true); }
+  }, true);
+
   function openMeldingen() {
     var m = state.meldingen;
     $("mlDag").checked = m.dagoverzicht;
@@ -8861,13 +9383,21 @@ button { cursor: pointer; }
   $("miMeldingen").addEventListener("click", openMeldingen);
   $("miAi").addEventListener("click", function (e) { e.stopPropagation(); openAi(); });
   $("aiBtn").addEventListener("click", function (e) { e.stopPropagation(); openAi(); });
-  $("aiMaak").addEventListener("click", vraagAi);
+  $("aiMaak").addEventListener("click", aiVolgende);
+  $("aiTerug").addEventListener("click", aiVorige);
   $("aiZet").addEventListener("click", zetAiInAgenda);
   $("aiOpnieuw").addEventListener("click", function () {
-    $("aiVoorstel").hidden = true;
-    $("aiStatus").textContent = "Pas je wens aan en klik nog eens op Maak planning.";
-    aiStand(true);
+    aiTaken = []; aiVoorstel = [];
+    aiToon("wens");
+    aiMelding("Pas je lijst aan; daarna loop ik hem opnieuw met je door.");
     $("aiWens").focus();
+  });
+  $("aiVragen").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ai-naar]");
+    if (!b) return;
+    aiVraagNr = +b.getAttribute("data-ai-naar");
+    aiToon("vragen");
+    renderAiVraag();
   });
   $("aiVoorstel").addEventListener("change", function (e) {
     var i = e.target.getAttribute && e.target.getAttribute("data-ai");
@@ -9247,6 +9777,7 @@ button { cursor: pointer; }
         if (!$("evOverlay").hidden) saveEvent();
         else if (!$("ldOverlay").hidden) saveLead();
         else if (!$("idOverlay").hidden && e.target.id !== "iText") saveIdee();
+        else if (!$("aiOverlay").hidden && (aiStap === "vragen" || aiStap === "overzicht")) { e.preventDefault(); aiVolgende(); }
       }
       return;
     }

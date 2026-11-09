@@ -10,7 +10,16 @@
 //     instellingen: { dayStart: 7, dayEnd: 21, weekend: true },
 //     bestaand: [{ datum, start, eind, heleDag, titel }]   // wat al vastligt
 //   }
-//   → { voorstel: [{ titel, datum, start, eind, categorie, notitie }], uitleg }
+//   → { voorstel: [{ titel, datum, start, eind, categorie, notitie, taak }], uitleg }
+//
+// In twee stappen, zoals de app het doet:
+//   1. stap: "vragen" — Claude haalt de losse taken uit je wens en stelt per
+//      taak een vraag: hoeveel uur denk je nodig te hebben? Met een eigen
+//      inschatting, en een deadline/voorkeur als je die al noemde.
+//      → { taken: [{ titel, vraag, uren, deadline, voorkeur, toelichting }], opmerking }
+//   2. zonder stap, met taken: [{ titel, uren, deadline, voorkeur }] — jouw
+//      antwoorden; Claude plant elke taak voor precies dat aantal uren.
+//      taak in het voorstel = het nummer van de taak (1, 2, …), 0 = geen.
 //
 // Sleutel: ANTHROPIC_API_KEY (omgevingsvariabele in Vercel, nooit in de code).
 // Alleen ingelogd: anders kon iedereen met het adres op jouw kosten Claude gebruiken.
@@ -21,6 +30,7 @@ const MODEL = "claude-opus-5-5";
 const API = "https://api.anthropic.com/v1/messages";
 const MAX_WENS = 4000;
 const MAX_BESTAAND = 300;
+const MAX_TAKEN = 40;
 const CATS = ["afspraak", "focus", "reizen", "prive", "overig"];
 const DATUM_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIJD_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -41,7 +51,51 @@ const SYSTEEM =
   "- Categorie: focus voor geconcentreerd werk (monteren, edit, administratie), afspraak voor afspraken met anderen, " +
   "reizen voor reistijd, prive voor privézaken (sporten, boodschappen), overig voor de rest.\n" +
   "- Titels kort en in het Nederlands, zoals de gebruiker het noemt. Zet details in de notitie (mag leeg).\n" +
-  "- Uitleg: twee à drie korte zinnen in het Nederlands, aan de gebruiker gericht (je/jij), over de keuzes die je maakte.";
+  "- Uitleg: twee à drie korte zinnen in het Nederlands, aan de gebruiker gericht (je/jij), over de keuzes die je maakte.\n" +
+  "- Staat er een genummerde takenlijst met uren bij, plan dan per taak precies dat aantal uren (verdeeld over blokken), " +
+  "klaar op of vóór de deadline, en houd rekening met de voorkeur. Zet in elk blok bij taak het nummer van de taak; " +
+  "blokken die niet bij een taak horen krijgen taak 0. Past een taak niet helemaal, plan dan wat past en zeg het in de uitleg.";
+
+const VRAGEN_SYSTEEM =
+  "Je bent de planningsassistent in Weekzicht, de agenda van een zelfstandige videograaf. " +
+  "De gebruiker vertelt wat hij deze week gedaan wil hebben. Voordat er gepland wordt, loop je zijn lijst met hem door.\n\n" +
+  "Jouw taak nu: haal er de losse taken uit en stel per taak één vraag: hoeveel uur denkt hij er deze week voor nodig te hebben.\n" +
+  "- Eén taak per ding dat hij wil doen, in de volgorde waarin hij ze noemt. Voeg geen taken toe die hij niet noemt. " +
+  "Vaste afspraken met een tijdstip (\"dinsdag 14:00 tandarts\") zijn ook taken; zet het tijdstip dan in voorkeur.\n" +
+  "- titel: kort, in zijn woorden (\"Bruiloft Jan & Lisa monteren\").\n" +
+  "- vraag: een korte, vriendelijke vraag aan hem (je/jij) over het aantal uur voor deze taak. " +
+  "Noemde hij zelf al een tijd, vraag dan of dat klopt (\"Je noemde ongeveer 8 uur voor het monteren. Klopt dat, of wil je er wat ruimte bij?\").\n" +
+  "- uren: jouw beste inschatting in uren (veelvoud van 0,25). Noemde hij een tijd, neem die over. Anders een realistische schatting voor een videograaf.\n" +
+  "- toelichting: één korte zin waarom je dat inschat (of leeg als hij het zelf noemde).\n" +
+  "- deadline: de dag (JJJJ-MM-DD, binnen de week) waarop het uiterlijk af moet als hij dat noemt (\"vóór donderdag\" = woensdag), anders leeg.\n" +
+  "- voorkeur: wat hij zegt over moment of manier (\"ochtend\", \"dinsdagmiddag\", \"in één keer\"), anders leeg.\n" +
+  "- opmerking: leeg, of één korte zin als iets onduidelijk is of niet in de week past.\n" +
+  "Alles in het Nederlands.";
+
+const VRAGEN_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["taken", "opmerking"],
+  properties: {
+    taken: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["titel", "vraag", "uren", "toelichting", "deadline", "voorkeur"],
+        properties: {
+          titel: { type: "string" },
+          vraag: { type: "string" },
+          uren: { type: "number" },
+          toelichting: { type: "string" },
+          deadline: { type: "string", description: "JJJJ-MM-DD of leeg" },
+          voorkeur: { type: "string" }
+        }
+      }
+    },
+    opmerking: { type: "string" }
+  }
+};
 
 const SCHEMA = {
   type: "object",
@@ -53,14 +107,15 @@ const SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["titel", "datum", "start", "eind", "categorie", "notitie"],
+        required: ["titel", "datum", "start", "eind", "categorie", "notitie", "taak"],
         properties: {
           titel: { type: "string" },
           datum: { type: "string", description: "JJJJ-MM-DD" },
           start: { type: "string", description: "HH:MM" },
           eind: { type: "string", description: "HH:MM" },
           categorie: { type: "string", enum: CATS },
-          notitie: { type: "string" }
+          notitie: { type: "string" },
+          taak: { type: "integer", description: "nummer van de taak, 0 = geen" }
         }
       }
     },
@@ -90,6 +145,13 @@ function dstr(ms) { return new Date(ms).toISOString().slice(0, 10); }
 function addD(s, n) { return dstr(civ(s) + n * 86400000); }
 function toMin(t) { const a = t.split(":"); return +a[0] * 60 + +a[1]; }
 function schoon(s, max) { return String(s == null ? "" : s).replace(/[\u0000-\u001f]+/g, " ").trim().slice(0, max); }
+/** Uren als veelvoud van een kwartier, tussen een kwartier en 60 uur; null als het geen getal is. */
+function uren(x) {
+  const n = typeof x === "number" ? x : parseFloat(String(x == null ? "" : x).replace(",", "."));
+  if (!isFinite(n) || n <= 0) return null;
+  return Math.min(60, Math.max(0.25, Math.round(n * 4) / 4));
+}
+function urenTekst(n) { return String(n).replace(".", ",") + " uur"; }
 
 /** Controleert de invoer van de app; geeft { fout } of de nette versie. */
 function invoer(body) {
@@ -111,7 +173,17 @@ function invoer(body) {
     if (!heleDag && !(TIJD_RE.test(String(x.start)) && TIJD_RE.test(String(x.eind)))) continue;
     bestaand.push({ datum: x.datum, start: heleDag ? "" : x.start, eind: heleDag ? "" : x.eind, heleDag, titel: schoon(x.titel, 80) });
   }
-  return { wens, weekStart, weekEind: addD(weekStart, 6), vandaag, nu, dayStart, dayEnd, weekend, bestaand };
+  const weekEind = addD(weekStart, 6);
+  const taken = [];
+  for (const t of Array.isArray(body.taken) ? body.taken.slice(0, MAX_TAKEN) : []) {
+    const titel = t ? schoon(t.titel, 120) : "";
+    const u = t ? uren(t.uren) : null;
+    if (!titel || u == null) continue;
+    const dl = DATUM_RE.test(String(t.deadline || "")) && t.deadline >= weekStart && t.deadline <= weekEind ? t.deadline : "";
+    taken.push({ titel, uren: u, deadline: dl, voorkeur: schoon(t.voorkeur, 120) });
+  }
+  const stap = body.stap === "vragen" ? "vragen" : "plannen";
+  return { stap, wens, weekStart, weekEind, vandaag, nu, dayStart, dayEnd, weekend, bestaand, taken };
 }
 
 /** Het bericht aan Claude: de week, wat er al staat, en de wens. */
@@ -135,10 +207,28 @@ function bericht(v) {
   regels.push("");
   regels.push("Wat ik deze week gedaan wil hebben:");
   regels.push(v.wens);
+  if (v.taken.length) {
+    regels.push("");
+    regels.push("De taken met mijn eigen inschatting van de tijd (plan per taak precies dit aantal uren):");
+    v.taken.forEach((t, i) => {
+      const dl = t.deadline ? " — uiterlijk af op " + DAGEN[(new Date(civ(t.deadline)).getUTCDay() + 6) % 7] + " " + t.deadline : "";
+      regels.push((i + 1) + ". " + t.titel + " — " + urenTekst(t.uren) + dl + (t.voorkeur ? " — voorkeur: " + t.voorkeur : ""));
+    });
+  }
   return regels.join("\n");
 }
 
 function buildRequest(v) {
+  if (v.stap === "vragen") {
+    return {
+      model: MODEL,
+      max_tokens: 8000,
+      output_config: { effort: "low", format: { type: "json_schema", schema: VRAGEN_SCHEMA } },
+      fallbacks: "default",
+      system: VRAGEN_SYSTEEM,
+      messages: [{ role: "user", content: bericht(v) }]
+    };
+  }
   return {
     model: MODEL,
     max_tokens: 16000,
@@ -169,10 +259,30 @@ function controleer(voorstel, v) {
       titel: schoon(x.titel, 120) || "Blok",
       datum: x.datum, start: x.start, eind: x.eind,
       categorie: CATS.indexOf(x.categorie) >= 0 ? x.categorie : "focus",
-      notitie: schoon(x.notitie, 500)
+      notitie: schoon(x.notitie, 500),
+      taak: Number.isInteger(x.taak) && x.taak >= 1 && x.taak <= v.taken.length ? x.taak : 0
     });
   }
   out.sort((a, b) => (a.datum + a.start).localeCompare(b.datum + b.start));
+  return out;
+}
+
+/** De vragenlijst: alleen taken met een titel; uren en deadline netjes gemaakt. */
+function controleerTaken(taken, v) {
+  const out = [];
+  for (const t of Array.isArray(taken) ? taken.slice(0, MAX_TAKEN) : []) {
+    const titel = t ? schoon(t.titel, 120) : "";
+    if (!titel) continue;
+    const dl = DATUM_RE.test(String(t.deadline || "")) && t.deadline >= v.weekStart && t.deadline <= v.weekEind ? t.deadline : "";
+    out.push({
+      titel,
+      vraag: schoon(t.vraag, 300) || "Hoeveel uur denk je nodig te hebben voor " + titel + "?",
+      uren: uren(t.uren) || 1,
+      toelichting: schoon(t.toelichting, 300),
+      deadline: dl,
+      voorkeur: schoon(t.voorkeur, 120)
+    });
+  }
   return out;
 }
 
@@ -184,6 +294,7 @@ function leesAntwoord(j) {
   const tekst = j.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   try {
     const data = JSON.parse(tekst);
+    if (Array.isArray(data.taken)) return { taken: data.taken, opmerking: schoon(data.opmerking, 400) };
     return { voorstel: data.voorstel, uitleg: schoon(data.uitleg, 1000) };
   } catch (e) {
     return { fout: "Claude gaf geen leesbare planning terug. Probeer het nog eens." };
@@ -223,6 +334,7 @@ async function handle(req, res, key, opts, doFetch) {
   }
   const a = leesAntwoord(j);
   if (a.fout) return send(res, 502, { error: "antwoord", melding: a.fout });
+  if (v.stap === "vragen") return send(res, 200, { taken: controleerTaken(a.taken, v), opmerking: a.opmerking || "" });
   return send(res, 200, { voorstel: controleer(a.voorstel, v), uitleg: a.uitleg });
 }
 
@@ -238,4 +350,5 @@ module.exports.invoer = invoer;
 module.exports.bericht = bericht;
 module.exports.buildRequest = buildRequest;
 module.exports.controleer = controleer;
+module.exports.controleerTaken = controleerTaken;
 module.exports.leesAntwoord = leesAntwoord;

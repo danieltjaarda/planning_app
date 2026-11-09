@@ -140,9 +140,17 @@ het formulier invult of muziek kiest. *Stuur nu een dagoverzicht* laat meteen
 zien hoe het eruitziet. De server stuurt ze ook als de app dicht is.
 
 **Plan met AI** — de knop *✦ Plan met AI* (ook in het ⋯-menu) opent een
-venster waarin je in gewone taal zegt wat je die week gedaan wilt hebben en
-ongeveer hoe lang het duurt ("bruiloft Jan & Lisa monteren, 8 uur, af vóór
-donderdag; dinsdagmiddag sporten"). `api/ai-planning.js` stuurt dat, met wat er
+venster waarin je in gewone taal zegt wat je die week gedaan wilt hebben
+("bruiloft Jan & Lisa monteren, af vóór donderdag; offertes nalopen;
+dinsdagmiddag sporten"). Daarna loopt de AI je lijst met je door, **vraag per
+vraag**: per taak hoeveel uur je denkt nodig te hebben (met een eigen
+inschatting en snelknoppen ½–12 u), wanneer het uiterlijk af moet en of je een
+voorkeur hebt; je kunt een taak ook op "deze week niet" zetten. Een overzicht
+zet alles op een rij, met het totaal tegenover je vrije uren. Pas dan wordt
+er gepland: elke taak precies voor het aantal uren dat jij opgaf, en boven
+het voorstel zie je per taak of het helemaal past. Sluit je het venster
+halverwege, dan ga je bij openen verder waar je was. `api/ai-planning.js`
+(eerst met `stap: "vragen"`, daarna met je antwoorden) stuurt dat, met wat er
 al in de week staat (afspraken, klussen, belafspraken; afgevallen klanten
 niet), naar Claude (`claude-opus-5-5`, gestructureerde JSON-uitvoer). Je krijgt
 een voorstel per dag te zien en vinkt af wat je niet wilt; pas bij *Zet in
@@ -153,6 +161,17 @@ al voorbij is). Zet `ANTHROPIC_API_KEY` in Vercel (Settings → Environment
 Variables, als Secret) en deploy opnieuw; lokaal in `.env`. Alleen ingelogd.
 
 **Taken** met deadlines, en een staafje per dag dat laat zien hoe vol de week is.
+
+**Slepen** — in de week- en dagweergave versleep je een afspraak naar een
+andere dag of tijd: met de muis indrukken en slepen, op de telefoon even
+vasthouden tot het blok optilt (in de iOS-app met een tikje) en dan met je
+vinger slepen. Kort tikken opent de afspraak zoals altijd, en vegen zonder
+vast te houden scrolt gewoon. Het blok springt per kwartier, de duur blijft
+gelijk, en aan de rand scrolt het rooster vanzelf mee. Hele-dag-afspraken
+versleep je naar een andere dag; een belafspraak met een klant verschuift
+mee. De klus van een klant (de trouwdag zelf) versleep je bewust niet: die
+pas je aan in het klantvenster. Esc breekt het slepen af.
+
 
 **Ideeën** — een eigen pagina (zijbalk, of ⋯-menu → *Ideeën*; sneltoets 5)
 om ideeën op te schrijven: typ er een in en druk op Enter. Klik op een idee om
